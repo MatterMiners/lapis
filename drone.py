@@ -29,7 +29,7 @@ class Drone(object):
         self._memory += memory
         self._disk += disk
         self._cores += cores
-        self.env.process(job(self.env, walltime, memory, cores, disk))
+        yield self.env.process(job(self.env, walltime, memory, cores, disk))
         self._memory -= memory
         self._disk -= disk
         self._cores -= cores
