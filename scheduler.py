@@ -21,6 +21,6 @@ def job_scheduler(env):
         for pool in globals.pools:
             if pool.level > 0 and globals.global_demand.level > 0:
                 drone = pool.get_drone(1)
-                drone.start_job(walltime=10, memory=2, cores=1, disk=100)
+                drone.start_job(*next(globals.job_generator))
             yield env.timeout(1)
 

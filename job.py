@@ -35,3 +35,8 @@ def job(env, walltime, memory, cores, disk):
     globals.global_demand.get(1)
     yield env.timeout(walltime)
     print("job finished")
+
+
+def job_property_generator():
+    while True:
+        yield 10, 2, 1, 100
