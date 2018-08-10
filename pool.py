@@ -1,4 +1,5 @@
 from simpy.resources import container
+from cobald import interfaces
 import globals
 from drone import Drone
 
@@ -17,7 +18,7 @@ def pool_demand():
     return result
 
 
-class Pool(container.Container):
+class Pool(interfaces.Pool, container.Container):
     def __init__(self, env, capacity=float('inf'), init=0, memory=8, cores=1, disk=100):
         super(Pool, self).__init__(env, capacity, init)
         self.memory = memory
@@ -45,6 +46,14 @@ class Pool(container.Container):
             yield self.env.timeout(1)
 
     @property
+    def allocation(self) -> float:
+        return len(self._drones_in_use) / self._supply
+
+    @property
+    def utilisation(self) -> float:
+        return 0
+
+    @property
     def supply(self):
         return self._supply
 
@@ -64,7 +73,8 @@ class Pool(container.Container):
             pass
         self._drones.append(drone)
         self.put(1)
-        print("[supply] pool supply at %d / %d (available: %d)" % (self._supply, self._demand, self.level))
+        print("[supply] pool supply at %d / %d (available: %d, allocation: %.2f, utilisation: %.2f)"
+              % (self._supply, self._demand, self.level, self.allocation, self.utilisation))
 
     def get_drone(self, amount):
         super(Pool, self).get(amount)
