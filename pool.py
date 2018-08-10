@@ -36,6 +36,12 @@ class Pool(container.Container):
                 # start a new drone
                 self._supply += 1
                 Drone(self.env, self, 10)
+            elif self._supply > self._demand:
+                self.get(1)
+                drone = self._drones.pop(0)
+                self._supply -= 1
+                yield from drone.shutdown()
+                del drone
             yield self.env.timeout(1)
 
     @property

@@ -13,7 +13,7 @@ def main():
     env.process(job_demand(env))
     env.process(drone_scheduler(env))
     env.process(job_scheduler(env))
-    env.run(until=100)
+    env.run(until=1000)
 
 
 if __name__ == "__main__":

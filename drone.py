@@ -15,6 +15,10 @@ class Drone(object):
         print("drone is alive at", self.env.now)
         self.pool.add_drone(self)
 
+    def shutdown(self):
+        yield self.env.timeout(1)
+        print("drone has been shut down")
+
     def start_job(self, walltime, memory, cores, disk):
         print("starting job at", self.env.now)
         if (self._memory + memory > self.pool.memory or
