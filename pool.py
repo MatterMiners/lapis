@@ -1,21 +1,6 @@
 from simpy.resources import container
 from cobald import interfaces
-import globals
 from drone import Drone
-
-
-def pool_supply():
-    result = 0
-    for pool in globals.pools:
-        result += pool.supply
-    return result
-
-
-def pool_demand():
-    result = 0
-    for pool in globals.pools:
-        result += pool.demand
-    return result
 
 
 class Pool(interfaces.Pool, container.Container):
@@ -25,7 +10,6 @@ class Pool(interfaces.Pool, container.Container):
         self.cores = cores
         self.disk = disk
         self._demand = 0
-        self._supply = 0
         self._drones = []
         self._drones_in_use = []
         self.env = env
@@ -33,29 +17,45 @@ class Pool(interfaces.Pool, container.Container):
 
     def run(self):
         while True:
-            if self._supply < self._demand:
+            if self.drone_demand() < self._demand:
                 # start a new drone
-                self._supply += 1
-                Drone(self.env, self, 10)
-            elif self._supply > self._demand:
-                self.get(1)
+                self.add_drone(Drone(self.env, self, 10))
+            elif self.drone_demand() > self._demand:
+                yield self.get(1)
                 drone = self._drones.pop(0)
-                self._supply -= 1
                 yield from drone.shutdown()
                 del drone
             yield self.env.timeout(1)
 
+    def drone_demand(self):
+        return len(self._drones) + len(self._drones_in_use)
+
     @property
     def allocation(self) -> float:
-        return len(self._drones_in_use) / self._supply
+        allocations = []
+        for drone in self.drones():
+            allocations.append(drone.allocation)
+        try:
+            return sum(allocations) / len(allocations)
+        except ZeroDivisionError:
+            return 1
 
     @property
     def utilisation(self) -> float:
-        return 0
+        utilisations = []
+        for drone in self._drones_in_use:
+            utilisations.append(drone.utilisation)
+        try:
+            return sum(utilisations) / len(utilisations)
+        except ZeroDivisionError:
+            return 1
 
     @property
     def supply(self):
-        return self._supply
+        supply = 0
+        for drone in self.drones():
+            supply += drone.supply
+        return supply
 
     @property
     def demand(self):
@@ -63,21 +63,30 @@ class Pool(interfaces.Pool, container.Container):
 
     @demand.setter
     def demand(self, value):
-        self._demand = value
+        if value > 0:
+            self._demand = value
+        else:
+            self._demand = 0
 
     def add_drone(self, drone):
         try:
             self._drones_in_use.remove(drone)
         except ValueError:
-            # drone not already existent
             pass
+
+    def drone_ready(self, drone):
+        print("[drone %s] is ready at %d" % (drone, self.env.now))
         self._drones.append(drone)
-        self.put(1)
-        print("[supply] pool supply at %d / %d (available: %d, allocation: %.2f, utilisation: %.2f)"
-              % (self._supply, self._demand, self.level, self.allocation, self.utilisation))
+        yield self.put(1)
 
     def get_drone(self, amount):
-        super(Pool, self).get(amount)
+        yield self.get(amount)
         drone = self._drones.pop(0)
         self._drones_in_use.append(drone)
         return drone
+
+    def drones(self):
+        for drone in self._drones:
+            yield drone
+        for drone in self._drones_in_use:
+            yield drone
