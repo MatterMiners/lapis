@@ -1,18 +1,56 @@
+from functools import partial, wraps
 import simpy
 import random
 
 import matplotlib.pyplot as plt
 
 import globals
+from cost import cobald_cost
 from job import job_demand, job_property_generator
 from scheduler import job_scheduler
-from pool import Pool
+from pool import Pool, pool_demands, pool_utilisation, pool_allocation, pool_unused
 from controller import SimulatedLinearController
 
 
+def trace(env, callback):
+    def get_wrapper(env_step, callback):
+        @wraps(env_step)
+        def tracing_step():
+            if len(env._queue):
+                t, prio, eid, event = env._queue[0]
+                callback(t, prio, eid, event)
+            return env_step()
+        return tracing_step
+    env.step = get_wrapper(env.step, callback)
+
+
+last_step = 0
+
+
+def monitor(data, t, prio, eid, event):
+    global last_step
+    # TODO: do relevant monitoring
+    if t > last_step:
+        # new data to be recorded
+        tmp = round(t)
+        data[tmp]["user_demand"] = globals.global_demand.level
+        data[tmp]["pool_demand"] = pool_demands()
+        data[tmp]["pool_utilisation"] = pool_utilisation()
+        data[tmp]["pool_allocation"] = pool_allocation()
+        data[tmp]["pool_unused"] = pool_unused() * -1
+        current_cost = cobald_cost()
+        data[tmp]["cost"] = current_cost
+        globals.cost += current_cost
+        data[tmp]["acc_cost"] = globals.cost
+        last_step = tmp
+
+
 def main():
+    monitor_data = partial(monitor, globals.monitoring_data)
+
     random.seed(1234)
     env = simpy.Environment()
+    trace(env, monitor_data)
     globals.job_generator = job_property_generator()
     for i in range(10):
         pool = Pool(env)
