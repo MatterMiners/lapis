@@ -32,8 +32,8 @@ def job_demand(env):
             # print("[demand] raising user demand for %f at %d to %d" % (value, env.now, globals.global_demand.level))
 
 
-def job(env, walltime, memory, cores, disk):
-    print("starting job at", env.now)
+def job(env, walltime, resources):
+    # print("starting job at", env.now)
     globals.global_demand.get(1)
     yield env.timeout(walltime)
     # print("job finished", env.now)
@@ -41,4 +41,4 @@ def job(env, walltime, memory, cores, disk):
 
 def job_property_generator():
     while True:
-        yield 10, 8, 1, 100
+        yield 10, {"memory": 8, "cores": 1, "disk": 100}

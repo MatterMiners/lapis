@@ -9,9 +9,7 @@ class Drone(interfaces.Pool):
         self.env = env
         self.pool = pool
         self.action = env.process(self.run(scheduling_duration))
-        self._memory = 0
-        self._disk = 0
-        self._cores = 0
+        self.resources = {resource: 0 for resource in self.pool.resources}
         self._supply = 0
 
     def run(self, scheduling_duration):
@@ -33,32 +31,34 @@ class Drone(interfaces.Pool):
 
     @property
     def utilisation(self):
-        return ((self._memory / self.pool.memory) + (self._disk / self.pool.disk) + (self._cores / self.pool.cores)) / 3
+        result = 0
+        for resource in self.resources:
+            result += self.resources[resource] / self.pool.resources[resource]
+        return result / len(self.resources)
+        #return min((self._memory / self.pool.memory), (self._disk / self.pool.disk), (self._cores / self.pool.cores))
 
     @property
     def allocation(self):
-        return self._memory > 0 or self._disk > 0 or self._cores > 0
+        return sum(self.resources.values()) > 0
+        #return max((self._memory / self.pool.memory), (self._disk / self.pool.disk), (self._cores / self.pool.cores))
 
     def shutdown(self):
         self._supply = 0
         yield self.env.timeout(1)
-        print("[drone %s] has been shut down" % self)
+        # print("[drone %s] has been shut down" % self)
 
-    def start_job(self, walltime, memory, cores, disk):
-        print("[drone %s] starting job at %d" % (self, self.env.now))
-        if (self._memory + memory > self.pool.memory or
-                self._disk + disk > self.pool.disk or
-                self._cores + cores > self.pool.cores):
-            # TODO: kill job
-            pass
-        self._memory += memory
-        self._disk += disk
-        self._cores += cores
-        yield self.env.process(job(self.env, walltime, memory, cores, disk))
-        self._memory -= memory
-        self._disk -= disk
-        self._cores -= cores
+    def start_job(self, walltime, resources):
+        # print("[drone %s] starting job at %d" % (self, self.env.now))
+        for resource_key in resources:
+            if self.resources[resource_key] + resources[resource_key]:
+                # TODO: kill job
+                pass
+        for resource_key in resources:
+            self.resources[resource_key] += resources[resource_key]
+        yield self.env.process(job(self.env, walltime, resources))
+        for resource_key in resources:
+            self.resources[resource_key] -= resources[resource_key]
         # put drone back into pool queue
-        print("[drone %s] finished job at %d" % (self, self.env.now))
+        # print("[drone %s] finished job at %d" % (self, self.env.now))
         self.pool.add_drone(self)
         yield from self.pool.drone_ready(self)

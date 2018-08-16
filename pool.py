@@ -38,11 +38,9 @@ def pool_unused():
 
 
 class Pool(interfaces.Pool, container.Container):
-    def __init__(self, env, capacity=float('inf'), init=0, memory=8, cores=1, disk=100):
+    def __init__(self, env, capacity=float('inf'), init=0, resources={"memory": 8, "cores": 1, "disk": 100}):
         super(Pool, self).__init__(env, capacity, init)
-        self.memory = memory
-        self.cores = cores
-        self.disk = disk
+        self.resources = resources
         self._demand = 0
         self._drones = []
         self._drones_in_use = []
