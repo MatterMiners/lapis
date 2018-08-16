@@ -1,6 +1,40 @@
 from simpy.resources import container
 from cobald import interfaces
+
+import globals
 from drone import Drone
+
+
+def pool_demands():
+    result = 0
+    for pool in globals.pools:
+        result += pool.demand
+    return result
+
+
+def pool_utilisation():
+    result = []
+    for pool in globals.pools:
+        for drone in pool.drones():
+            result.append(drone.utilisation)
+    return sum(result)
+
+
+def pool_allocation():
+    result = []
+    for pool in globals.pools:
+        for drone in pool.drones():
+            result.append(drone.allocation)
+    return sum(result)
+
+
+def pool_unused():
+    result = 0
+    for pool in globals.pools:
+        for drone in pool.drones():
+            if drone.allocation == 0:
+                result += 1
+    return result
 
 
 class Pool(interfaces.Pool, container.Container):
@@ -43,7 +77,7 @@ class Pool(interfaces.Pool, container.Container):
     @property
     def utilisation(self) -> float:
         utilisations = []
-        for drone in self._drones_in_use:
+        for drone in self.drones():
             utilisations.append(drone.utilisation)
         try:
             return sum(utilisations) / len(utilisations)
@@ -75,7 +109,7 @@ class Pool(interfaces.Pool, container.Container):
             pass
 
     def drone_ready(self, drone):
-        print("[drone %s] is ready at %d" % (drone, self.env.now))
+        # print("[drone %s] is ready at %d" % (drone, self.env.now))
         self._drones.append(drone)
         yield self.put(1)
 
