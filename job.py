@@ -32,11 +32,17 @@ def job_demand(env):
             # print("[demand] raising user demand for %f at %d to %d" % (value, env.now, globals.global_demand.level))
 
 
-def job(env, walltime, resources):
-    # print("starting job at", env.now)
-    globals.global_demand.get(1)
-    yield env.timeout(walltime)
-    # print("job finished", env.now)
+class Job(object):
+    def __init__(self, env, walltime, resources):
+        self.env = env
+        self.resources = resources
+        self.walltime = walltime
+
+    def __iter__(self):
+        # print("starting job at", self.env.now)
+        yield globals.global_demand.get(1)
+        yield self.env.timeout(self.walltime)
+        # print("job finished", self.env.now)
 
 
 def job_property_generator():

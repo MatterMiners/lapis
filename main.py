@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import globals
 from cost import cobald_cost
 from job import job_demand, job_property_generator
-from scheduler import job_scheduler
+from scheduler import job_scheduler, htcondor_job_scheduler
 from pool import Pool, pool_demands, pool_utilisation, pool_allocation, pool_unused
 from controller import SimulatedLinearController
 
@@ -43,6 +43,9 @@ def monitor(data, t, prio, eid, event):
         globals.cost += current_cost
         data[tmp]["acc_cost"] = globals.cost
         last_step = tmp
+        # for pool in globals.pools:
+        #     print("%s [Pool %s] drones %d, demand %d, supply %d (%d); allocation %.2f, utilisation %.2f" % (
+        #         tmp, pool, len(pool.drones), pool.demand, pool.supply, pool.level, pool.allocation, pool.utilisation))
 
 
 def main():
@@ -58,7 +61,7 @@ def main():
         SimulatedLinearController(env, target=pool, rate=1)
     globals.global_demand = simpy.Container(env)
     env.process(job_demand(env))
-    env.process(job_scheduler(env))
+    env.process(htcondor_job_scheduler(env))
     env.run(until=1000)
 
     # Plotting some first results

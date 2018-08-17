@@ -1,6 +1,6 @@
 from cobald import interfaces
 
-from job import job
+from job import Job
 
 
 class Drone(interfaces.Pool):
@@ -48,17 +48,14 @@ class Drone(interfaces.Pool):
         # print("[drone %s] has been shut down" % self)
 
     def start_job(self, walltime, resources):
-        # print("[drone %s] starting job at %d" % (self, self.env.now))
         for resource_key in resources:
             if self.resources[resource_key] + resources[resource_key]:
                 # TODO: kill job
                 pass
         for resource_key in resources:
             self.resources[resource_key] += resources[resource_key]
-        yield self.env.process(job(self.env, walltime, resources))
+        yield from Job(self.env, walltime, resources)
         for resource_key in resources:
             self.resources[resource_key] -= resources[resource_key]
         # put drone back into pool queue
         # print("[drone %s] finished job at %d" % (self, self.env.now))
-        self.pool.add_drone(self)
-        yield from self.pool.drone_ready(self)
