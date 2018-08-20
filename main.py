@@ -8,7 +8,7 @@ import globals
 from cost import cobald_cost
 from job import job_demand, job_property_generator
 from scheduler import job_scheduler, htcondor_job_scheduler
-from pool import Pool, pool_demands, pool_supplys, pool_utilisation, pool_allocation, pool_unused
+from pool import Pool, pool_demands, pool_supplys, pool_utilisation, pool_allocation, pool_unused, pool_jobs
 from controller import SimulatedLinearController
 
 
@@ -39,6 +39,7 @@ def monitor(data, t, prio, eid, event):
         data[tmp]["pool_utilisation"] = pool_utilisation()
         data[tmp]["pool_allocation"] = pool_allocation()
         data[tmp]["pool_unused"] = pool_unused() * -1
+        data[tmp]["pool_jobs"] = pool_jobs()
         current_cost = cobald_cost()
         data[tmp]["cost"] = current_cost
         globals.cost += current_cost
@@ -81,6 +82,9 @@ def main():
     plt.plot(globals.monitoring_data.keys(),
              [value.get("pool_supply", None) for value in globals.monitoring_data.values()],
              label="Pool supply")
+    plt.plot(globals.monitoring_data.keys(),
+             [value.get("pool_jobs", None) for value in globals.monitoring_data.values()],
+             label="Running jobs")
     plt.legend()
     plt.show()
     plt.plot(globals.monitoring_data.keys(),
@@ -118,6 +122,7 @@ def main():
 
     fig.tight_layout()
     plt.show()
+    print("final cost: %.2f" % globals.monitoring_data[sorted(globals.monitoring_data.keys())[-1]]["acc_cost"])
 
 
 if __name__ == "__main__":
