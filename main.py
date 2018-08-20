@@ -44,7 +44,8 @@ def monitor(data, t, prio, eid, event):
         globals.cost += current_cost
         data[tmp]["acc_cost"] = globals.cost
         last_step = tmp
-        # for pool in globals.pools:
+        for pool in globals.pools:
+            data[tmp]["pool_%s_supply" % pool] = pool.supply
         #     print("%s [Pool %s] drones %d, demand %d, supply %d (%d); allocation %.2f, utilisation %.2f" % (
         #         tmp, pool, len(pool.drones), pool.demand, pool.supply, pool.level, pool.allocation, pool.utilisation))
 
@@ -91,6 +92,13 @@ def main():
     plt.plot(globals.monitoring_data.keys(),
              [value.get("pool_unused", None) for value in globals.monitoring_data.values()],
              label="Wasted resources")
+    plt.legend()
+    plt.show()
+
+    for index, pool in enumerate(globals.pools):
+        plt.plot(globals.monitoring_data.keys(),
+                 [value.get("pool_%s_supply" % pool, None) for value in globals.monitoring_data.values()],
+                 label="Pool %d supply" % index)
     plt.legend()
     plt.show()
 
