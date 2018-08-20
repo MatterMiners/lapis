@@ -57,7 +57,7 @@ def htcondor_export_job_generator(filename):
         htcondor_reader = csv.reader(input_file, delimiter=' ', quotechar="'")
         header = next(htcondor_reader)
         for row in htcondor_reader:
-            yield 10, {
+            yield float(row[header.index("RemoteWallClockTime")]), {
                 "cores": int(row[header.index("RequestCpus")]),
                 "disk": int(row[header.index("RequestDisk")]),
                 "memory": float(row[header.index("RequestMemory")])
