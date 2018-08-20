@@ -11,6 +11,7 @@ class Drone(interfaces.Pool):
         self.action = env.process(self.run(scheduling_duration))
         self.resources = {resource: 0 for resource in self.pool.resources}
         self._supply = 0
+        self.jobs = 0
 
     def run(self, scheduling_duration):
         yield self.env.timeout(scheduling_duration)
@@ -54,7 +55,9 @@ class Drone(interfaces.Pool):
                 pass
         for resource_key in resources:
             self.resources[resource_key] += resources[resource_key]
+        self.jobs += 1
         yield from Job(self.env, walltime, resources)
+        self.jobs -= 1
         for resource_key in resources:
             self.resources[resource_key] -= resources[resource_key]
         # put drone back into pool queue
