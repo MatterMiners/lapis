@@ -8,7 +8,7 @@ import globals
 from cost import cobald_cost
 from job import job_demand, job_property_generator
 from scheduler import job_scheduler, htcondor_job_scheduler
-from pool import Pool, pool_demands, pool_utilisation, pool_allocation, pool_unused
+from pool import Pool, pool_demands, pool_supplys, pool_utilisation, pool_allocation, pool_unused
 from controller import SimulatedLinearController
 
 
@@ -35,6 +35,7 @@ def monitor(data, t, prio, eid, event):
         tmp = round(t)
         data[tmp]["user_demand"] = globals.global_demand.level
         data[tmp]["pool_demand"] = pool_demands()
+        data[tmp]["pool_supply"] = pool_supplys()
         data[tmp]["pool_utilisation"] = pool_utilisation()
         data[tmp]["pool_allocation"] = pool_allocation()
         data[tmp]["pool_unused"] = pool_unused() * -1
@@ -54,30 +55,43 @@ def main():
     random.seed(1234)
     env = simpy.Environment()
     trace(env, monitor_data)
-    globals.job_generator = job_property_generator()
-    for i in range(10):
-        pool = Pool(env)
+    #globals.job_generator = job_property_generator()
+    globals.job_generator = htcondor_export_job_generator("condor_usage.csv")
+    for resources in [{"memory": 5000, "cores": 1}, {"memory": 24000, "cores": 8}, {"memory": 16000, "cores": 4}]:
+        pool = Pool(env, resources=resources)
         globals.pools.append(pool)
-        SimulatedLinearController(env, target=pool, rate=1)
+        SimulatedCostController(env, target=pool, rate=1)
     globals.global_demand = simpy.Container(env)
     env.process(job_demand(env))
     env.process(htcondor_job_scheduler(env))
     env.run(until=1000)
 
     # Plotting some first results
-    plt.plot(globals.monitoring_data.keys(), [value.get("user_demand", None) for value in globals.monitoring_data.values()])
     plt.plot(globals.monitoring_data.keys(),
-         [value.get("user_demand_new", None) for value in globals.monitoring_data.values()],
-         'ro')
+             [value.get("user_demand", None) for value in globals.monitoring_data.values()],
+             label="Accumulated demand")
     plt.plot(globals.monitoring_data.keys(),
-         [value.get("pool_demand", None) for value in globals.monitoring_data.values()])
+             [value.get("user_demand_new", None) for value in globals.monitoring_data.values()],
+             'ro',
+             label="Current demand")
+    plt.plot(globals.monitoring_data.keys(),
+             [value.get("pool_demand", None) for value in globals.monitoring_data.values()],
+             label="Pool demand")
+    plt.plot(globals.monitoring_data.keys(),
+             [value.get("pool_supply", None) for value in globals.monitoring_data.values()],
+             label="Pool supply")
+    plt.legend()
     plt.show()
     plt.plot(globals.monitoring_data.keys(),
-         [value.get("pool_utilisation", None) for value in globals.monitoring_data.values()])
+             [value.get("pool_utilisation", None) for value in globals.monitoring_data.values()],
+             label="Pool utilisation")
     plt.plot(globals.monitoring_data.keys(),
-         [value.get("pool_allocation", None) for value in globals.monitoring_data.values()])
+             [value.get("pool_allocation", None) for value in globals.monitoring_data.values()],
+             label="Pool allocation")
     plt.plot(globals.monitoring_data.keys(),
-         [value.get("pool_unused", None) for value in globals.monitoring_data.values()])
+             [value.get("pool_unused", None) for value in globals.monitoring_data.values()],
+             label="Wasted resources")
+    plt.legend()
     plt.show()
 
     fig, ax1 = plt.subplots()

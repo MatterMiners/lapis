@@ -12,6 +12,13 @@ def pool_demands():
     return result
 
 
+def pool_supplys():
+    result = 0
+    for pool in globals.pools:
+        result += pool.supply
+    return result
+
+
 def pool_utilisation():
     result = []
     for pool in globals.pools:
