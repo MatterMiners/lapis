@@ -35,7 +35,7 @@ def job_demand(env):
 
 
 class Job(object):
-    def __init__(self, env, walltime, resources):
+    def __init__(self, env, walltime, resources, used_resources=None):
         self.env = env
         self.resources = resources
         self.walltime = walltime
@@ -61,4 +61,7 @@ def htcondor_export_job_generator(filename):
                 "cores": int(row[header.index("RequestCpus")]),
                 "disk": int(row[header.index("RequestDisk")]),
                 "memory": float(row[header.index("RequestMemory")])
+            }, {
+                "memory": float(row[header.index("MemoryUsage")]),
+                "disk": int(row[header.index("DiskUsage_RAW")])
             }

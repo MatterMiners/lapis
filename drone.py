@@ -47,7 +47,7 @@ class Drone(interfaces.Pool):
         yield self.env.timeout(1)
         # print("[drone %s] has been shut down" % self)
 
-    def start_job(self, walltime, resources):
+    def start_job(self, walltime, resources, used_resources=None):
         for resource_key in resources:
             if self.resources[resource_key] + resources[resource_key]:
                 # TODO: kill job
