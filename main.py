@@ -40,6 +40,7 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
         running_jobs = 0
         used_resources = 0
         unused_resources = 0
+        available_resources = 0
         empty_drones = 0
         result = {}
         for pool in globals.pools:
@@ -56,6 +57,7 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
                     normalisation_factor = resource_normalisation.get(resource_key, 1)
                     used_resources += usage / normalisation_factor
                     unused_resources += (pool.resources[resource_key] - usage) / normalisation_factor
+                    available_resources += pool.resources[resource_key] / normalisation_factor
         result["user_demand"] = globals.global_demand.level
         result["pool_demand"] = pool_demand
         result["pool_supply"] = pool_supply
@@ -65,6 +67,7 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
         result["empty_drones"] = empty_drones
         result["used_resources"] = used_resources
         result["unused_resources"] = unused_resources
+        result["available_resources"] = available_resources
         cost = cobald_cost()
         result["cost"] = cost
         globals.cost += cost
@@ -147,14 +150,27 @@ def main():
     plt.show()
 
     # resource plot for max
-    plt.plot(globals.monitoring_data.keys(),
+    fig, ax = plt.subplots(2, sharex=True)
+    ax[0].plot(globals.monitoring_data.keys(),
              [value.get("unused_resources", None) for value in globals.monitoring_data.values()],
              label="Unused")
-    plt.plot(globals.monitoring_data.keys(),
+    ax[0].plot(globals.monitoring_data.keys(),
              [value.get("used_resources", None) for value in globals.monitoring_data.values()],
-             label="used")
-    plt.legend()
-    plt.show()
+             label="Used")
+    ax[0].set_title("Resource utilisation")
+    ax[0].legend()
+    percentages = []
+    percentage_means = []
+    for value in globals.monitoring_data.values():
+        try:
+            percentages.append(value.get("unused_resources", None) / value.get("available_resources", None))
+        except ZeroDivisionError:
+            percentages.append(1)
+        percentage_means.append(sum(percentages) / len(percentages))
+    ax[1].plot(globals.monitoring_data.keys(), percentages)
+    ax[1].plot(globals.monitoring_data.keys(), percentage_means, label="mean")
+    ax[1].set_title("Percentage of unused resources")
+    fig.show()
     print("final cost: %.2f" % globals.monitoring_data[sorted(globals.monitoring_data.keys())[-1]]["acc_cost"])
 
 
