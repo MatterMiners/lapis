@@ -32,16 +32,17 @@ class Drone(interfaces.Pool):
 
     @property
     def utilisation(self):
-        result = 0
-        for resource in self.resources:
-            result += self.resources[resource] / self.pool.resources[resource]
-        return result / len(self.resources)
-        #return min((self._memory / self.pool.memory), (self._disk / self.pool.disk), (self._cores / self.pool.cores))
+        resources = []
+        for resource_key, value in self.resources.items():
+            resources.append(value / self.pool.resources[resource_key])
+        return min(resources)
 
     @property
     def allocation(self):
-        return sum(self.resources.values()) > 0
-        #return max((self._memory / self.pool.memory), (self._disk / self.pool.disk), (self._cores / self.pool.cores))
+        resources = []
+        for resource_key, value in self.resources.items():
+            resources.append(value / self.pool.resources[resource_key])
+        return max(resources)
 
     def shutdown(self):
         self._supply = 0
