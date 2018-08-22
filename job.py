@@ -59,7 +59,7 @@ def htcondor_export_job_generator(filename):
         for row in htcondor_reader:
             yield float(row[header.index("RemoteWallClockTime")]), {
                 "cores": int(row[header.index("RequestCpus")]),
-                "disk": int(row[header.index("RequestDisk")]),
+                #"disk": int(row[header.index("RequestDisk")]),
                 "memory": float(row[header.index("RequestMemory")])
             }, {
                 "memory": float(row[header.index("MemoryUsage")]),
