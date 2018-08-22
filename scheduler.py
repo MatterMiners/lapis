@@ -66,8 +66,8 @@ def htcondor_job_scheduler(env):
                 current_job = None
                 yield env.timeout(0)
             else:
-                yield env.timeout(1)
+                yield env.timeout(60)
         else:
-            yield env.timeout(1)
+            yield env.timeout(60)
 
 
