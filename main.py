@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 
 import globals
 from cost import cobald_cost
-from job import job_demand, job_property_generator
-from scheduler import job_scheduler, htcondor_job_scheduler
+from job import job_demand, job_property_generator, htcondor_export_job_generator
+from scheduler import htcondor_job_scheduler
 from pool import Pool
-from controller import SimulatedLinearController
+from controller import SimulatedLinearController, SimulatedCostController
 
 
 def trace(env, callback, resource_normalisation):
