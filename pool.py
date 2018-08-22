@@ -1,51 +1,11 @@
 from simpy.resources import container
 from cobald import interfaces
 
-import globals
 from drone import Drone
 
 
-def pool_demands():
-    result = 0
-    for pool in globals.pools:
-        result += pool.demand
-    return result
-
-
-def pool_supplys():
-    result = 0
-    for pool in globals.pools:
-        result += pool.supply
-    return result
-
-
-def pool_utilisation():
-    result = []
-    for pool in globals.pools:
-        for drone in pool.drones:
-            result.append(drone.utilisation)
-    return sum(result)
-
-
-def pool_allocation():
-    result = []
-    for pool in globals.pools:
-        for drone in pool.drones:
-            result.append(drone.allocation)
-    return sum(result)
-
-
-def pool_unused():
-    result = 0
-    for pool in globals.pools:
-        for drone in pool.drones:
-            if drone.allocation == 0:
-                result += 1
-    return result
-
-
 class Pool(interfaces.Pool, container.Container):
-    def __init__(self, env, capacity=float('inf'), init=0, resources={"memory": 8, "cores": 1, "disk": 100}):
+    def __init__(self, env, capacity=float('inf'), init=0, resources={"memory": 8, "cores": 1}):
         super(Pool, self).__init__(env, capacity, init)
         self.resources = resources
         self._demand = 0
@@ -55,12 +15,20 @@ class Pool(interfaces.Pool, container.Container):
 
     def run(self):
         while True:
-            if self.drone_demand() < self._demand:
+            drones_required = self._demand - self.level
+            while drones_required > 0:
+                drones_required -= 1
                 # start a new drone
                 Drone(self.env, self, 10)
-            elif self.drone_demand() > self._demand:
+                yield self.put(1)
+            if self.level > self._demand:
+                for drone in self.drones:
+                    if drone.jobs == 0:
+                        break
+                else:
+                    break
                 yield self.get(1)
-                drone = self.drones.pop(0)
+                self.drones.remove(drone)
                 yield from drone.shutdown()
                 del drone
             yield self.env.timeout(1)
@@ -109,4 +77,3 @@ class Pool(interfaces.Pool, container.Container):
     def drone_ready(self, drone):
         # print("[drone %s] is ready at %d" % (drone, self.env.now))
         self.drones.append(drone)
-        yield self.put(1)
