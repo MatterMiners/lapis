@@ -1,6 +1,7 @@
 import globals
 
 
+# TODO: does not work anymore as there is no method get_drone at pool
 def job_scheduler(env):
     while True:
         for pool in globals.pools:
