@@ -36,12 +36,13 @@ def htcondor_job_scheduler(env):
                     elif (pool.resources[resource_type] - drone.resources[resource_type]) < \
                             job[1][resource_type]:
                         cost = float("Inf")
+                        break
                     else:
                         cost += (pool.resources[resource_type] - drone.resources[resource_type]) // \
                                 job[1][resource_type]
                 cost /= len(resource_types)
                 if cost <= 1:
-                    # directly start stuff
+                    # directly start job
                     return drone
                 try:
                     priorities[cost].append(drone)
@@ -55,19 +56,32 @@ def htcondor_job_scheduler(env):
             pass
         return None
 
+    unscheduled_jobs = []
     current_job = None
+    postponed_unmatched_job = False
     while True:
-        if not current_job:
+        if not postponed_unmatched_job and len(unscheduled_jobs) > 0:
+            for job in unscheduled_jobs:
+                best_match = schedule_pool(job)
+                if best_match:
+                    env.process(best_match.start_job(*job))
+                    unscheduled_jobs.remove(job)
+                    yield env.timeout(0)
+        if not current_job and globals.global_demand.level - len(unscheduled_jobs) > 0:
             current_job = next(globals.job_generator)
-        if globals.global_demand.level > 0:
+        if current_job:
             best_match = schedule_pool(current_job)
             if best_match:
                 env.process(best_match.start_job(*current_job))
                 current_job = None
                 yield env.timeout(0)
             else:
-                yield env.timeout(60)
+                postponed_unmatched_job = True
+                unscheduled_jobs.append(current_job)
+                current_job = None
+                yield env.timeout(0)
         else:
+            postponed_unmatched_job = False
             yield env.timeout(60)
 
 
