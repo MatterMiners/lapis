@@ -16,7 +16,6 @@ class Drone(interfaces.Pool):
     def run(self, scheduling_duration):
         yield self.env.timeout(scheduling_duration)
         self._supply = 1
-        self.pool.drone_ready(self)
 
     @property
     def supply(self):
