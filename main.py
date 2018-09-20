@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 import globals
 from cost import cobald_cost
-from job import job_demand, htcondor_export_job_generator
+from job import job_demand, htcondor_export_job_generator, Job
 from scheduler import CondorJobScheduler
 from pool import Pool
 from controller import SimulatedCostController
@@ -28,6 +28,12 @@ last_step = 0
 
 
 def monitor(data, t, prio, eid, event, resource_normalisation):
+    if event.value:
+        if isinstance(event.value, Job):
+            try:
+                globals.monitoring_data["job_waiting_times"].append(event.value.waiting_time)
+            except AttributeError:
+                globals.monitoring_data["job_waiting_times"] = [event.value.waiting_time]
     global last_step
     if t > last_step:
         # new data to be recorded
@@ -72,62 +78,68 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
         result["cost"] = cost
         globals.cost += cost
         result["acc_cost"] = globals.cost
-        globals.monitoring_data[tmp].update(result)
+        monitoring_data = globals.monitoring_data["timesteps"]
+        try:
+            monitoring_data[tmp].update(result)
+        except KeyError:
+            monitoring_data[tmp] = result
         #     print("%s [Pool %s] drones %d, demand %d, supply %d (%d); allocation %.2f, utilisation %.2f" % (
         #         tmp, pool, len(pool.drones), pool.demand, pool.supply, pool.level, pool.allocation, pool.utilisation))
 
 
 def generate_plots():
     # Plotting some first results
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("user_demand", None) for value in globals.monitoring_data.values()],
+    keys = globals.monitoring_data["timesteps"].keys()
+    values = globals.monitoring_data["timesteps"].values()
+    plt.plot(keys,
+             [value.get("user_demand", None) for value in values],
              label="Accumulated demand")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("user_demand_new", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("user_demand_new", None) for value in values],
              'ro',
              label="Current demand")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("pool_demand", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("pool_demand", None) for value in values],
              label="Pool demand")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("pool_supply", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("pool_supply", None) for value in values],
              label="Pool supply")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("running_jobs", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("running_jobs", None) for value in values],
              label="Running jobs")
     plt.legend()
     plt.show()
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("pool_utilisation", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("pool_utilisation", None) for value in values],
              label="Pool utilisation")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("pool_allocation", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("pool_allocation", None) for value in values],
              label="Pool allocation")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("empty_drones", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("empty_drones", None) for value in values],
              label="Unallocated drones")
     plt.legend()
     plt.show()
 
     for index, pool in enumerate(globals.pools):
         print("pool", index, "has", pool.resources)
-        plt.plot(globals.monitoring_data.keys(),
-                 [value.get("pool_%s_supply" % pool, None) for value in globals.monitoring_data.values()],
+        plt.plot(keys,
+                 [value.get("pool_%s_supply" % pool, None) for value in values],
                  label="Pool %d supply" % index)
     plt.legend()
     plt.show()
 
     fig, ax1 = plt.subplots()
-    ax1.plot(globals.monitoring_data.keys(),
-             [value.get("cost", None) for value in globals.monitoring_data.values()], 'b-')
+    ax1.plot(keys,
+             [value.get("cost", None) for value in values], 'b-')
     ax1.set_xlabel('Time')
     # Make the y-axis label, ticks and tick labels match the line color.
     ax1.set_ylabel('Cost', color='b')
     ax1.tick_params('y', colors='b')
 
     ax2 = ax1.twinx()
-    ax2.plot(globals.monitoring_data.keys(),
-             [value.get("acc_cost", None) for value in globals.monitoring_data.values()], 'r.')
+    ax2.plot(keys,
+             [value.get("acc_cost", None) for value in values], 'r.')
     ax2.set_ylabel('Accumulated Cost', color='r')
     ax2.tick_params('y', colors='r')
 
@@ -136,26 +148,31 @@ def generate_plots():
 
     # resource plot for max
     fig, ax = plt.subplots(2, sharex=True)
-    ax[0].plot(globals.monitoring_data.keys(),
-               [value.get("unused_resources", None) for value in globals.monitoring_data.values()],
+    ax[0].plot(keys,
+               [value.get("unused_resources", None) for value in values],
                label="Unused")
-    ax[0].plot(globals.monitoring_data.keys(),
-               [value.get("used_resources", None) for value in globals.monitoring_data.values()],
+    ax[0].plot(keys,
+               [value.get("used_resources", None) for value in values],
                label="Used")
     ax[0].set_title("Resource utilisation")
     ax[0].legend()
     percentages = []
     percentage_means = []
-    for value in globals.monitoring_data.values():
+    for value in values:
         try:
             percentages.append(value.get("unused_resources", 0) / value.get("available_resources", 0))
         except ZeroDivisionError:
             percentages.append(1)
         percentage_means.append(sum(percentages) / len(percentages))
-    ax[1].plot(globals.monitoring_data.keys(), percentages)
-    ax[1].plot(globals.monitoring_data.keys(), percentage_means, label="mean")
+    ax[1].plot(keys, percentages)
+    ax[1].plot(keys, percentage_means, label="mean")
     ax[1].set_title("Percentage of unused resources")
     fig.show()
+
+    # waiting time histogram
+    plt.hist(globals.monitoring_data["job_waiting_times"], label="Job waiting times")
+    plt.legend()
+    plt.show()
 
 
 def main():
@@ -176,7 +193,7 @@ def main():
     env.run(until=2000)
 
     generate_plots()
-    print("final cost: %.2f" % globals.monitoring_data[sorted(globals.monitoring_data.keys())[-1]]["acc_cost"])
+    print("final cost: %.2f" % globals.monitoring_data["timesteps"][sorted(globals.monitoring_data["timesteps"].keys())[-1]]["acc_cost"])
 
 
 if __name__ == "__main__":
