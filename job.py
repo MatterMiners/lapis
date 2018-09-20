@@ -41,27 +41,45 @@ class Job(object):
         self.walltime = walltime
 
     def __iter__(self):
-        # print("starting job at", self.env.now)
-        yield globals.global_demand.get(1)
+        # print(self, "starting job at", self.env.now, "with duration", self.walltime)
         yield self.env.timeout(self.walltime)
-        # print("job finished", self.env.now)
+        # print(self, "job finished", self.env.now)
 
 
-def job_property_generator():
+def job_property_generator(**kwargs):
     while True:
         yield 10, {"memory": 8, "cores": 1, "disk": 100}
 
 
-def htcondor_export_job_generator(filename):
+def htcondor_export_job_generator(filename, job_queue, env=None, **kwargs):
     with open(filename, "r") as input_file:
         htcondor_reader = csv.reader(input_file, delimiter=' ', quotechar="'")
         header = next(htcondor_reader)
-        for row in htcondor_reader:
-            yield float(row[header.index("RemoteWallClockTime")]), {
-                "cores": int(row[header.index("RequestCpus")]),
-                #"disk": int(row[header.index("RequestDisk")]),
-                "memory": float(row[header.index("RequestMemory")])
-            }, {
-                "memory": float(row[header.index("MemoryUsage")]),
-                "disk": int(row[header.index("DiskUsage_RAW")])
-            }
+        row = next(htcondor_reader)
+        base_date = float(row[header.index("QDate")])
+        current_time = 0
+
+        count = 0
+        while True:
+            if not row:
+                row = next(htcondor_reader)
+                current_time = float(row[header.index("QDate")]) - base_date
+            if env.now >= current_time:
+                count += 1
+                job_queue.append((
+                    float(row[header.index("RemoteWallClockTime")]),
+                    {
+                        "cores": int(row[header.index("RequestCpus")]),
+                        # "disk": int(row[header.index("RequestDisk")]),
+                        "memory": float(row[header.index("RequestMemory")])
+                    },
+                    {
+                        "memory": float(row[header.index("MemoryUsage")]),
+                        "disk": int(row[header.index("DiskUsage_RAW")])
+                    }))
+                row = None
+            else:
+                if count > 0:
+                    globals.monitoring_data[round(env.now)]["user_demand_new"] = count
+                    count = 0
+                yield env.timeout(1)
