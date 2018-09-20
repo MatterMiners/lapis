@@ -41,29 +41,6 @@ class CondorJobScheduler(object):
                     self.job_queue.remove(job)
                     yield self.env.timeout(0)
             yield self.env.timeout(60)
-            # if not postponed_unmatched_job and len(self._unscheduled_jobs) > 0:
-            #     for job in self._unscheduled_jobs:
-            #         best_match = self._schedule_job(job)
-            #         if best_match:
-            #             self.env.process(best_match.start_job(*job))
-            #             self._unscheduled_jobs.remove(job)
-            #             yield self.env.timeout(0)
-            # if not current_job:
-            #     current_job = next(self.job_queue)
-            # if current_job:
-            #     best_match = self._schedule_job(current_job)
-            #     if best_match:
-            #         self.env.process(best_match.start_job(*current_job))
-            #         current_job = None
-            #         yield self.env.timeout(0)
-            #     else:
-            #         postponed_unmatched_job = True
-            #         self._unscheduled_jobs.append(current_job)
-            #         current_job = None
-            #         yield self.env.timeout(0)
-            # else:
-            #     postponed_unmatched_job = False
-            #     yield self.env.timeout(60)
 
     def _schedule_job(self, job):
         priorities = {}
