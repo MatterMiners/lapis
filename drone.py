@@ -4,12 +4,12 @@ from job import Job
 
 
 class Drone(interfaces.Pool):
-    def __init__(self, env, pool, scheduling_duration):
+    def __init__(self, env, pool_resources, scheduling_duration):
         super(Drone, self).__init__()
         self.env = env
-        self.pool = pool
+        self.pool_resources = pool_resources
         self.action = env.process(self.run(scheduling_duration))
-        self.resources = {resource: 0 for resource in self.pool.resources}
+        self.resources = {resource: 0 for resource in self.pool_resources}
         self._supply = 0
         self.jobs = 0
 
@@ -33,14 +33,14 @@ class Drone(interfaces.Pool):
     def utilisation(self):
         resources = []
         for resource_key, value in self.resources.items():
-            resources.append(value / self.pool.resources[resource_key])
+            resources.append(value / self.pool_resources[resource_key])
         return min(resources)
 
     @property
     def allocation(self):
         resources = []
         for resource_key, value in self.resources.items():
-            resources.append(value / self.pool.resources[resource_key])
+            resources.append(value / self.pool_resources[resource_key])
         return max(resources)
 
     def shutdown(self):

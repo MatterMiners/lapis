@@ -19,7 +19,7 @@ class Pool(interfaces.Pool, container.Container):
             while drones_required > 0:
                 drones_required -= 1
                 # start a new drone
-                self._drones.append(Drone(self.env, self, 10))
+                self._drones.append(Drone(self.env, self.resources, 10))
                 yield self.put(1)
             if self.level > self._demand:
                 for drone in self._drones:
