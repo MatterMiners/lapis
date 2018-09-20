@@ -12,6 +12,8 @@ class Drone(interfaces.Pool):
         self.resources = {resource: 0 for resource in self.pool.resources}
         self._supply = 0
         self.jobs = 0
+        self._allocation = None
+        self._utilisation = None
 
     def run(self, scheduling_duration):
         yield self.env.timeout(scheduling_duration)
@@ -32,17 +34,22 @@ class Drone(interfaces.Pool):
 
     @property
     def utilisation(self):
-        resources = []
-        for resource_key, value in self.resources.items():
-            resources.append(value / self.pool.resources[resource_key])
-        return min(resources)
+        if self._utilisation is None:
+            self._init_allocation_and_utilisation()
+        return self._utilisation
 
     @property
     def allocation(self):
+        if self._allocation is None:
+            self._init_allocation_and_utilisation()
+        return self._allocation
+
+    def _init_allocation_and_utilisation(self):
         resources = []
         for resource_key, value in self.resources.items():
             resources.append(value / self.pool.resources[resource_key])
-        return max(resources)
+        self._allocation = max(resources)
+        self._utilisation = min(resources)
 
     def shutdown(self):
         self._supply = 0
@@ -54,11 +61,15 @@ class Drone(interfaces.Pool):
             if self.resources[resource_key] + resources[resource_key]:
                 # TODO: kill job
                 pass
+        self._utilisation = None
+        self._allocation = None
         for resource_key in resources:
             self.resources[resource_key] += resources[resource_key]
         self.jobs += 1
         yield from Job(self.env, walltime, resources)
         self.jobs -= 1
+        self._utilisation = None
+        self._allocation = None
         for resource_key in resources:
             self.resources[resource_key] -= resources[resource_key]
         # put drone back into pool queue
