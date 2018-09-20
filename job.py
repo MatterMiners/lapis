@@ -35,12 +35,12 @@ def job_demand(env):
 
 
 class Job(object):
-    def __init__(self, env, walltime, resources, used_resources=None):
+    def __init__(self, env, walltime, resources, used_resources=None, in_queue_since=0):
         self.env = env
         self.resources = resources
-        self.walltime = walltime
+        self.walltime = float(walltime)
 
-    def __iter__(self):
+    def process(self):
         # print(self, "starting job at", self.env.now, "with duration", self.walltime)
         yield self.env.timeout(self.walltime)
         # print(self, "job finished", self.env.now)
@@ -66,17 +66,15 @@ def htcondor_export_job_generator(filename, job_queue, env=None, **kwargs):
                 current_time = float(row[header.index("QDate")]) - base_date
             if env.now >= current_time:
                 count += 1
-                job_queue.append((
-                    float(row[header.index("RemoteWallClockTime")]),
-                    {
+                job_queue.append(Job(
+                    env, row[header.index("RemoteWallClockTime")], resources={
                         "cores": int(row[header.index("RequestCpus")]),
                         # "disk": int(row[header.index("RequestDisk")]),
                         "memory": float(row[header.index("RequestMemory")])
-                    },
-                    {
+                    }, used_resources={
                         "memory": float(row[header.index("MemoryUsage")]),
                         "disk": int(row[header.index("DiskUsage_RAW")])
-                    }))
+                    }, in_queue_since=env.now))
                 row = None
             else:
                 if count > 0:

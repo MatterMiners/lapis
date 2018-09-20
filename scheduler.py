@@ -37,7 +37,7 @@ class CondorJobScheduler(object):
             for job in self.job_queue:
                 best_match = self._schedule_job(job)
                 if best_match:
-                    self.env.process(best_match.start_job(*job))
+                    self.env.process(best_match.start_job(job))
                     self.job_queue.remove(job)
                     yield self.env.timeout(0)
             yield self.env.timeout(60)
@@ -70,17 +70,17 @@ class CondorJobScheduler(object):
         for pool in globals.pools:
             for drone in pool.drones:
                 cost = 0
-                resource_types = {*drone.resources.keys(), *job[1].keys()}
+                resource_types = {*drone.resources.keys(), *job.resources.keys()}
                 for resource_type in resource_types:
                     if resource_type not in drone.resources.keys():
                         cost = float("Inf")
                     elif (pool.resources[resource_type] - drone.resources[resource_type]) < \
-                            job[1][resource_type]:
+                            job.resources[resource_type]:
                         cost = float("Inf")
                         break
                     else:
                         cost += (pool.resources[resource_type] - drone.resources[resource_type]) // \
-                                job[1][resource_type]
+                                job.resources[resource_type]
                 cost /= len(resource_types)
                 if cost <= 1:
                     # directly start job
