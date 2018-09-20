@@ -39,10 +39,19 @@ class Job(object):
         self.env = env
         self.resources = resources
         self.walltime = float(walltime)
+        self.in_queue_since = in_queue_since
+        self.in_queue_until = None
+
+    @property
+    def waiting_time(self):
+        if self.in_queue_until is not None:
+            return self.in_queue_until - self.in_queue_since
+        return float("Inf")
 
     def process(self):
+        self.in_queue_until = self.env.now
         # print(self, "starting job at", self.env.now, "with duration", self.walltime)
-        yield self.env.timeout(self.walltime)
+        yield self.env.timeout(self.walltime, value=self)
         # print(self, "job finished", self.env.now)
 
 
