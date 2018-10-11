@@ -28,8 +28,16 @@ last_step = 0
 
 
 def monitor(data, t, prio, eid, event, resource_normalisation):
-    print(event)
     if event.value:
+        if isinstance(event.value, simpy.exceptions.Interrupt):
+            job = event.value.cause
+            for resource_key, usage in job.used_resources.items():
+                value = job.resources[resource_key] / usage
+                if value > 1:
+                    try:
+                        globals.monitoring_data["job_exceeds_%s" % resource_key].append(value)
+                    except AttributeError:
+                        globals.monitoring_data["job_exceeds_%s" % resource_key] = [value]
         if isinstance(event.value, Job):
             try:
                 globals.monitoring_data["job_waiting_times"].append(event.value.waiting_time)
@@ -174,6 +182,13 @@ def generate_plots():
     plt.hist(globals.monitoring_data["job_waiting_times"], label="Job waiting times")
     plt.legend()
     plt.show()
+
+    for resource_key in [key for key in globals.monitoring_data.keys() if
+                         isinstance(key, str) and key.startswith("job_exceeds_")]:
+        plt.hist(globals.monitoring_data[resource_key], label="Job exceeding %s" %
+                                                              resource_key.replace("job_exceeds_", ""))
+        plt.legend()
+        plt.show()
 
 
 def main():
