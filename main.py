@@ -6,10 +6,10 @@ import matplotlib.pyplot as plt
 
 import globals
 from cost import cobald_cost
-from job import job_demand, job_property_generator, htcondor_export_job_generator
-from scheduler import htcondor_job_scheduler
+from job import job_demand, htcondor_export_job_generator, Job
+from scheduler import CondorJobScheduler
 from pool import Pool
-from controller import SimulatedLinearController, SimulatedCostController
+from controller import SimulatedCostController
 
 
 def trace(env, callback, resource_normalisation):
@@ -28,6 +28,21 @@ last_step = 0
 
 
 def monitor(data, t, prio, eid, event, resource_normalisation):
+    if event.value:
+        if isinstance(event.value, simpy.exceptions.Interrupt):
+            job = event.value.cause
+            for resource_key, usage in job.used_resources.items():
+                value = job.resources[resource_key] / usage
+                if value > 1:
+                    try:
+                        globals.monitoring_data["job_exceeds_%s" % resource_key].append(value)
+                    except AttributeError:
+                        globals.monitoring_data["job_exceeds_%s" % resource_key] = [value]
+        if isinstance(event.value, Job):
+            try:
+                globals.monitoring_data["job_waiting_times"].append(event.value.waiting_time)
+            except AttributeError:
+                globals.monitoring_data["job_waiting_times"] = [event.value.waiting_time]
     global last_step
     if t > last_step:
         # new data to be recorded
@@ -58,7 +73,7 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
                     used_resources += usage / normalisation_factor
                     unused_resources += (pool.resources[resource_key] - usage) / normalisation_factor
                     available_resources += pool.resources[resource_key] / normalisation_factor
-        result["user_demand"] = globals.global_demand.level
+        result["user_demand"] = len(globals.job_queue)
         result["pool_demand"] = pool_demand
         result["pool_supply"] = pool_supply
         result["pool_utilisation"] = pool_utilisation
@@ -72,77 +87,68 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
         result["cost"] = cost
         globals.cost += cost
         result["acc_cost"] = globals.cost
-        globals.monitoring_data[tmp].update(result)
+        monitoring_data = globals.monitoring_data["timesteps"]
+        try:
+            monitoring_data[tmp].update(result)
+        except KeyError:
+            monitoring_data[tmp] = result
         #     print("%s [Pool %s] drones %d, demand %d, supply %d (%d); allocation %.2f, utilisation %.2f" % (
         #         tmp, pool, len(pool.drones), pool.demand, pool.supply, pool.level, pool.allocation, pool.utilisation))
 
 
-def main():
-    monitor_data = partial(monitor, globals.monitoring_data)
-
-    random.seed(1234)
-    env = simpy.Environment()
-    trace(env, monitor_data, resource_normalisation={"memory": 2000})
-    #globals.job_generator = job_property_generator()
-    globals.job_generator = htcondor_export_job_generator("condor_usage.csv")
-    for resources in [{"memory": 5000, "cores": 1}, {"memory": 24000, "cores": 8}, {"memory": 16000, "cores": 4}]:
-        pool = Pool(env, resources=resources)
-        globals.pools.append(pool)
-        SimulatedCostController(env, target=pool, rate=1)
-    globals.global_demand = simpy.Container(env)
-    env.process(job_demand(env))
-    env.process(htcondor_job_scheduler(env))
-    env.run(until=1000)
-
+def generate_plots():
     # Plotting some first results
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("user_demand", None) for value in globals.monitoring_data.values()],
+    keys = globals.monitoring_data["timesteps"].keys()
+    values = globals.monitoring_data["timesteps"].values()
+    plt.plot(keys,
+             [value.get("user_demand", None) for value in values],
              label="Accumulated demand")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("user_demand_new", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("user_demand_new", None) for value in values],
              'ro',
              label="Current demand")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("pool_demand", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("pool_demand", None) for value in values],
              label="Pool demand")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("pool_supply", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("pool_supply", None) for value in values],
              label="Pool supply")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("running_jobs", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("running_jobs", None) for value in values],
              label="Running jobs")
     plt.legend()
     plt.show()
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("pool_utilisation", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("pool_utilisation", None) for value in values],
              label="Pool utilisation")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("pool_allocation", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("pool_allocation", None) for value in values],
              label="Pool allocation")
-    plt.plot(globals.monitoring_data.keys(),
-             [value.get("empty_drones", None) for value in globals.monitoring_data.values()],
+    plt.plot(keys,
+             [value.get("empty_drones", None) for value in values],
              label="Unallocated drones")
     plt.legend()
     plt.show()
 
     for index, pool in enumerate(globals.pools):
-        plt.plot(globals.monitoring_data.keys(),
-                 [value.get("pool_%s_supply" % pool, None) for value in globals.monitoring_data.values()],
+        print("pool", index, "has", pool.resources)
+        plt.plot(keys,
+                 [value.get("pool_%s_supply" % pool, None) for value in values],
                  label="Pool %d supply" % index)
     plt.legend()
     plt.show()
 
     fig, ax1 = plt.subplots()
-    ax1.plot(globals.monitoring_data.keys(),
-         [value.get("cost", None) for value in globals.monitoring_data.values()], 'b-')
+    ax1.plot(keys,
+             [value.get("cost", None) for value in values], 'b-')
     ax1.set_xlabel('Time')
     # Make the y-axis label, ticks and tick labels match the line color.
     ax1.set_ylabel('Cost', color='b')
     ax1.tick_params('y', colors='b')
 
     ax2 = ax1.twinx()
-    ax2.plot(globals.monitoring_data.keys(),
-         [value.get("acc_cost", None) for value in globals.monitoring_data.values()], 'r.')
+    ax2.plot(keys,
+             [value.get("acc_cost", None) for value in values], 'r.')
     ax2.set_ylabel('Accumulated Cost', color='r')
     ax2.tick_params('y', colors='r')
 
@@ -151,27 +157,59 @@ def main():
 
     # resource plot for max
     fig, ax = plt.subplots(2, sharex=True)
-    ax[0].plot(globals.monitoring_data.keys(),
-             [value.get("unused_resources", None) for value in globals.monitoring_data.values()],
-             label="Unused")
-    ax[0].plot(globals.monitoring_data.keys(),
-             [value.get("used_resources", None) for value in globals.monitoring_data.values()],
-             label="Used")
+    ax[0].plot(keys,
+               [value.get("unused_resources", None) for value in values],
+               label="Unused")
+    ax[0].plot(keys,
+               [value.get("used_resources", None) for value in values],
+               label="Used")
     ax[0].set_title("Resource utilisation")
     ax[0].legend()
     percentages = []
     percentage_means = []
-    for value in globals.monitoring_data.values():
+    for value in values:
         try:
-            percentages.append(value.get("unused_resources", None) / value.get("available_resources", None))
+            percentages.append(value.get("unused_resources", 0) / value.get("available_resources", 0))
         except ZeroDivisionError:
             percentages.append(1)
         percentage_means.append(sum(percentages) / len(percentages))
-    ax[1].plot(globals.monitoring_data.keys(), percentages)
-    ax[1].plot(globals.monitoring_data.keys(), percentage_means, label="mean")
+    ax[1].plot(keys, percentages)
+    ax[1].plot(keys, percentage_means, label="mean")
     ax[1].set_title("Percentage of unused resources")
     fig.show()
-    print("final cost: %.2f" % globals.monitoring_data[sorted(globals.monitoring_data.keys())[-1]]["acc_cost"])
+
+    # waiting time histogram
+    plt.hist(globals.monitoring_data["job_waiting_times"], label="Job waiting times")
+    plt.legend()
+    plt.show()
+
+    for resource_key in [key for key in globals.monitoring_data.keys() if
+                         isinstance(key, str) and key.startswith("job_exceeds_")]:
+        plt.hist(globals.monitoring_data[resource_key], label="Job exceeding %s" %
+                                                              resource_key.replace("job_exceeds_", ""))
+        plt.legend()
+        plt.show()
+
+
+def main():
+    monitor_data = partial(monitor, globals.monitoring_data)
+
+    random.seed(1234)
+    env = simpy.Environment()
+    trace(env, monitor_data, resource_normalisation={"memory": 2000})
+    globals.job_generator = htcondor_export_job_generator(filename="condor_usage_sorted_filtered.csv",
+                                                          job_queue=globals.job_queue,
+                                                          env=env)
+    env.process(globals.job_generator)
+    for resources in [{"memory": 5000, "cores": 1}, {"memory": 24000, "cores": 8}, {"memory": 16000, "cores": 4}]:
+        pool = Pool(env, resources=resources)
+        globals.pools.append(pool)
+        SimulatedCostController(env, target=pool, rate=1)
+    globals.job_scheduler = CondorJobScheduler(env=env, job_queue=globals.job_queue)
+    env.run(until=2000)
+
+    generate_plots()
+    print("final cost: %.2f" % globals.monitoring_data["timesteps"][sorted(globals.monitoring_data["timesteps"].keys())[-1]]["acc_cost"])
 
 
 if __name__ == "__main__":

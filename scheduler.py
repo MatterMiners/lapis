@@ -12,7 +12,7 @@ def job_scheduler(env):
         yield env.timeout(1)
 
 
-def htcondor_job_scheduler(env):
+class CondorJobScheduler(object):
     """
     Goal of the htcondor job scheduler is to have a scheduler that somehow mimics how htcondor does schedule jobs.
     Htcondor does scheduling based on a priority queue. The priorities itself are managed by operators of htcondor.
@@ -25,22 +25,39 @@ def htcondor_job_scheduler(env):
     :param env:
     :return:
     """
-    def schedule_pool(job):
+    def __init__(self, env, job_queue):
+        self.env = env
+        self.job_queue = job_queue
+        self.action = env.process(self.run())
+
+    def run(self):
+        # current_job = None
+        # postponed_unmatched_job = False
+        while True:
+            for job in self.job_queue:
+                best_match = self._schedule_job(job)
+                if best_match:
+                    self.env.process(best_match.start_job(job))
+                    self.job_queue.remove(job)
+                    yield self.env.timeout(0)
+            yield self.env.timeout(60)
+
+    def _schedule_job(self, job):
         priorities = {}
         for pool in globals.pools:
             for drone in pool.drones:
                 cost = 0
-                resource_types = {*drone.resources.keys(), *job[1].keys()}
+                resource_types = {*drone.resources.keys(), *job.resources.keys()}
                 for resource_type in resource_types:
                     if resource_type not in drone.resources.keys():
                         cost = float("Inf")
                     elif (pool.resources[resource_type] - drone.resources[resource_type]) < \
-                            job[1][resource_type]:
+                            job.resources[resource_type]:
                         cost = float("Inf")
                         break
                     else:
                         cost += (pool.resources[resource_type] - drone.resources[resource_type]) // \
-                                job[1][resource_type]
+                                job.resources[resource_type]
                 cost /= len(resource_types)
                 if cost <= 1:
                     # directly start job
@@ -56,33 +73,3 @@ def htcondor_job_scheduler(env):
         except ValueError:
             pass
         return None
-
-    unscheduled_jobs = []
-    current_job = None
-    postponed_unmatched_job = False
-    while True:
-        if not postponed_unmatched_job and len(unscheduled_jobs) > 0:
-            for job in unscheduled_jobs:
-                best_match = schedule_pool(job)
-                if best_match:
-                    env.process(best_match.start_job(*job))
-                    unscheduled_jobs.remove(job)
-                    yield env.timeout(0)
-        if not current_job and globals.global_demand.level - len(unscheduled_jobs) > 0:
-            current_job = next(globals.job_generator)
-        if current_job:
-            best_match = schedule_pool(current_job)
-            if best_match:
-                env.process(best_match.start_job(*current_job))
-                current_job = None
-                yield env.timeout(0)
-            else:
-                postponed_unmatched_job = True
-                unscheduled_jobs.append(current_job)
-                current_job = None
-                yield env.timeout(0)
-        else:
-            postponed_unmatched_job = False
-            yield env.timeout(60)
-
-

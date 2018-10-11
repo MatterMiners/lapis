@@ -1,5 +1,8 @@
 from cobald.controller.linear import LinearController
+from cobald.controller.relative_supply import RelativeSupplyController
 from cobald.interfaces import Pool
+
+from cost import local_cobald_cost
 
 
 class SimulatedLinearController(LinearController):
@@ -14,6 +17,21 @@ class SimulatedLinearController(LinearController):
             # print("[controller] demand %d -> %d, supply %d (global %d), allocation %.2f, utilisation %.2f "
             #       "(available %d)" % (pre_demand, self.target.demand, self.target.supply, globals.global_demand.level,
             #                           self.target.allocation, self.target.utilisation, self.target.level))
+            yield self.env.timeout(self.interval)
+
+
+class SimulatedRelativeSupplyController(RelativeSupplyController):
+    def __init__(self, env, target: Pool, low_utilisation=0.5, high_allocation=0.5, low_scale=0.9, high_scale=1.1,
+                 interval=1):
+        super(SimulatedRelativeSupplyController, self).__init__(target=target, low_utilisation=low_utilisation,
+                                                                high_allocation=high_allocation, low_scale=low_scale,
+                                                                high_scale=high_scale, interval=interval)
+        self.env = env
+        self.action = env.process(self.run())
+
+    def run(self):
+        while True:
+            self.regulate(interval=self.interval)
             yield self.env.timeout(self.interval)
 
 
@@ -34,5 +52,8 @@ class SimulatedCostController(SimulatedLinearController):
                 self.target.demand = allocation
                 if self.current_cost > 1:
                     self.current_cost -= 1
+                # self.target.demand = allocation + self.current_cost
         # else:
-        #     self.target.demand = allocation
+        #     if self.current_cost > 1:
+        #         self.current_cost -= 1
+        #     self.target.demand = allocation + self.current_cost
