@@ -1,6 +1,7 @@
 import random
 import math
 import csv
+import simpy
 
 import globals
 
@@ -42,6 +43,7 @@ class Job(object):
         self.walltime = float(walltime)
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
+        self.processing = None
 
     @property
     def waiting_time(self):
@@ -51,13 +53,18 @@ class Job(object):
 
     def process(self):
         self.in_queue_until = self.env.now
-        # print(self, "starting job at", self.env.now, "with duration", self.walltime)
-        yield self.env.timeout(self.walltime, value=self)
-        # print(self, "job finished", self.env.now)
+        self.processing = self.env.process(self._process())
+        return self.processing
+
+    def _process(self):
+        try:
+            yield self.env.timeout(self.walltime, value=self)
+        except simpy.exceptions.Interrupt:
+            pass
 
     def kill(self):
         # job exceeds either own requested resources or resources provided by drone
-        print("----> killing job", self)
+        self.processing.interrupt(cause=self)
 
 
 def job_property_generator(**kwargs):
@@ -89,7 +96,7 @@ def htcondor_export_job_generator(filename, job_queue, env=None, **kwargs):
                         "cores": float(row[header.index("RemoteSysCpu")]) + float(row[header.index("RemoteUserCpu")]) /
                                  float(row[header.index("RemoteWallClockTime")]),
                         "memory": float(row[header.index("MemoryUsage")]),
-                        "disk": int(row[header.index("DiskUsage_RAW")])
+                        # "disk": int(row[header.index("DiskUsage_RAW")])
                     }, in_queue_since=env.now))
                 row = None
             else:

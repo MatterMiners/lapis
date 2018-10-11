@@ -10,6 +10,8 @@ class Drone(interfaces.Pool):
         self.pool_resources = pool_resources
         self.action = env.process(self.run(scheduling_duration))
         self.resources = {resource: 0 for resource in self.pool_resources}
+        # shadowing requested resources to determine jobs to be killed
+        self.used_resources = {resource: 0 for resource in self.pool_resources}
         self._supply = 0
         self.jobs = 0
         self._allocation = None
@@ -56,32 +58,35 @@ class Drone(interfaces.Pool):
         # print("[drone %s] has been shut down" % self)
 
     def start_job(self, job, kill=False):
+        """
+        Method manages to start a job in the context of the given drone.
+        The job is started independent of available resources. If resources of drone are exceeded, the job is killed.
+
+        :param job: the job to start
+        :param kill: if True, a job is killed when used resources exceed requested resources
+        :return:
+        """
+        self._utilisation = None
+        self._allocation = None
+        self.jobs += 1
+        job_execution = job.process()
         for resource_key in job.resources:
-            if self.resources[resource_key] + job.resources[resource_key]:
-                # TODO: kill job
-                pass
+            if self.used_resources[resource_key] + job.used_resources[resource_key] > self.pool_resources[resource_key]:
+                job.kill()
             if job.resources[resource_key] < job.used_resources[resource_key]:
                 if kill:
                     job.kill()
                 else:
                     pass
-                return
-            if self.resources[resource_key] + job.resources[resource_key] > self.pool_resources[resource_key] and kill:
-                if kill:
-                    job.kill()
-                else:
-                    pass
-                return
-        self._utilisation = None
-        self._allocation = None
         for resource_key in job.resources:
             self.resources[resource_key] += job.resources[resource_key]
-        self.jobs += 1
-        yield from job.process()
+            self.used_resources[resource_key] += job.used_resources[resource_key]
+        yield job_execution
         self.jobs -= 1
         self._utilisation = None
         self._allocation = None
         for resource_key in job.resources:
             self.resources[resource_key] -= job.resources[resource_key]
+            self.used_resources[resource_key] -= job.used_resources[resource_key]
         # put drone back into pool queue
         # print("[drone %s] finished job at %d" % (self, self.env.now))
