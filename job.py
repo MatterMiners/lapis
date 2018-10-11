@@ -38,6 +38,7 @@ class Job(object):
     def __init__(self, env, walltime, resources, used_resources=None, in_queue_since=0):
         self.env = env
         self.resources = resources
+        self.used_resources = used_resources
         self.walltime = float(walltime)
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
@@ -53,6 +54,10 @@ class Job(object):
         # print(self, "starting job at", self.env.now, "with duration", self.walltime)
         yield self.env.timeout(self.walltime, value=self)
         # print(self, "job finished", self.env.now)
+
+    def kill(self):
+        # job exceeds either own requested resources or resources provided by drone
+        print("----> killing job", self)
 
 
 def job_property_generator(**kwargs):
@@ -81,6 +86,8 @@ def htcondor_export_job_generator(filename, job_queue, env=None, **kwargs):
                         # "disk": int(row[header.index("RequestDisk")]),
                         "memory": float(row[header.index("RequestMemory")])
                     }, used_resources={
+                        "cores": float(row[header.index("RemoteSysCpu")]) + float(row[header.index("RemoteUserCpu")]) /
+                                 float(row[header.index("RemoteWallClockTime")]),
                         "memory": float(row[header.index("MemoryUsage")]),
                         "disk": int(row[header.index("DiskUsage_RAW")])
                     }, in_queue_since=env.now))

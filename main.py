@@ -28,6 +28,7 @@ last_step = 0
 
 
 def monitor(data, t, prio, eid, event, resource_normalisation):
+    print(event)
     if event.value:
         if isinstance(event.value, Job):
             try:

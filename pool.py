@@ -8,7 +8,7 @@ class Pool(interfaces.Pool, container.Container):
     def __init__(self, env, capacity=float('inf'), init=0, resources={"memory": 8, "cores": 1}):
         super(Pool, self).__init__(env, capacity, init)
         self.resources = resources
-        self._demand = 0
+        self._demand = 1
         self._drones = []
         self.env = env
         self.action = env.process(self.run())

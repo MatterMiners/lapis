@@ -12,6 +12,8 @@ class Drone(interfaces.Pool):
         self.resources = {resource: 0 for resource in self.pool_resources}
         self._supply = 0
         self.jobs = 0
+        self._allocation = None
+        self._utilisation = None
 
     def run(self, scheduling_duration):
         yield self.env.timeout(scheduling_duration)
@@ -31,33 +33,54 @@ class Drone(interfaces.Pool):
 
     @property
     def utilisation(self):
-        resources = []
-        for resource_key, value in self.resources.items():
-            resources.append(value / self.pool_resources[resource_key])
-        return min(resources)
+        if self._utilisation is None:
+            self._init_allocation_and_utilisation()
+        return self._utilisation
 
     @property
     def allocation(self):
+        if self._allocation is None:
+            self._init_allocation_and_utilisation()
+        return self._allocation
+
+    def _init_allocation_and_utilisation(self):
         resources = []
         for resource_key, value in self.resources.items():
-            resources.append(value / self.pool_resources[resource_key])
-        return max(resources)
+            resources.append(value / self.pool.resources[resource_key])
+        self._allocation = max(resources)
+        self._utilisation = min(resources)
 
     def shutdown(self):
         self._supply = 0
         yield self.env.timeout(1)
         # print("[drone %s] has been shut down" % self)
 
-    def start_job(self, job):
+    def start_job(self, job, kill=False):
         for resource_key in job.resources:
             if self.resources[resource_key] + job.resources[resource_key]:
                 # TODO: kill job
                 pass
+            if job.resources[resource_key] < job.used_resources[resource_key]:
+                if kill:
+                    job.kill()
+                else:
+                    pass
+                return
+            if self.resources[resource_key] + job.resources[resource_key] > self.pool_resources[resource_key] and kill:
+                if kill:
+                    job.kill()
+                else:
+                    pass
+                return
+        self._utilisation = None
+        self._allocation = None
         for resource_key in job.resources:
             self.resources[resource_key] += job.resources[resource_key]
         self.jobs += 1
         yield from job.process()
         self.jobs -= 1
+        self._utilisation = None
+        self._allocation = None
         for resource_key in job.resources:
             self.resources[resource_key] -= job.resources[resource_key]
         # put drone back into pool queue
