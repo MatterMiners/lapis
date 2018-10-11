@@ -1,7 +1,5 @@
 from cobald import interfaces
 
-from job import Job
-
 
 class Drone(interfaces.Pool):
     def __init__(self, env, pool_resources, scheduling_duration):
