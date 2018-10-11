@@ -80,3 +80,17 @@ class Pool(interfaces.Pool, container.Container):
             self._demand = value
         else:
             self._demand = 0
+
+
+class StaticPool(Pool):
+    def __init__(self, env, init=0, resources={"memory": 8, "cores": 1}):
+        assert init > 0, "Static pool was initialised without any resources..."
+        super(StaticPool, self).__init__(env, capacity=init, init=init, resources=resources)
+        self._demand = init
+        for _ in range(init):
+            self._drones.append(Drone(self.env, self.resources, 0))
+        self.put(init)
+
+    def run(self):
+        while True:
+            yield self.env.timeout(float("Inf"))
