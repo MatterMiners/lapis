@@ -46,7 +46,7 @@ class Drone(interfaces.Pool):
     def _init_allocation_and_utilisation(self):
         resources = []
         for resource_key, value in self.resources.items():
-            resources.append(value / self.pool.resources[resource_key])
+            resources.append(value / self.pool_resources[resource_key])
         self._allocation = max(resources)
         self._utilisation = min(resources)
 
