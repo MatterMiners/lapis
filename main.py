@@ -32,7 +32,7 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
         if isinstance(event.value, simpy.exceptions.Interrupt):
             job = event.value.cause
             for resource_key, usage in job.used_resources.items():
-                value = job.resources[resource_key] / usage
+                value = usage / job.resources[resource_key]
                 if value > 1:
                     try:
                         globals.monitoring_data["job_exceeds_%s" % resource_key].append(value)
