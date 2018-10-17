@@ -199,14 +199,14 @@ def generate_plots():
         plt.show()
 
 
-def main():
+def main(filename="condor_usage_sorted_filtered.csv", until=2000):
     resource_normalisation = {"memory": 2000}
     monitor_data = partial(monitor, resource_normalisation)
 
     random.seed(1234)
     env = simpy.Environment()
     trace(env, monitor_data, resource_normalisation=resource_normalisation)
-    globals.job_generator = htcondor_export_job_generator(filename="condor_usage_sorted_filtered.csv",
+    globals.job_generator = htcondor_export_job_generator(filename=filename,
                                                           job_queue=globals.job_queue,
                                                           env=env)
     env.process(globals.job_generator)
@@ -215,7 +215,7 @@ def main():
         globals.pools.append(pool)
         SimulatedCostController(env, target=pool, rate=1)
     globals.job_scheduler = CondorJobScheduler(env=env, job_queue=globals.job_queue)
-    env.run(until=2000)
+    env.run(until=until)
 
     generate_plots()
     print("final cost: %.2f" % globals.monitoring_data["timesteps"][sorted(globals.monitoring_data["timesteps"].keys())[-1]]["acc_cost"])
