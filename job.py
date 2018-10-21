@@ -2,6 +2,7 @@ import random
 import math
 import csv
 import simpy
+import logging
 
 import globals
 
@@ -31,7 +32,7 @@ def job_demand(env):
         value = round(value)
         if value > 0:
             globals.global_demand.put(value)
-            globals.monitoring_data[round(env.now)]["user_demand_new"] = value
+            logging.getLogger("general").info(str(round(env.now)), {"user_demand_new": value})
             # print("[demand] raising user demand for %f at %d to %d" % (value, env.now, globals.global_demand.level))
 
 
@@ -99,8 +100,9 @@ def htcondor_export_job_generator(filename, job_queue, env=None, **kwargs):
                         # "disk": int(row[header.index("DiskUsage_RAW")])
                     }, in_queue_since=env.now))
                 row = None
+                current_time = 0
             else:
                 if count > 0:
-                    globals.monitoring_data[round(env.now)]["user_demand_new"] = count
+                    logging.getLogger("general").info(str(round(env.now)), {"user_demand_new": count})
                     count = 0
                 yield env.timeout(1)

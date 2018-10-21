@@ -1,6 +1,9 @@
 from functools import partial, wraps
 import simpy
 import random
+import logging.handlers
+
+from cobald.monitor.format_json import JsonFormatter
 
 import matplotlib.pyplot as plt
 
@@ -8,8 +11,25 @@ import globals
 from cost import cobald_cost
 from job import job_demand, htcondor_export_job_generator, Job
 from scheduler import CondorJobScheduler
-from pool import Pool
+from pool import Pool, StaticPool
 from controller import SimulatedCostController
+
+
+class JSONSocketHandler(logging.handlers.SocketHandler):
+    def makePickle(self, record):
+        return self.format(record).encode()
+
+
+monitoring_logger = logging.getLogger("general")
+monitoring_logger.setLevel(logging.DEBUG)
+socketHandler = JSONSocketHandler(
+    'localhost',
+    logging.handlers.DEFAULT_TCP_LOGGING_PORT)
+streamHandler = logging.StreamHandler()
+socketHandler.setFormatter(JsonFormatter())
+streamHandler.setFormatter(JsonFormatter())
+monitoring_logger.addHandler(socketHandler)
+monitoring_logger.addHandler(streamHandler)
 
 
 def trace(env, callback, resource_normalisation):
@@ -34,15 +54,9 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
             for resource_key, usage in job.used_resources.items():
                 value = usage / job.resources[resource_key]
                 if value > 1:
-                    try:
-                        globals.monitoring_data["job_exceeds_%s" % resource_key].append(value)
-                    except AttributeError:
-                        globals.monitoring_data["job_exceeds_%s" % resource_key] = [value]
+                    monitoring_logger.info(str(round(t)), {"job_exceeds_%s" % resource_key: value})
         if isinstance(event.value, Job):
-            try:
-                globals.monitoring_data["job_waiting_times"].append(event.value.waiting_time)
-            except AttributeError:
-                globals.monitoring_data["job_waiting_times"] = [event.value.waiting_time]
+            monitoring_logger.info(str(round(t)), {"job_waiting_times": event.value.waiting_time})
     global last_step
     if t > last_step:
         # new data to be recorded
@@ -61,7 +75,7 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
         for pool in globals.pools:
             pool_demand += pool.demand
             pool_supply += pool.supply
-            result["pool_%s_supply" % pool] = pool.supply
+            result["pool_%s_supply" % id(pool)] = pool.supply
             pool_utilisation += pool.utilisation
             pool_allocation += pool.allocation
             for drone in pool.drones:
@@ -87,13 +101,7 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
         result["cost"] = cost
         globals.cost += cost
         result["acc_cost"] = globals.cost
-        monitoring_data = globals.monitoring_data["timesteps"]
-        try:
-            monitoring_data[tmp].update(result)
-        except KeyError:
-            monitoring_data[tmp] = result
-        #     print("%s [Pool %s] drones %d, demand %d, supply %d (%d); allocation %.2f, utilisation %.2f" % (
-        #         tmp, pool, len(pool.drones), pool.demand, pool.supply, pool.level, pool.allocation, pool.utilisation))
+        monitoring_logger.info(str(tmp), result)
 
 
 def generate_plots():
@@ -192,11 +200,12 @@ def generate_plots():
 
 
 def main():
-    monitor_data = partial(monitor, globals.monitoring_data)
+    resource_normalisation = {"memory": 2000}
+    monitor_data = partial(monitor, resource_normalisation)
 
     random.seed(1234)
     env = simpy.Environment()
-    trace(env, monitor_data, resource_normalisation={"memory": 2000})
+    trace(env, monitor_data, resource_normalisation=resource_normalisation)
     globals.job_generator = htcondor_export_job_generator(filename="condor_usage_sorted_filtered.csv",
                                                           job_queue=globals.job_queue,
                                                           env=env)
