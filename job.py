@@ -94,7 +94,7 @@ def htcondor_export_job_generator(filename, job_queue, env=None, **kwargs):
                         # "disk": int(row[header.index("RequestDisk")]),
                         "memory": float(row[header.index("RequestMemory")])
                     }, used_resources={
-                        "cores": float(row[header.index("RemoteSysCpu")]) + float(row[header.index("RemoteUserCpu")]) /
+                        "cores": (float(row[header.index("RemoteSysCpu")]) + float(row[header.index("RemoteUserCpu")])) /
                                  float(row[header.index("RemoteWallClockTime")]),
                         "memory": float(row[header.index("MemoryUsage")]),
                         # "disk": int(row[header.index("DiskUsage_RAW")])
