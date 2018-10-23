@@ -34,11 +34,12 @@ def job_demand(env):
 
 
 class Job(object):
-    def __init__(self, env, walltime, resources, used_resources=None, in_queue_since=0):
+    def __init__(self, env, walltime, resources, used_resources=None, in_queue_since=0, schedule_date=0):
         self.env = env
         self.resources = resources
         self.used_resources = used_resources
         self.walltime = float(walltime)
+        self.schedule_date = schedule_date
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
         self.processing = None
@@ -71,33 +72,24 @@ def job_property_generator(**kwargs):
 
 
 def htcondor_export_job_generator(filename, job_queue, env=None, **kwargs):
+    from .job_io.htcondor import htcondor_job_reader
+
     with open(filename, "r") as input_file:
-        htcondor_reader = csv.reader(input_file, delimiter=' ', quotechar="'")
-        header = next(htcondor_reader)
-        row = next(htcondor_reader)
-        base_date = float(row[header.index("QDate")])
+        reader = htcondor_job_reader(env, input_file)
+        job = next(reader)
+        base_date = job.schedule_date
         current_time = 0
 
         count = 0
         while True:
-            if not row:
-                row = next(htcondor_reader)
-                current_time = float(row[header.index("QDate")]) - base_date
+            if not job:
+                job = next(reader)
+                current_time = job.schedule_date - base_date
             if env.now >= current_time:
                 count += 1
-                job_queue.append(Job(
-                    env, row[header.index("RemoteWallClockTime")], resources={
-                        "cores": int(row[header.index("RequestCpus")]),
-                        # "disk": int(row[header.index("RequestDisk")]),
-                        "memory": float(row[header.index("RequestMemory")])
-                    }, used_resources={
-                        "cores": (float(row[header.index("RemoteSysCpu")]) + float(row[header.index("RemoteUserCpu")])) /
-                                 float(row[header.index("RemoteWallClockTime")]),
-                        "memory": float(row[header.index("MemoryUsage")]),
-                        # "disk": int(row[header.index("DiskUsage_RAW")])
-                    }, in_queue_since=env.now))
-                row = None
-                current_time = 0
+                job.in_queue_since = env.now
+                job_queue.append(job)
+                job = None
             else:
                 if count > 0:
                     logging.getLogger("general").info(str(round(env.now)), {"user_demand_new": count})
