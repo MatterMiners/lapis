@@ -1,7 +1,7 @@
 from simpy.resources import container
 from cobald import interfaces
 
-from drone import Drone
+from .drone import Drone
 
 
 class Pool(interfaces.Pool, container.Container):

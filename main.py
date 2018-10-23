@@ -7,12 +7,13 @@ from cobald.monitor.format_json import JsonFormatter
 
 import matplotlib.pyplot as plt
 
-import globals
-from cost import cobald_cost
-from job import job_demand, htcondor_export_job_generator, Job
-from scheduler import CondorJobScheduler
-from pool import Pool, StaticPool
-from controller import SimulatedCostController
+from cobald_sim import globals
+
+from cobald_sim.cost import cobald_cost
+from cobald_sim.job import htcondor_export_job_generator, Job
+from cobald_sim.scheduler import CondorJobScheduler
+from cobald_sim.pool import Pool, StaticPool
+from cobald_sim.controller import SimulatedCostController
 
 
 class JSONSocketHandler(logging.handlers.SocketHandler):
@@ -97,9 +98,9 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
         result["used_resources"] = used_resources
         result["unused_resources"] = unused_resources
         result["available_resources"] = available_resources
-        cost = cobald_cost()
-        result["cost"] = cost
-        globals.cost += cost
+        current_cost = cobald_cost()
+        result["cost"] = current_cost
+        globals.cost += current_cost
         result["acc_cost"] = globals.cost
         monitoring_logger.info(str(tmp), result)
 

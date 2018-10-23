@@ -1,6 +1,6 @@
 import csv
 
-from pool import StaticPool
+from ..pool import StaticPool
 
 
 def htcondor_pool_reader(env, iterable, resource_name_mapping={

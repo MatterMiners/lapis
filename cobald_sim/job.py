@@ -1,10 +1,7 @@
 import random
 import math
-import csv
 import simpy
 import logging
-
-import globals
 
 
 def job_demand(env):

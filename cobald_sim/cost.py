@@ -1,4 +1,4 @@
-import globals
+from cobald_sim import globals
 
 
 def cobald_cost():

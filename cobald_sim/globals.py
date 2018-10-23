@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 pools = []
 job_queue = []
 job_generator = None

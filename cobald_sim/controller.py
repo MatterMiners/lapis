@@ -2,8 +2,6 @@ from cobald.controller.linear import LinearController
 from cobald.controller.relative_supply import RelativeSupplyController
 from cobald.interfaces import Pool
 
-from cost import local_cobald_cost
-
 
 class SimulatedLinearController(LinearController):
     def __init__(self, env, target: Pool, low_utilisation=0.5, high_allocation=0.5, rate=1, interval=1):

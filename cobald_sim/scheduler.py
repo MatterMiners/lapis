@@ -1,4 +1,4 @@
-import globals
+from cobald_sim import globals
 
 
 # TODO: does not work anymore as there is no method get_drone at pool
