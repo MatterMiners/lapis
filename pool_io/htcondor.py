@@ -1,4 +1,4 @@
-import pandas as pd
+import csv
 
 from pool import StaticPool
 
@@ -15,9 +15,10 @@ def htcondor_pool_reader(env, iterable, resource_name_mapping={
     :param resource_name_mapping: Mapping from given header names to well-defined resources in simulation
     :return: Yields the :py:class:`StaticPool`s found in the given iterable
     """
-    df = pd.read_csv(iterable, sep='\s{1,}', header=0, engine='python', thousands=',')
-    df = df.rename(columns=resource_name_mapping)
-    header = list(df.columns.values)
-    for row_idx, *row in df.itertuples():
-        yield StaticPool(env, init=row[0], resources={key: row[header.index(key)] for key in
-                                                      resource_name_mapping.values()})
+    reader = csv.reader(iterable, delimiter=' ', skipinitialspace=True)
+    first_line = next(reader)
+    for row_idx, row in enumerate(reader):
+        yield StaticPool(
+            env,
+            init=int(row[0]),
+            resources={value: row[first_line.index(key)] for key, value in resource_name_mapping.items()})
