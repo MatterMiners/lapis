@@ -125,8 +125,9 @@ def cli(ctx, seed):
 @cli.command()
 @click.option("--job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
 @click.option("--pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
+@click.option("--until", default=2000)
 @click.pass_context
-def static(ctx, job_file, pool_file, until=2000):
+def static(ctx, job_file, pool_file, until):
     click.echo("starting static environment")
     random.seed(ctx.obj["seed"])
     resource_normalisation = {"memory": 2000}
