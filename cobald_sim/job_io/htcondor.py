@@ -22,7 +22,7 @@ def htcondor_job_reader(env, iterable, resource_name_mapping={
             env,
             walltime=row[resource_name_mapping["walltime"]],
             resources={
-                "cores": int(row[resource_name_mapping["cores"]]),
+                "cores": float(row[resource_name_mapping["cores"]]),
                 # "disk": float(row[resource_name_mapping["disk"]]),
                 "memory": float(row[resource_name_mapping["memory"]])
             }, used_resources={

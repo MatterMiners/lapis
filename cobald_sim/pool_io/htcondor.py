@@ -20,4 +20,4 @@ def htcondor_pool_reader(env, iterable, resource_name_mapping={
         yield StaticPool(
             env,
             init=int(row["Count"]),
-            resources={key: row[value] for key, value in resource_name_mapping.items()})
+            resources={key: float(row[value]) for key, value in resource_name_mapping.items() if key in ["cores", "memory"]})
