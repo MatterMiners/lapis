@@ -8,7 +8,7 @@ import logging.handlers
 from cobald.monitor.format_json import JsonFormatter
 
 from cobald_sim.cost import cobald_cost
-from cobald_sim.job import htcondor_export_job_generator
+from cobald_sim.job import job_to_queue_scheduler
 from cobald_sim.job_io.htcondor import htcondor_job_reader
 from cobald_sim.pool_io.htcondor import htcondor_pool_reader
 from cobald_sim.job_io.swf import swf_job_reader
@@ -135,9 +135,9 @@ def static(ctx, job_file, pool_file, until=2000):
     env = simpy.Environment()
     trace(env, monitor_data, resource_normalisation=resource_normalisation)
     file, file_type = job_file
-    globals.job_generator = htcondor_export_job_generator(input_file=file,
-                                                          job_queue=globals.job_queue,
-                                                          env=env)
+    globals.job_generator = job_to_queue_scheduler(job_generator=job_import_mapper[file_type](env, file),
+                                                   job_queue=globals.job_queue,
+                                                   env=env)
     for current_pool in pool_file:
         file, file_type = current_pool
         for pool in pool_import_mapper[file_type](env=env, iterable=file):

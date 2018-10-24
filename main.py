@@ -10,10 +10,11 @@ import matplotlib.pyplot as plt
 from cobald_sim import globals
 
 from cobald_sim.cost import cobald_cost
-from cobald_sim.job import htcondor_export_job_generator, Job
+from cobald_sim.job import job_to_queue_scheduler, Job
 from cobald_sim.scheduler import CondorJobScheduler
 from cobald_sim.pool import Pool, StaticPool
 from cobald_sim.controller import SimulatedCostController
+from cobald_sim.job_io.htcondor import htcondor_job_reader
 
 
 class JSONSocketHandler(logging.handlers.SocketHandler):
@@ -208,9 +209,9 @@ def main(filename="condor_usage_sorted_filtered.csv", until=2000):
     env = simpy.Environment()
     trace(env, monitor_data, resource_normalisation=resource_normalisation)
     with open(filename, "r") as input_file:
-        globals.job_generator = htcondor_export_job_generator(input_file=input_file,
-                                                              job_queue=globals.job_queue,
-                                                              env=env)
+        globals.job_generator = job_to_queue_scheduler(job_generator=htcondor_job_reader(env, input_file),
+                                                       job_queue=globals.job_queue,
+                                                       env=env)
         env.process(globals.job_generator)
         for resources in [{"memory": 5000, "cores": 1}, {"memory": 24000, "cores": 8}, {"memory": 16000, "cores": 4}]:
             pool = Pool(env, resources=resources)

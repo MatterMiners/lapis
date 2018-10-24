@@ -71,18 +71,15 @@ def job_property_generator(**kwargs):
         yield 10, {"memory": 8, "cores": 1, "disk": 100}
 
 
-def htcondor_export_job_generator(input_file, job_queue, env=None, **kwargs):
-    from .job_io.htcondor import htcondor_job_reader
-
-    reader = htcondor_job_reader(env, input_file)
-    job = next(reader)
+def job_to_queue_scheduler(job_generator, job_queue, env=None, **kwargs):
+    job = next(job_generator)
     base_date = job.queue_date
     current_time = 0
 
     count = 0
     while True:
         if not job:
-            job = next(reader)
+            job = next(job_generator)
             current_time = job.queue_date - base_date
         if env.now >= current_time:
             count += 1
