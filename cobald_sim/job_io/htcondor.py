@@ -9,7 +9,7 @@ def htcondor_job_reader(env, iterable, resource_name_mapping={
     "memory": "RequestMemory",
     "disk": "RequestDisk"
 }, used_resource_name_mapping={
-    "scheduletime": "QDate",
+    "queuetime": "QDate",
     "walltime": "RemoteWallClockTime",
     "cores": "Number of Allocated Processors",
     "memory": "MemoryUsage",
@@ -30,4 +30,4 @@ def htcondor_job_reader(env, iterable, resource_name_mapping={
                          float(row[used_resource_name_mapping["walltime"]]),
                 "memory": float(row[used_resource_name_mapping["memory"]]),
                 # "disk": float(row[used_resource_name_mapping["disk"]])
-            }, schedule_date=float(row[used_resource_name_mapping["scheduletime"]]))
+            }, queue_date=float(row[used_resource_name_mapping["queuetime"]]))

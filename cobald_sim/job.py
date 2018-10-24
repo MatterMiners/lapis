@@ -34,12 +34,12 @@ def job_demand(env):
 
 
 class Job(object):
-    def __init__(self, env, walltime, resources, used_resources=None, in_queue_since=0, schedule_date=0):
+    def __init__(self, env, walltime, resources, used_resources=None, in_queue_since=0, queue_date=0):
         self.env = env
         self.resources = resources
         self.used_resources = used_resources
         self.walltime = float(walltime)
-        self.schedule_date = schedule_date
+        self.queue_date = queue_date
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
         self.processing = None
@@ -77,14 +77,14 @@ def htcondor_export_job_generator(filename, job_queue, env=None, **kwargs):
     with open(filename, "r") as input_file:
         reader = htcondor_job_reader(env, input_file)
         job = next(reader)
-        base_date = job.schedule_date
+        base_date = job.queue_date
         current_time = 0
 
         count = 0
         while True:
             if not job:
                 job = next(reader)
-                current_time = job.schedule_date - base_date
+                current_time = job.queue_date - base_date
             if env.now >= current_time:
                 count += 1
                 job.in_queue_since = env.now
