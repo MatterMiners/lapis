@@ -207,17 +207,18 @@ def main(filename="condor_usage_sorted_filtered.csv", until=2000):
     random.seed(1234)
     env = simpy.Environment()
     trace(env, monitor_data, resource_normalisation=resource_normalisation)
-    globals.job_generator = htcondor_export_job_generator(filename=filename,
-                                                          job_queue=globals.job_queue,
-                                                          env=env)
-    env.process(globals.job_generator)
-    for resources in [{"memory": 5000, "cores": 1}, {"memory": 24000, "cores": 8}, {"memory": 16000, "cores": 4}]:
-        pool = Pool(env, resources=resources)
-        globals.pools.append(pool)
-        SimulatedCostController(env, target=pool, rate=1)
-    globals.pools.append(StaticPool(env, init=2))
-    globals.job_scheduler = CondorJobScheduler(env=env, job_queue=globals.job_queue)
-    env.run(until=until)
+    with open(filename, "r") as input_file:
+        globals.job_generator = htcondor_export_job_generator(input_file=input_file,
+                                                              job_queue=globals.job_queue,
+                                                              env=env)
+        env.process(globals.job_generator)
+        for resources in [{"memory": 5000, "cores": 1}, {"memory": 24000, "cores": 8}, {"memory": 16000, "cores": 4}]:
+            pool = Pool(env, resources=resources)
+            globals.pools.append(pool)
+            SimulatedCostController(env, target=pool, rate=1)
+        globals.pools.append(StaticPool(env, init=2))
+        globals.job_scheduler = CondorJobScheduler(env=env, job_queue=globals.job_queue)
+        env.run(until=until)
 
 
 if __name__ == "__main__":

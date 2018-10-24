@@ -71,27 +71,26 @@ def job_property_generator(**kwargs):
         yield 10, {"memory": 8, "cores": 1, "disk": 100}
 
 
-def htcondor_export_job_generator(filename, job_queue, env=None, **kwargs):
+def htcondor_export_job_generator(input_file, job_queue, env=None, **kwargs):
     from .job_io.htcondor import htcondor_job_reader
 
-    with open(filename, "r") as input_file:
-        reader = htcondor_job_reader(env, input_file)
-        job = next(reader)
-        base_date = job.queue_date
-        current_time = 0
+    reader = htcondor_job_reader(env, input_file)
+    job = next(reader)
+    base_date = job.queue_date
+    current_time = 0
 
-        count = 0
-        while True:
-            if not job:
-                job = next(reader)
-                current_time = job.queue_date - base_date
-            if env.now >= current_time:
-                count += 1
-                job.in_queue_since = env.now
-                job_queue.append(job)
-                job = None
-            else:
-                if count > 0:
-                    logging.getLogger("general").info(str(round(env.now)), {"user_demand_new": count})
-                    count = 0
-                yield env.timeout(1)
+    count = 0
+    while True:
+        if not job:
+            job = next(reader)
+            current_time = job.queue_date - base_date
+        if env.now >= current_time:
+            count += 1
+            job.in_queue_since = env.now
+            job_queue.append(job)
+            job = None
+        else:
+            if count > 0:
+                logging.getLogger("general").info(str(round(env.now)), {"user_demand_new": count})
+                count = 0
+            yield env.timeout(1)
