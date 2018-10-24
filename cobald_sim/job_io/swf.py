@@ -39,11 +39,12 @@ def swf_job_reader(env, iterable, resource_name_mapping={
             env,
             walltime=row[header[resource_name_mapping["walltime"]]],
             resources={
-                "cores": row[header[resource_name_mapping["cores"]]],
-                "memory": row[header[resource_name_mapping["memory"]]]
+                key: float(row[header[resource_name_mapping[key]]])
+                for key in ("cores", "memory")
+                if float(row[header[resource_name_mapping[key]]]) >= 0
             },
             used_resources={
-                "cores": row[header[used_resource_name_mapping["cores"]]],
-                "memory": row[header[used_resource_name_mapping["memory"]]]
+                key: float(row[header[used_resource_name_mapping[key]]])
+                for key in ("cores", "memory")
+                if float(row[header[used_resource_name_mapping[key]]]) >= 0
             }, schedule_date=float(row[header[used_resource_name_mapping["scheduletime"]]]))
-
