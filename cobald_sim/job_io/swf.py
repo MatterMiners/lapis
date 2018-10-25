@@ -37,14 +37,13 @@ def swf_job_reader(env, iterable, resource_name_mapping={
     for row in reader:
         yield Job(
             env,
-            walltime=row[header[resource_name_mapping["walltime"]]],
             resources={
                 key: float(row[header[resource_name_mapping[key]]])
-                for key in ("cores", "memory")
+                for key in ("cores", "memory", "walltime")
                 if float(row[header[resource_name_mapping[key]]]) >= 0
             },
             used_resources={
                 key: float(row[header[used_resource_name_mapping[key]]])
-                for key in ("cores", "memory")
+                for key in ("cores", "memory", "walltime")
                 if float(row[header[used_resource_name_mapping[key]]]) >= 0
             }, queue_date=float(row[header[used_resource_name_mapping["queuetime"]]]))

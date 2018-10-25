@@ -34,11 +34,13 @@ def job_demand(env):
 
 
 class Job(object):
-    def __init__(self, env, walltime, resources, used_resources=None, in_queue_since=0, queue_date=0):
+    def __init__(self, env, resources, used_resources=None, in_queue_since=0, queue_date=0):
         self.env = env
         self.resources = resources
         self.used_resources = used_resources
-        self.walltime = float(walltime)
+        self.walltime = used_resources.pop("walltime", None)
+        self.requested_walltime = resources.pop("walltime", None)
+        assert self.walltime or self.requested_walltime, "Job does not provide any walltime"
         self.queue_date = queue_date
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
@@ -57,7 +59,7 @@ class Job(object):
 
     def _process(self):
         try:
-            yield self.env.timeout(self.walltime, value=self)
+            yield self.env.timeout(self.requested_walltime or self.walltime, value=self)
         except simpy.exceptions.Interrupt:
             pass
 
