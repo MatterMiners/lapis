@@ -7,10 +7,11 @@ import logging.handlers
 
 from cobald.monitor.format_json import JsonFormatter
 
+from cobald_sim.controller import SimulatedCostController
 from cobald_sim.cost import cobald_cost
 from cobald_sim.job import job_to_queue_scheduler
 from cobald_sim.job_io.htcondor import htcondor_job_reader
-from cobald_sim.pool import StaticPool
+from cobald_sim.pool import StaticPool, Pool
 from cobald_sim.pool_io.htcondor import htcondor_pool_reader
 from cobald_sim.job_io.swf import swf_job_reader
 
@@ -117,18 +118,19 @@ def monitor(data, t, prio, eid, event, resource_normalisation):
 
 @click.group()
 @click.option("--seed", type=int, default=1234)
+@click.option("--until", default=2000)
 @click.pass_context
-def cli(ctx, seed):
+def cli(ctx, seed, until):
     ctx.ensure_object(dict)
     ctx.obj['seed'] = seed
+    ctx.obj['until'] = until
 
 
 @cli.command()
 @click.option("--job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
 @click.option("--pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
-@click.option("--until", default=2000)
 @click.pass_context
-def static(ctx, job_file, pool_file, until):
+def static(ctx, job_file, pool_file):
     click.echo("starting static environment")
     random.seed(ctx.obj["seed"])
     resource_normalisation = {"memory": 2000}
@@ -146,13 +148,33 @@ def static(ctx, job_file, pool_file, until):
             globals.pools.append(pool)
     env.process(globals.job_generator)
     globals.job_scheduler = CondorJobScheduler(env=env, job_queue=globals.job_queue)
-    env.run(until=until)
+    env.run(until=ctx.obj["until"])
 
 
 @cli.command()
+@click.option("--job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
+@click.option("--pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
 @click.pass_context
-def dynamic(ctx):
+def dynamic(ctx, job_file, pool_file):
     click.echo("starting dynamic environment")
+    random.seed(ctx.obj["seed"])
+    resource_normalisation = {"memory": 2000}
+    monitor_data = partial(monitor, resource_normalisation)
+
+    env = simpy.Environment()
+    trace(env, monitor_data, resource_normalisation=resource_normalisation)
+    file, file_type = job_file
+    globals.job_generator = job_to_queue_scheduler(job_generator=job_import_mapper[file_type](env, file),
+                                                   job_queue=globals.job_queue,
+                                                   env=env)
+    for current_pool in pool_file:
+        file, file_type = current_pool
+        for pool in pool_import_mapper[file_type](env=env, iterable=file, pool_type=Pool):
+            globals.pools.append(pool)
+            SimulatedCostController(env, target=pool, rate=1)
+    env.process(globals.job_generator)
+    globals.job_scheduler = CondorJobScheduler(env=env, job_queue=globals.job_queue)
+    env.run(until=ctx.obj["until"])
 
 
 @cli.command()
