@@ -178,9 +178,34 @@ def dynamic(ctx, job_file, pool_file):
 
 
 @cli.command()
+@click.option("--job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
+@click.option("--static_pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
+@click.option("--dynamic_pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
 @click.pass_context
-def hybrid(ctx):
+def hybrid(ctx, job_file, static_pool_file, dynamic_pool_file):
     click.echo("starting hybrid environment")
+    random.seed(ctx.obj["seed"])
+    resource_normalisation = {"memory": 2000}
+    monitor_data = partial(monitor, resource_normalisation)
+
+    env = simpy.Environment()
+    trace(env, monitor_data, resource_normalisation=resource_normalisation)
+    file, file_type = job_file
+    globals.job_generator = job_to_queue_scheduler(job_generator=job_import_mapper[file_type](env, file),
+                                                   job_queue=globals.job_queue,
+                                                   env=env)
+    for current_pool in static_pool_file:
+        file, file_type = current_pool
+        for pool in pool_import_mapper[file_type](env=env, iterable=file, pool_type=StaticPool):
+            globals.pools.append(pool)
+    for current_pool in dynamic_pool_file:
+        file, file_type = current_pool
+        for pool in pool_import_mapper[file_type](env=env, iterable=file, pool_type=Pool):
+            globals.pools.append(pool)
+            SimulatedCostController(env, target=pool, rate=1)
+    env.process(globals.job_generator)
+    globals.job_scheduler = CondorJobScheduler(env=env, job_queue=globals.job_queue)
+    env.run(until=ctx.obj["until"])
 
 
 if __name__ == '__main__':
