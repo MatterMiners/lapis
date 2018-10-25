@@ -217,7 +217,7 @@ def main(filename="condor_usage_sorted_filtered.csv", until=2000):
             pool = Pool(env, resources=resources)
             globals.pools.append(pool)
             SimulatedCostController(env, target=pool, rate=1)
-        globals.pools.append(StaticPool(env, init=2))
+        globals.pools.append(StaticPool(env, capacity=2))
         globals.job_scheduler = CondorJobScheduler(env=env, job_queue=globals.job_queue)
         env.run(until=until)
 

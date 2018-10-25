@@ -10,6 +10,7 @@ from cobald.monitor.format_json import JsonFormatter
 from cobald_sim.cost import cobald_cost
 from cobald_sim.job import job_to_queue_scheduler
 from cobald_sim.job_io.htcondor import htcondor_job_reader
+from cobald_sim.pool import StaticPool
 from cobald_sim.pool_io.htcondor import htcondor_pool_reader
 from cobald_sim.job_io.swf import swf_job_reader
 
@@ -141,7 +142,7 @@ def static(ctx, job_file, pool_file, until):
                                                    env=env)
     for current_pool in pool_file:
         file, file_type = current_pool
-        for pool in pool_import_mapper[file_type](env=env, iterable=file):
+        for pool in pool_import_mapper[file_type](env=env, iterable=file, pool_type=StaticPool):
             globals.pools.append(pool)
     env.process(globals.job_generator)
     globals.job_scheduler = CondorJobScheduler(env=env, job_queue=globals.job_queue)
