@@ -44,6 +44,6 @@ def swf_job_reader(env, iterable, resource_name_mapping={
             },
             used_resources={
                 key: float(row[header[used_resource_name_mapping[key]]])
-                for key in ("cores", "memory", "walltime")
+                for key in used_resource_name_mapping.keys()
                 if float(row[header[used_resource_name_mapping[key]]]) >= 0
             }, queue_date=float(row[header[used_resource_name_mapping["queuetime"]]]))

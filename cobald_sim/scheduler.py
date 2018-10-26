@@ -51,6 +51,8 @@ class CondorJobScheduler(object):
                 for resource_type in resource_types:
                     if resource_type not in drone.resources.keys():
                         cost = float("Inf")
+                    elif resource_type not in job.resources:
+                        cost += drone.resources[resource_type] - drone.resources[resource_type]
                     elif (pool.resources[resource_type] - drone.resources[resource_type]) < \
                             job.resources[resource_type]:
                         cost = float("Inf")

@@ -69,22 +69,38 @@ class Drone(interfaces.Pool):
         self.jobs += 1
         job_execution = job.process()
         for resource_key in job.resources:
-            if self.used_resources[resource_key] + job.used_resources[resource_key] > self.pool_resources[resource_key]:
-                job.kill()
-            if job.resources[resource_key] < job.used_resources[resource_key]:
-                if kill:
+            try:
+                if self.used_resources[resource_key] + job.used_resources[resource_key] > self.pool_resources[resource_key]:
                     job.kill()
-                else:
-                    pass
+            except KeyError:
+                # we do not have data about how many resources the job used, so check with requested data
+                if self.used_resources[resource_key] + job.resources[resource_key] > self.pool_resources[resource_key]:
+                    job.kill()
+            try:
+                if job.resources[resource_key] < job.used_resources[resource_key]:
+                    if kill:
+                        job.kill()
+                    else:
+                        pass
+            except KeyError:
+                # check is not relevant if the data is not stored
+                pass
         for resource_key in job.resources:
             self.resources[resource_key] += job.resources[resource_key]
-            self.used_resources[resource_key] += job.used_resources[resource_key]
+            try:
+                self.used_resources[resource_key] += job.used_resources[resource_key]
+            except KeyError:
+                self.used_resources[resource_key] += job.resources[resource_key]
         yield job_execution
         self.jobs -= 1
         self._utilisation = None
         self._allocation = None
         for resource_key in job.resources:
             self.resources[resource_key] -= job.resources[resource_key]
-            self.used_resources[resource_key] -= job.used_resources[resource_key]
+        for resource_key in {*job.resources, *job.used_resources}:
+            try:
+                self.used_resources[resource_key] -= job.used_resources[resource_key]
+            except KeyError:
+                self.used_resources[resource_key] -= job.resources[resource_key]
         # put drone back into pool queue
         # print("[drone %s] finished job at %d" % (self, self.env.now))

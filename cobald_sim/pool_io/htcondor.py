@@ -21,4 +21,4 @@ def htcondor_pool_reader(env, iterable, resource_name_mapping={
         yield pool_type(
             env,
             capacity=int(row["Count"]),
-            resources={key: float(row[value]) for key, value in resource_name_mapping.items() if key in ["cores", "memory"]})
+            resources={key: float(row[value]) for key, value in resource_name_mapping.items()})
