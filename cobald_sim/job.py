@@ -4,7 +4,7 @@ import simpy
 import logging
 
 
-def job_demand(env):
+def job_demand(simulator):
     """
     function randomly sets global user demand by using different strategies
     :param env:
@@ -25,11 +25,11 @@ def job_demand(env):
             # sqrt
             # print("strategy: sqrt amount")
             amount = math.sqrt(random.random()*random.random()*100)
-        value = yield env.timeout(delay=delay, value=amount)
+        value = yield simulator.env.timeout(delay=delay, value=amount)
         value = round(value)
         if value > 0:
-            globals.global_demand.put(value)
-            logging.getLogger("general").info(str(round(env.now)), {"user_demand_new": value})
+            simulator.global_demand.put(value)
+            logging.getLogger("general").info(str(round(simulator.env.now)), {"user_demand_new": value})
             # print("[demand] raising user demand for %f at %d to %d" % (value, env.now, globals.global_demand.level))
 
 

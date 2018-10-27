@@ -1,9 +1,6 @@
-from cobald_sim import globals
-
-
-def cobald_cost():
-    result = len(globals.job_queue)
-    for pool in globals.pools:
+def cobald_cost(simulator):
+    result = len(simulator.job_queue)
+    for pool in simulator.pools:
         for drone in pool.drones:
             result += 1
             tmp = 0
