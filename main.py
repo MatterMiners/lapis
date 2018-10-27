@@ -7,14 +7,14 @@ from cobald.monitor.format_json import JsonFormatter
 
 import matplotlib.pyplot as plt
 
-from cobald_sim import globals
-
 from cobald_sim.cost import cobald_cost
 from cobald_sim.job import job_to_queue_scheduler, Job
 from cobald_sim.scheduler import CondorJobScheduler
 from cobald_sim.pool import Pool, StaticPool
 from cobald_sim.controller import SimulatedCostController
 from cobald_sim.job_io.htcondor import htcondor_job_reader
+from cobald_sim.pool_io.htcondor import htcondor_pool_reader
+from cobald_sim.simulator import Simulator
 
 
 class JSONSocketHandler(logging.handlers.SocketHandler):
@@ -202,24 +202,34 @@ def generate_plots():
 
 
 def main(filename="condor_usage_sorted_filtered.csv", until=2000):
-    resource_normalisation = {"memory": 2000}
-    monitor_data = partial(monitor, resource_normalisation)
+    simulator = Simulator()
+    simulator.create_job_generator(filename=filename, job_reader=htcondor_job_reader)
+    simulator.create_pools(filename="ekp_worker.csv", pool_reader=htcondor_pool_reader, pool_type=StaticPool)
+    simulator.create_scheduler(scheduler_type=CondorJobScheduler)
+    simulator.run(until=until)
+    # resource_normalisation = {"memory": 2000}
+    # monitor_data = partial(monitor, resource_normalisation)
 
-    random.seed(1234)
-    env = simpy.Environment()
-    trace(env, monitor_data, resource_normalisation=resource_normalisation)
-    with open(filename, "r") as input_file:
-        globals.job_generator = job_to_queue_scheduler(job_generator=htcondor_job_reader(env, input_file),
-                                                       job_queue=globals.job_queue,
-                                                       env=env)
-        env.process(globals.job_generator)
-        for resources in [{"memory": 5000, "cores": 1}, {"memory": 24000, "cores": 8}, {"memory": 16000, "cores": 4}]:
-            pool = Pool(env, resources=resources)
-            globals.pools.append(pool)
-            SimulatedCostController(env, target=pool, rate=1)
-        globals.pools.append(StaticPool(env, capacity=2))
-        globals.job_scheduler = CondorJobScheduler(env=env, job_queue=globals.job_queue)
-        env.run(until=until)
+    # random.seed(1234)
+    # env = simpy.Environment()
+    # trace(env, monitor_data, resource_normalisation=resource_normalisation)
+    # with open(filename, "r") as input_file:
+    #     globals.job_generator = job_to_queue_scheduler(job_generator=htcondor_job_reader(simulator.env, input_file),
+    #                                                    job_queue=globals.job_queue,
+    #                                                    env=simulator.env)
+    #     simulator.env.process(globals.job_generator)
+    #     with open("ekp_worker.csv", "r") as pool_input:
+    #         for pool in htcondor_pool_reader(env=simulator.env, iterable=pool_input, pool_type=StaticPool):
+    #             globals.pools.append(pool)
+    #     # for resources in [{"memory": 5000, "cores": 1}, {"memory": 24000, "cores": 8}, {"memory": 16000, "cores": 4}]:
+    #     #     pool = Pool(env, resources=resources)
+    #     #     globals.pools.append(pool)
+    #     #     SimulatedCostController(env, target=pool, rate=1)
+    #     # globals.pools.append(StaticPool(env, capacity=2))
+    #     globals.job_scheduler = CondorJobScheduler(env=simulator.env, job_queue=globals.job_queue)
+    #     # env.run(until=until)
+    for job in simulator.job_scheduler.job_queue:
+        print(job.resources, job.used_resources)
 
 
 if __name__ == "__main__":

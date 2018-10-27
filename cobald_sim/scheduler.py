@@ -1,15 +1,12 @@
-from cobald_sim import globals
-
-
 # TODO: does not work anymore as there is no method get_drone at pool
-def job_scheduler(env):
+def job_scheduler(simulator):
     while True:
-        for pool in globals.pools:
-            while pool.level > 0 and globals.global_demand.level > 0:
+        for pool in simulator.pools:
+            while pool.level > 0 and simulator.global_demand.level > 0:
                 drone = yield from pool.get_drone(1)
-                env.process(drone.start_job(*next(globals.job_generator)))
-                yield env.timeout(0)
-        yield env.timeout(1)
+                simulator.env.process(drone.start_job(*next(simulator.job_generator)))
+                yield simulator.env.timeout(0)
+        yield simulator.env.timeout(1)
 
 
 class CondorJobScheduler(object):
@@ -25,9 +22,10 @@ class CondorJobScheduler(object):
     :param env:
     :return:
     """
-    def __init__(self, env, job_queue):
+    def __init__(self, env, job_queue, pools):
         self.env = env
         self.job_queue = job_queue
+        self.pools = pools
         self.action = env.process(self.run())
 
     def run(self):
@@ -44,7 +42,7 @@ class CondorJobScheduler(object):
 
     def _schedule_job(self, job):
         priorities = {}
-        for pool in globals.pools:
+        for pool in self.pools:
             for drone in pool.drones:
                 cost = 0
                 resource_types = {*drone.resources.keys(), *job.resources.keys()}
