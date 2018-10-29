@@ -15,7 +15,7 @@ class Pool(interfaces.Pool, container.Container):
     :param resources: Dictionary of resources available for each pool instantiated within the pool
     """
     def __init__(self, env, capacity=float('inf'), init=0, resources={"memory": 8000, "cores": 1}):
-        super(Pool, self).__init__(env, capacity)
+        super(Pool, self).__init__(env, capacity, init)
         self._drones = []
         self.env = env
         self.resources = resources
@@ -26,7 +26,6 @@ class Pool(interfaces.Pool, container.Container):
     def init_pool(self, init=0):
         for _ in range(init):
             self._drones.append(Drone(self.env, self.resources, 0))
-        self.put(init)
 
     def run(self):
         while True:
