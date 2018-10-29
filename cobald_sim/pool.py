@@ -5,13 +5,28 @@ from .drone import Drone
 
 
 class Pool(interfaces.Pool, container.Container):
+    """
+    A pool encapsulating a number of pools or drones. Given a specific demand, allocation and utilisation, the
+    pool is able to adapt in terms of number of drones providing the given resources.
+
+    :param env: Reference to the simulation env
+    :param capacity: Maximum number of pools that can be instantiated within the pool
+    :param init: Number of pools to instantiate at creation time of the pool
+    :param resources: Dictionary of resources available for each pool instantiated within the pool
+    """
     def __init__(self, env, capacity=float('inf'), init=0, resources={"memory": 8000, "cores": 1}):
-        super(Pool, self).__init__(env, capacity, init)
-        self.resources = resources
-        self._demand = 1
+        super(Pool, self).__init__(env, capacity)
         self._drones = []
         self.env = env
+        self.resources = resources
+        self.init_pool(init=init)
+        self._demand = 1
         self.action = env.process(self.run())
+
+    def init_pool(self, init=0):
+        for _ in range(init):
+            self._drones.append(Drone(self.env, self.resources, 0))
+        self.put(init)
 
     def run(self):
         while True:
@@ -83,13 +98,18 @@ class Pool(interfaces.Pool, container.Container):
 
 
 class StaticPool(Pool):
+    """
+    A static pool does not react on changing conditions regarding demand, allocation and utilisation but instead
+    initialises the `capacity` of given drones with initialised `resources`.
+
+    :param env: Reference to the simulation env
+    :param capacity: Maximum number of pools that can be instantiated within the pool
+    :param resources: Dictionary of resources available for each pool instantiated within the pool
+    """
     def __init__(self, env, capacity=0, resources={"memory": 8000, "cores": 1}):
         assert capacity > 0, "Static pool was initialised without any resources..."
         super(StaticPool, self).__init__(env, capacity=capacity, init=capacity, resources=resources)
         self._demand = capacity
-        for _ in range(capacity):
-            self._drones.append(Drone(self.env, self.resources, 0))
-        self.put(capacity)
 
     def run(self):
         while True:
