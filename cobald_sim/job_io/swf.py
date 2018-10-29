@@ -46,4 +46,4 @@ def swf_job_reader(env, iterable, resource_name_mapping={
                 key: float(row[header[used_resource_name_mapping[key]]])
                 for key in used_resource_name_mapping.keys()
                 if float(row[header[used_resource_name_mapping[key]]]) >= 0
-            }, queue_date=float(row[header[used_resource_name_mapping["queuetime"]]]))
+            }, queue_date=float(row[header[used_resource_name_mapping["queuetime"]]]), name=row[header["Job Number"]])
