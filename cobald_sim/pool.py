@@ -24,10 +24,19 @@ class Pool(interfaces.Pool, container.Container):
         self.action = env.process(self.run())
 
     def init_pool(self, init=0):
+        """
+        Initialisation of existing drones at creation time of pool.
+
+        :param init: Number of drones to create.
+        """
         for _ in range(init):
             self._drones.append(Drone(self.env, self.resources, 0))
 
     def run(self):
+        """
+        Pool periodically checks the current demand and provided drones. If demand is higher than the current level,
+        the pool takes care of initialising new drones. Otherwise drones get removed.
+        """
         while True:
             drones_required = self._demand - self.level
             while drones_required > 0:
@@ -111,5 +120,8 @@ class StaticPool(Pool):
         self._demand = capacity
 
     def run(self):
+        """
+        Pool runs forever and does not check if number of drones needs to be adapted.
+        """
         while True:
             yield self.env.timeout(float("Inf"))
