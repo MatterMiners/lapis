@@ -54,8 +54,8 @@ def cli(ctx, seed, until, log_tcp, log_file):
 
 
 @cli.command()
-@click.option("--job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
-@click.option("--pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
+@click.option("--job-file", "job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
+@click.option("--pool-file", "pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
 @click.pass_context
 def static(ctx, job_file, pool_file):
     click.echo("starting static environment")
@@ -70,8 +70,8 @@ def static(ctx, job_file, pool_file):
 
 
 @cli.command()
-@click.option("--job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
-@click.option("--pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
+@click.option("--job-file", "job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
+@click.option("--pool-file", "pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
 @click.pass_context
 def dynamic(ctx, job_file, pool_file):
     click.echo("starting dynamic environment")
@@ -90,9 +90,9 @@ def dynamic(ctx, job_file, pool_file):
 
 
 @cli.command()
-@click.option("--job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
-@click.option("--static_pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
-@click.option("--dynamic_pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
+@click.option("--job-file", "job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
+@click.option("--static-pool-file", "static_pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
+@click.option("--dynamic-pool-file", "dynamic_pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
 @click.pass_context
 def hybrid(ctx, job_file, static_pool_file, dynamic_pool_file):
     click.echo("starting hybrid environment")
