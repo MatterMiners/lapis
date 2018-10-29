@@ -49,7 +49,7 @@ def monitor(data, t, prio, eid, event, resource_normalisation, simulator):
         for pool in simulator.pools:
             pool_demand += pool.demand
             pool_supply += pool.supply
-            result["pool_%s_supply" % id(pool)] = pool.supply
+            result["pool_%s_supply" % pool.name] = pool.supply
             pool_utilisation += pool.utilisation
             pool_allocation += pool.allocation
             for drone in pool.drones:

@@ -34,7 +34,7 @@ def job_demand(simulator):
 
 
 class Job(object):
-    def __init__(self, env, resources, used_resources=None, in_queue_since=0, queue_date=0):
+    def __init__(self, env, resources, used_resources=None, in_queue_since=0, queue_date=0, name=None):
         self.env = env
         self.resources = resources
         self.used_resources = used_resources
@@ -45,6 +45,7 @@ class Job(object):
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
         self.processing = None
+        self.name = name or id(self)
 
     @property
     def waiting_time(self):

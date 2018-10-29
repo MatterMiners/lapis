@@ -14,13 +14,14 @@ class Pool(interfaces.Pool, container.Container):
     :param init: Number of pools to instantiate at creation time of the pool
     :param resources: Dictionary of resources available for each pool instantiated within the pool
     """
-    def __init__(self, env, capacity=float('inf'), init=0, resources={"memory": 8000, "cores": 1}):
+    def __init__(self, env, capacity=float('inf'), init=0, resources={"memory": 8000, "cores": 1}, name=None):
         super(Pool, self).__init__(env, capacity, init)
         self._drones = []
         self.env = env
         self.resources = resources
         self.init_pool(init=init)
         self._demand = 1
+        self.name = name or id(self)
         self.action = env.process(self.run())
 
     def init_pool(self, init=0):
