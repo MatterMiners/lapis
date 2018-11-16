@@ -29,7 +29,7 @@ def job_demand(simulator):
         value = round(value)
         if value > 0:
             simulator.global_demand.put(value)
-            logging.getLogger("general").info(str(round(simulator.env.now)), {"user_demand_new": value})
+            logging.info(str(round(simulator.env.now)), {"user_demand_new": value})
             # print("[demand] raising user demand for %f at %d to %d" % (value, env.now, globals.global_demand.level))
 
 
@@ -60,7 +60,8 @@ class Job(object):
 
     def _process(self):
         try:
-            yield self.env.timeout(self.requested_walltime or self.walltime, value=self)
+            yield self.env.timeout(0, value=self)
+            yield self.env.timeout(self.requested_walltime or self.walltime)
         except simpy.exceptions.Interrupt:
             pass
 
@@ -91,6 +92,6 @@ def job_to_queue_scheduler(job_generator, job_queue, env=None, **kwargs):
             job = None
         else:
             if count > 0:
-                logging.getLogger("general").info(str(round(env.now)), {"user_demand_new": count})
+                logging.info(str(round(env.now)), {"user_demand_new": count})
                 count = 0
             yield env.timeout(1)

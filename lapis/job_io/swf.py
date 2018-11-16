@@ -1,6 +1,6 @@
 import csv
 
-from cobald_sim.job import Job
+from lapis.job import Job
 
 
 def swf_job_reader(env, iterable, resource_name_mapping={

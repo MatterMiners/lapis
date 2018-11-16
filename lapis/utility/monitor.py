@@ -3,8 +3,8 @@ from functools import wraps
 import simpy
 import logging
 
-from cobald_sim.cost import cobald_cost
-from cobald_sim.job import Job
+from lapis.cost import cobald_cost
+from lapis.job import Job
 
 last_step = 0
 

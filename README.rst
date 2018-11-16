@@ -1,8 +1,8 @@
-=========================================
-COBalD_Sim - this is just a working title
-=========================================
+===============================================================================
+Lapis is an adaptable, performant, and interactive scheduling (Lapis) simulator
+===============================================================================
 
-The ``cobald_sim`` library provides a framework and runtime for simulating the scheduling and usage of opportunistic
+The ``lapis`` library provides a framework and runtime for simulating the scheduling and usage of opportunistic
 and static resources.
 
 Command Line Interface

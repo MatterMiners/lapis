@@ -3,8 +3,8 @@ from functools import partial
 
 import simpy
 
-from cobald_sim.job import job_to_queue_scheduler
-from cobald_sim.utility.monitor import monitor, trace
+from lapis.job import job_to_queue_scheduler
+from lapis.utility.monitor import monitor, trace
 
 
 class Simulator(object):
@@ -35,4 +35,5 @@ class Simulator(object):
         self.job_scheduler = scheduler_type(env=self.env, job_queue=self.job_queue, pools=self.pools)
 
     def run(self, until=2000):
+        print("running until", until)
         self.env.run(until=until)

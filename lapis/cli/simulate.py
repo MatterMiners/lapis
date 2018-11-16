@@ -3,14 +3,14 @@ import logging.handlers
 
 from cobald.monitor.format_json import JsonFormatter
 
-from cobald_sim.controller import SimulatedCostController
-from cobald_sim.job_io.htcondor import htcondor_job_reader
-from cobald_sim.pool import StaticPool, Pool
-from cobald_sim.pool_io.htcondor import htcondor_pool_reader
-from cobald_sim.job_io.swf import swf_job_reader
+from lapis.controller import SimulatedCostController
+from lapis.job_io.htcondor import htcondor_job_reader
+from lapis.pool import StaticPool, Pool
+from lapis.pool_io.htcondor import htcondor_pool_reader
+from lapis.job_io.swf import swf_job_reader
 
-from cobald_sim.scheduler import CondorJobScheduler
-from cobald_sim.simulator import Simulator
+from lapis.scheduler import CondorJobScheduler
+from lapis.simulator import Simulator
 
 
 class JSONSocketHandler(logging.handlers.SocketHandler):
@@ -18,7 +18,7 @@ class JSONSocketHandler(logging.handlers.SocketHandler):
         return self.format(record).encode()
 
 
-monitoring_logger = logging.getLogger("general")
+monitoring_logger = logging.getLogger()
 monitoring_logger.setLevel(logging.DEBUG)
 
 last_step = 0
