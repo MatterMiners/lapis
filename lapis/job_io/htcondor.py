@@ -6,7 +6,7 @@ from lapis.job import Job
 
 def htcondor_job_reader(env, iterable, resource_name_mapping={
     "cores": "RequestCpus",
-    "walltime": "RemoteWallClockTime",
+    "walltime": "RequestWalltime",
     "memory": "RequestMemory",
     "disk": "RequestDisk"
 }, used_resource_name_mapping={
