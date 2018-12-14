@@ -3,7 +3,7 @@ from lapis.job_io.htcondor import htcondor_job_reader
 
 class TestHtcondorJobReader(object):
     def test_simple_read(self):
-        with open("../data/condor_usage_sorted_filtered-ek.csv") as input_file:
+        with open("../data/htcondor_jobs.csv") as input_file:
             jobs = 0
             for job in htcondor_job_reader(None, input_file):
                 assert job is not None
