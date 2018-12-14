@@ -1,0 +1,59 @@
+; Example taken from Gaia export by Joseph Emeras (joseph.emeras@gmail.com) provided at Parallel Workloads Archive
+; see: http://www.cs.huji.ac.il/labs/parallel/workload/l_unilu_gaia/index.html
+;
+;   --- SWF file converted from SQL request to the OAR database and jobs resource usage collected by Colmet ---
+;       Version: 2.2
+;      Computer: Bull / Dell mix
+;    Conversion: Joseph Emeras <joseph.emeras@gmail.com> - uncleaned version - March 2015
+;
+;  Installation: UNILU Gaia Cluster
+;   Acknowledge: Joseph Emeras, SnT
+;   Information: https://hpc.uni.lu/systems/gaia/
+;
+; MaxJobs: 51987
+; MaxRecords: 51987
+;
+; UnixStartTime: 1400749079
+;
+; TimeZoneString: Europe/Luxembourg
+; StartTime: Thu May 22 10:57:59 CEST 2014
+; EndTime:   Tue Aug 19 13:06:12 CEST 2014
+;
+; MaxNodes: 151
+; MaxProcs: 2004
+;
+; MaxQueues: 3
+;    Queues: Queue nb 1 is default queue. Queue nb 2 is besteffort jobs queue. Besteffort jobs are low priority and preemptible jobs. Queue 0 is Interactive jobs.
+;     Queue: 1 - Normal jobs queue - normal priority - jobs are not preemptible
+;     Queue: 2 - Besteffort jobs queue - low priority - besteffort jobs can be preempted by normal jobs.
+;     Queue: 0 - Interactive jobs - normal priority - jobs are not preemptible - interactive jobs provide a direct shell on the nodes to the user.
+;
+; Note: Scheduler is OAR (http://oar.imag.fr/)
+;
+;
+; 1|         2|          3|        4|  5|    6|      7|  8|        9| 10| 11| 12| 13| 14| 15| 16| 17| 18
+;  |          |           |         |   |     |       |   |         |   |   |   |   |   |   |   |   |
+; j|         s|          w|        r|  p|    c|      m|  p|        u|  m|  s|  u|  g|  e|  q|  p|  p|  t
+; o|         u|          a|        u|  r|    p|      e|  r|        s|  e|  t|  i|  i|  x|   |  a|  r|  h
+; b|         b|          i|        n|  o|    u|      m|  o|        e|  m|  a|  d|  d|  e|  n|  r|  e|  i
+;  |         m|          t|        t|  c|     |       |  c|        r|   |  t|   |   |   |  u|  t|  v|  n
+;  |         i|           |        i|   |    u|      u|   |         |  r|  u|   |   |  n|  m|  i|   |  k
+;  |         t|           |        m|  a|    s|      s|  r|        e|  e|  s|   |   |  u|   |  t|  j|
+;  |          |           |        e|  l|    e|      e|  e|        s|  q|   |   |   |  m|   |  i|  o|  t
+;  |          |           |         |  l|    d|      d|  q|        t|   |   |   |   |   |   |  o|  b|  i
+;  |          |           |         |  o|     |       |   |         |   |   |   |   |   |   |  n|   |  m
+;  |          |           |         |  c|     |       |   |         |   |   |   |   |   |   |   |   |  e
+;  |          |           |         |   |     |       |   |         |   |   |   |   |   |   |   |   |
+; MaxQueues: 3
+; Queue:  0  interactive    interactive
+; Queue:  1  default        default
+; Queue:  2  besteffort     besteffort
+;
+    1        0 477768  35541  160  32096 89734  160 108000    -1  1   1   1   1  1 -1 -1 -1
+    2    83558      1 432024   36   1320  7566   36 432000    -1  0   2   2   2  1 -1 -1 -1
+    3   195861      1 278442   64 278442 34640   64 432000    -1  1   3   3   3  1 -1 -1 -1
+    4   278659      2 268225    4   4023  4864    4 345600    -1  1   4   4   4  1 -1 -1 -1
+    5   339016      1 305581   24   1783 14805   24 432000    -1  0   5   5   5  1 -1 -1 -1
+    6   339299      1 214651   24 358.00  2560   24 432000    -1  1   5   5   6  1 -1 -1 -1
+    7   340144      1 432006   24 720.00  2005   24 432000    -1  0   5   5   7  1 -1 -1 -1
+    8   340462      2 370083   24 925.00  4565   24 432000    -1  0   5   5   7  1 -1 -1 -1
