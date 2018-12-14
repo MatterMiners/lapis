@@ -1,4 +1,5 @@
 import csv
+import logging
 
 from lapis.job import Job
 
@@ -18,6 +19,9 @@ def htcondor_job_reader(env, iterable, resource_name_mapping={
     htcondor_reader = csv.DictReader(iterable, delimiter=' ', quotechar="'")
 
     for row in htcondor_reader:
+        if float(row[used_resource_name_mapping["walltime"]]) <= 0:
+            logging.getLogger("implementation").warning("removed job from htcondor import", row)
+            continue
         yield Job(
             env,
             resources={
