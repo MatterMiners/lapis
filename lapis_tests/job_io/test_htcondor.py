@@ -11,3 +11,7 @@ class TestHtcondorJobReader(object):
                 assert job is not None
                 jobs += 1
             assert jobs > 0
+        with open(os.path.join(os.path.dirname(__file__), "..", "data", "htcondor_jobs.csv")) as input_file:
+            # ensure that one job was removed by importer (wrong walltime given)
+            lines = sum(1 for _ in input_file)
+            assert jobs == (lines - 2)
