@@ -3,7 +3,10 @@ import math
 import simpy
 import logging
 
+from usim import time
 
+
+# TODO: needs refactoring
 def job_demand(simulator):
     """
     function randomly sets global user demand by using different strategies
@@ -33,9 +36,9 @@ def job_demand(simulator):
             # print("[demand] raising user demand for %f at %d to %d" % (value, env.now, globals.global_demand.level))
 
 
+# TODO: needs refactoring
 class Job(object):
-    def __init__(self, env, resources, used_resources=None, in_queue_since=0, queue_date=0, name=None):
-        self.env = env
+    def __init__(self, resources, used_resources=None, in_queue_since=0, queue_date=0, name=None):
         self.resources = resources
         self.used_resources = used_resources
         self.walltime = used_resources.pop("walltime", None)
@@ -53,11 +56,14 @@ class Job(object):
             return self.in_queue_until - self.in_queue_since
         return float("Inf")
 
-    def process(self):
-        self.in_queue_until = self.env.now
-        self.processing = self.env.process(self._process())
-        return self.processing
+    async def run(self):
+        self.in_queue_until = time.now
+        # self.processing = self.env.process(self._process())
+        # return self.processing
+        await (time + self.walltime or self.requested_walltime)
+        print("%s: job finished after %s" % (time.now, self.walltime or self.requested_walltime))
 
+    # TODO: not needed anymore?
     def _process(self):
         try:
             yield self.env.timeout(0, value=self)
@@ -65,6 +71,7 @@ class Job(object):
         except simpy.exceptions.Interrupt:
             pass
 
+    # TODO: interrupt should be integrated
     def kill(self):
         # job exceeds either own requested resources or resources provided by drone
         self.processing.interrupt(cause=self)
@@ -75,7 +82,7 @@ def job_property_generator(**kwargs):
         yield 10, {"memory": 8, "cores": 1, "disk": 100}
 
 
-def job_to_queue_scheduler(job_generator, job_queue, env=None, **kwargs):
+async def job_to_queue_scheduler(job_generator, job_queue, **kwargs):
     job = next(job_generator)
     base_date = job.queue_date
     current_time = 0
@@ -85,13 +92,13 @@ def job_to_queue_scheduler(job_generator, job_queue, env=None, **kwargs):
         if not job:
             job = next(job_generator)
             current_time = job.queue_date - base_date
-        if env.now >= current_time:
+        if time.now >= current_time:
             count += 1
-            job.in_queue_since = env.now
-            job_queue.append(job)
+            job.in_queue_since = time.now
+            await job_queue.put(job)
             job = None
         else:
             if count > 0:
-                logging.info(str(round(env.now)), {"user_demand_new": count})
+                logging.info(str(round(time.now)), {"user_demand_new": count})
                 count = 0
-            yield env.timeout(1)
+            await (time == current_time)

@@ -62,10 +62,13 @@ def static(ctx, job_file, pool_file):
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
     simulator.create_job_generator(job_input=file, job_reader=job_import_mapper[file_type])
+    simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     for current_pool in pool_file:
         pool_file, pool_file_type = current_pool
-        simulator.create_pools(pool_input=pool_file, pool_reader=pool_import_mapper[pool_file_type], pool_type=StaticPool)
-    simulator.create_scheduler(scheduler_type=CondorJobScheduler)
+        simulator.create_pools(
+            pool_input=pool_file,
+            pool_reader=pool_import_mapper[pool_file_type],
+            pool_type=StaticPool)
     simulator.run(until=ctx.obj["until"])
 
 
@@ -78,6 +81,7 @@ def dynamic(ctx, job_file, pool_file):
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
     simulator.create_job_generator(job_input=file, job_reader=job_import_mapper[file_type])
+    simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     for current_pool in pool_file:
         file, file_type = current_pool
         simulator.create_pools(
@@ -85,7 +89,6 @@ def dynamic(ctx, job_file, pool_file):
             pool_reader=pool_import_mapper[file_type],
             pool_type=Pool,
             controller=SimulatedCostController)
-    simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     simulator.run(until=ctx.obj["until"])
 
 
@@ -99,13 +102,13 @@ def hybrid(ctx, job_file, static_pool_file, dynamic_pool_file):
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
     simulator.create_job_generator(job_input=file, job_reader=job_import_mapper[file_type])
+    simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     for current_pool in static_pool_file:
         file, file_type = current_pool
         simulator.create_pools(pool_input=file, pool_reader=pool_import_mapper[file_type], pool_type=StaticPool)
     for current_pool in dynamic_pool_file:
         file, file_type = current_pool
         simulator.create_pools(pool_input=file, pool_reader=pool_import_mapper[file_type], pool_type=Pool, controller=SimulatedCostController)
-    simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     simulator.run(until=ctx.obj["until"])
 
 

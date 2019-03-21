@@ -1,4 +1,10 @@
+from usim import time, Scope
+
+
 # TODO: does not work anymore as there is no method get_drone at pool
+from lapis.drone import Drone
+
+
 def job_scheduler(simulator):
     while True:
         for pool in simulator.pools:
@@ -22,50 +28,59 @@ class CondorJobScheduler(object):
     :param env:
     :return:
     """
-    def __init__(self, env, job_queue, pools):
-        self.env = env
+    def __init__(self, job_queue):
         self.job_queue = job_queue
-        self.pools = pools
-        self.action = env.process(self.run())
+        self.drone_list = []
 
-    def run(self):
+    def register_drone(self, drone: Drone):
+        self.drone_list.append(drone)
+
+    def unregister_drone(self, drone: Drone):
+        self.drone_list.remove(drone)
+
+    async def run(self):
         # current_job = None
         # postponed_unmatched_job = False
-        while True:
-            for job in self.job_queue:
-                best_match = self._schedule_job(job)
-                if best_match:
-                    self.env.process(best_match.start_job(job))
-                    self.job_queue.remove(job)
-                    yield self.env.timeout(0)
-            yield self.env.timeout(60)
-
-    def _schedule_job(self, job):
-        priorities = {}
-        for pool in self.pools:
-            for drone in pool.drones:
-                cost = 0
-                resource_types = {*drone.resources.keys(), *job.resources.keys()}
-                for resource_type in resource_types:
-                    if resource_type not in drone.resources.keys():
-                        cost = float("Inf")
-                    elif resource_type not in job.resources:
-                        cost += drone.resources[resource_type] - drone.resources[resource_type]
-                    elif (pool.resources[resource_type] - drone.resources[resource_type]) < \
-                            job.resources[resource_type]:
-                        cost = float("Inf")
-                        break
+        async with Scope() as scope:
+            temp = []
+            while True:
+                async for job in self.job_queue:
+                    best_match = self._schedule_job(job)
+                    if best_match:
+                        scope.do(best_match.start_job(job))
                     else:
-                        cost += (pool.resources[resource_type] - drone.resources[resource_type]) // \
-                                job.resources[resource_type]
-                cost /= len(resource_types)
-                if cost <= 1:
-                    # directly start job
-                    return drone
-                try:
-                    priorities[cost].append(drone)
-                except KeyError:
-                    priorities[cost] = [drone]
+                        temp.append(job)
+                # put all the jobs that could not be scheduled back into the queue
+                while temp:
+                    job = temp.pop()
+                    await self.job_queue.put(job)
+                await (time + 60)
+
+    def _schedule_job(self, job) -> Drone:
+        priorities = {}
+        for drone in self.drone_list:
+            cost = 0
+            resource_types = {*drone.resources.keys(), *job.resources.keys()}
+            for resource_type in resource_types:
+                if resource_type not in drone.resources.keys():
+                    cost = float("Inf")
+                elif resource_type not in job.resources:
+                    cost += drone.resources[resource_type] - drone.resources[resource_type]
+                elif (drone.pool_resources[resource_type] - drone.resources[resource_type]) < \
+                        job.resources[resource_type]:
+                    cost = float("Inf")
+                    break
+                else:
+                    cost += (drone.pool_resources[resource_type] - drone.resources[resource_type]) // \
+                            job.resources[resource_type]
+            cost /= len(resource_types)
+            if cost <= 1:
+                # directly start job
+                return drone
+            try:
+                priorities[cost].append(drone)
+            except KeyError:
+                priorities[cost] = [drone]
         try:
             minimal_key = min(priorities)
             if minimal_key < float("Inf"):
