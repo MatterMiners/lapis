@@ -7,7 +7,7 @@ class TestHtcondorJobReader(object):
     def test_simple_read(self):
         with open(os.path.join(os.path.dirname(__file__), "..", "data", "htcondor_jobs.csv")) as input_file:
             jobs = 0
-            for job in htcondor_job_reader(None, input_file):
+            for job in htcondor_job_reader(input_file):
                 assert job is not None
                 jobs += 1
             assert jobs > 0
