@@ -22,10 +22,15 @@ def htcondor_job_reader(iterable, resource_name_mapping={
         if float(row[used_resource_name_mapping["walltime"]]) <= 0:
             logging.getLogger("implementation").warning("removed job from htcondor import", row)
             continue
+        resources = {}
+        for key in resource_name_mapping:
+            try:
+                resources[key] = float(row[resource_name_mapping[key]])
+            except ValueError:
+                pass
         yield Job(
-            resources={
-                key: float(row[resource_name_mapping[key]]) for key in resource_name_mapping
-            }, used_resources={
+            resources=resources,
+            used_resources={
                 "cores": (float(row["RemoteSysCpu"]) + float(row["RemoteUserCpu"])) /
                          float(row[used_resource_name_mapping["walltime"]]),
                 "memory": float(row[used_resource_name_mapping["memory"]]),
