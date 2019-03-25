@@ -41,6 +41,9 @@ def job_demand(simulator):
 
 # TODO: needs refactoring
 class Job(object):
+    __slots__ = ("resources", "used_resources", "walltime", "requested_walltime", "queue_date", "in_queue_since",
+                 "in_queue_until", "name")
+
     def __init__(self, resources, used_resources=None, in_queue_since=0, queue_date=0, name=None):
         self.resources = resources
         self.used_resources = used_resources
@@ -50,7 +53,6 @@ class Job(object):
         self.queue_date = queue_date
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
-        self.processing = None
         self.name = name or id(self)
 
     @property
