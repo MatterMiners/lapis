@@ -1,12 +1,14 @@
 import csv
+from functools import partial
 
+from typing import Callable
 from ..pool import Pool
 
 
-def machines_pool_reader(env, iterable, resource_name_mapping={
+def machines_pool_reader(iterable, resource_name_mapping={
     "cores": "CPUs_per_node",
     "memory": "RAM_per_node_in_KB"
-}, pool_type=Pool):
+}, pool_type=Pool, make_drone: Callable=None):
     """
     Load a pool configuration that was exported via htcondor from files or iterables
 
@@ -15,11 +17,11 @@ def machines_pool_reader(env, iterable, resource_name_mapping={
     :param pool_type: The type of pool to be yielded
     :return: Yields the :py:class:`StaticPool`s found in the given iterable
     """
+    assert make_drone
     reader = csv.DictReader(iterable, delimiter=' ', skipinitialspace=True)
     for row_idx, row in enumerate(reader):
         yield pool_type(
-            env,
             capacity=int(row["number_of_nodes"]),
-            resources={key: float(row[value]) for key, value in resource_name_mapping.items()},
+            make_drone=partial(make_drone, {key: float(row[value]) for key, value in resource_name_mapping.items()}),
             name=row["cluster_name"]
         )

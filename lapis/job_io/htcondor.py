@@ -4,7 +4,7 @@ import logging
 from lapis.job import Job
 
 
-def htcondor_job_reader(env, iterable, resource_name_mapping={
+def htcondor_job_reader(iterable, resource_name_mapping={
     "cores": "RequestCpus",
     "walltime": "RequestWalltime",
     "memory": "RequestMemory",
@@ -23,7 +23,6 @@ def htcondor_job_reader(env, iterable, resource_name_mapping={
             logging.getLogger("implementation").warning("removed job from htcondor import", row)
             continue
         yield Job(
-            env,
             resources={
                 key: float(row[resource_name_mapping[key]]) for key in resource_name_mapping
             }, used_resources={

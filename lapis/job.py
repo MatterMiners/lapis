@@ -1,9 +1,15 @@
 import random
 import math
-import simpy
 import logging
 
+from usim import time, ActivityCancelled
 
+
+class JobKilled(Exception):
+    ...
+
+
+# TODO: needs refactoring
 def job_demand(simulator):
     """
     function randomly sets global user demand by using different strategies
@@ -33,9 +39,9 @@ def job_demand(simulator):
             # print("[demand] raising user demand for %f at %d to %d" % (value, env.now, globals.global_demand.level))
 
 
+# TODO: needs refactoring
 class Job(object):
-    def __init__(self, env, resources, used_resources=None, in_queue_since=0, queue_date=0, name=None):
-        self.env = env
+    def __init__(self, resources, used_resources=None, in_queue_since=0, queue_date=0, name=None):
         self.resources = resources
         self.used_resources = used_resources
         self.walltime = used_resources.pop("walltime", None)
@@ -53,21 +59,16 @@ class Job(object):
             return self.in_queue_until - self.in_queue_since
         return float("Inf")
 
-    def process(self):
-        self.in_queue_until = self.env.now
-        self.processing = self.env.process(self._process())
-        return self.processing
-
-    def _process(self):
-        try:
-            yield self.env.timeout(0, value=self)
-            yield self.env.timeout(self.requested_walltime or self.walltime)
-        except simpy.exceptions.Interrupt:
-            pass
-
-    def kill(self):
-        # job exceeds either own requested resources or resources provided by drone
-        self.processing.interrupt(cause=self)
+    async def run(self):
+        self.in_queue_until = time.now
+        logging.info(str(round(time.now)), {
+            "job_queue_time": self.queue_date,
+            "job_waiting_time": self.waiting_time
+        })
+        await (time + self.walltime or self.requested_walltime)
+        logging.info(str(round(time.now)), {
+            "job_wall_time": self.walltime or self.requested_walltime
+        })
 
 
 def job_property_generator(**kwargs):
@@ -75,7 +76,7 @@ def job_property_generator(**kwargs):
         yield 10, {"memory": 8, "cores": 1, "disk": 100}
 
 
-def job_to_queue_scheduler(job_generator, job_queue, env=None, **kwargs):
+async def job_to_queue_scheduler(job_generator, job_queue, **kwargs):
     job = next(job_generator)
     base_date = job.queue_date
     current_time = 0
@@ -85,13 +86,13 @@ def job_to_queue_scheduler(job_generator, job_queue, env=None, **kwargs):
         if not job:
             job = next(job_generator)
             current_time = job.queue_date - base_date
-        if env.now >= current_time:
+        if time.now >= current_time:
             count += 1
-            job.in_queue_since = env.now
-            job_queue.append(job)
+            job.in_queue_since = time.now
+            await job_queue.put(job)
             job = None
         else:
             if count > 0:
-                logging.info(str(round(env.now)), {"user_demand_new": count})
+                logging.info(str(round(time.now)), {"user_demand_new": count})
                 count = 0
-            yield env.timeout(1)
+            await (time == current_time)

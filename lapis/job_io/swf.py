@@ -3,7 +3,7 @@ import csv
 from lapis.job import Job
 
 
-def swf_job_reader(env, iterable, resource_name_mapping={
+def swf_job_reader(iterable, resource_name_mapping={
     "cores": "Requested Number of Processors",
     "walltime": "Requested Time",
     "memory": "Requested Memory"
@@ -36,7 +36,6 @@ def swf_job_reader(env, iterable, resource_name_mapping={
     reader = csv.reader((line for line in iterable if line[0] != ';'), delimiter=' ', skipinitialspace=True)
     for row in reader:
         yield Job(
-            env,
             resources={
                 key: float(row[header[resource_name_mapping[key]]])
                 for key in ("cores", "memory", "walltime")
@@ -44,6 +43,6 @@ def swf_job_reader(env, iterable, resource_name_mapping={
             },
             used_resources={
                 key: float(row[header[used_resource_name_mapping[key]]])
-                for key in used_resource_name_mapping.keys()
+                for key in ("cores", "memory", "walltime")
                 if float(row[header[used_resource_name_mapping[key]]]) >= 0
             }, queue_date=float(row[header[used_resource_name_mapping["queuetime"]]]), name=row[header["Job Number"]])
