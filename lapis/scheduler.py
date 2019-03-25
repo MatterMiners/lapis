@@ -1,5 +1,6 @@
-from usim import time, Scope
+from collections import deque
 
+from usim import time, Scope, each
 
 # TODO: does not work anymore as there is no method get_drone at pool
 from lapis.drone import Drone
@@ -29,8 +30,10 @@ class CondorJobScheduler(object):
     :return:
     """
     def __init__(self, job_queue):
-        self.job_queue = job_queue
+        self._stream_queue = job_queue
         self.drone_list = []
+        self.interval = 60
+        self.job_queue = []
 
     def register_drone(self, drone: Drone):
         self.drone_list.append(drone)
@@ -39,22 +42,18 @@ class CondorJobScheduler(object):
         self.drone_list.remove(drone)
 
     async def run(self):
-        # current_job = None
-        # postponed_unmatched_job = False
         async with Scope() as scope:
-            temp = []
-            while True:
-                async for job in self.job_queue:
+            scope.do(self._collect_jobs())
+            async for _ in each(interval=self.interval):
+                for job in self.job_queue:
                     best_match = self._schedule_job(job)
                     if best_match:
                         scope.do(best_match.start_job(job))
-                    else:
-                        temp.append(job)
-                # put all the jobs that could not be scheduled back into the queue
-                while temp:
-                    job = temp.pop()
-                    await self.job_queue.put(job)
-                await (time + 60)
+                        self.job_queue.remove(job)
+
+    async def _collect_jobs(self):
+        async for job in self._stream_queue:
+            self.job_queue.append(job)
 
     def _schedule_job(self, job) -> Drone:
         priorities = {}

@@ -1,21 +1,17 @@
 import random
 from functools import partial
 
-import simpy
-
 from usim import run, time, until
 from usim.basics import Queue
 
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
-from lapis.utility.monitor import monitor, trace
 
 
 class Simulator(object):
     def __init__(self, seed=1234):
         random.seed(seed)
         resource_normalisation = {"memory": 2000}
-        # monitor_data = partial(monitor, resource_normalisation)
         self.job_queue = Queue()
         self.pools = []
         self.controllers = []
@@ -23,7 +19,6 @@ class Simulator(object):
         self.job_generator = None
         self.cost = 0
         self._job_generators = []
-        # trace(self.env, monitor_data, resource_normalisation=resource_normalisation, simulator=self)
 
     def create_job_generator(self, job_input, job_reader):
         self._job_generators.append((job_input, job_reader))

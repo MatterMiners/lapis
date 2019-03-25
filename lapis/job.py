@@ -1,9 +1,12 @@
 import random
 import math
-import simpy
 import logging
 
-from usim import time
+from usim import time, ActivityCancelled
+
+
+class JobKilled(Exception):
+    ...
 
 
 # TODO: needs refactoring
@@ -58,23 +61,14 @@ class Job(object):
 
     async def run(self):
         self.in_queue_until = time.now
-        # self.processing = self.env.process(self._process())
-        # return self.processing
+        logging.info(str(round(time.now)), {
+            "job_queue_time": self.queue_date,
+            "job_waiting_time": self.waiting_time
+        })
         await (time + self.walltime or self.requested_walltime)
-        print("%s: job finished after %s" % (time.now, self.walltime or self.requested_walltime))
-
-    # TODO: not needed anymore?
-    def _process(self):
-        try:
-            yield self.env.timeout(0, value=self)
-            yield self.env.timeout(self.requested_walltime or self.walltime)
-        except simpy.exceptions.Interrupt:
-            pass
-
-    # TODO: interrupt should be integrated
-    def kill(self):
-        # job exceeds either own requested resources or resources provided by drone
-        self.processing.interrupt(cause=self)
+        logging.info(str(round(time.now)), {
+            "job_wall_time": self.walltime or self.requested_walltime
+        })
 
 
 def job_property_generator(**kwargs):

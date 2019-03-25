@@ -16,7 +16,7 @@ class Pool(interfaces.Pool):
     def __init__(self, capacity=float('inf'), init=0, name=None, make_drone: Callable=None):
         super(Pool, self).__init__()
         assert make_drone
-        self.make_drone= make_drone
+        self.make_drone = make_drone
         self._drones = []
         self.init_pool(init=init)
         self._demand = 1
@@ -60,7 +60,7 @@ class Pool(interfaces.Pool):
                     self._drones.append(drone)
                     self.put(1)
                 if self.level > self._demand:
-                    for drone in self._drones:
+                    for drone in self.drones:  # only consider drones, that supply resources
                         if drone.jobs == 0:
                             break
                     else:

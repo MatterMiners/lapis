@@ -25,7 +25,8 @@ if __name__ == '__main__':
         # dependencies
         install_requires=[
             'cobald',
-            'simpy',
+            'usim',
+            'click'
         ],
         extras_require={
             # 'docs':  ["sphinx", "sphinxcontrib-tikz", "sphinx_rtd_theme"],
@@ -46,6 +47,7 @@ if __name__ == '__main__':
             'Programming Language :: Python :: 3.4',
             'Programming Language :: Python :: 3.5',
             'Programming Language :: Python :: 3.6',
+            'Programming Language :: Python :: 3.7'
         ],
         keywords=package_about['__keywords__'],
         # unit tests

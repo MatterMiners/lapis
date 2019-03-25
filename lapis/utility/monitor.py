@@ -1,78 +1,107 @@
 from functools import wraps
+from typing import Callable
 
-import simpy
 import logging
 
+from usim import each, Flag, time
+
 from lapis.cost import cobald_cost
-from lapis.job import Job
+from lapis.simulator import Simulator
 
-last_step = 0
-
-
-def trace(env, callback, resource_normalisation, simulator):
-    def get_wrapper(env_step, callback):
-        @wraps(env_step)
-        def tracing_step():
-            if len(env._queue):
-                t, prio, eid, event = env._queue[0]
-                callback(t, prio, eid, event, resource_normalisation, simulator)
-            return env_step()
-        return tracing_step
-    env.step = get_wrapper(env.step, callback)
+sampling_required = Flag()
 
 
-def monitor(data, t, prio, eid, event, resource_normalisation, simulator):
-    if event.value:
-        if isinstance(event.value, simpy.exceptions.Interrupt):
-            job = event.value.cause
-            for resource_key, usage in job.used_resources.items():
-                value = usage / job.resources[resource_key]
-                if value > 1:
-                    logging.info(str(round(t)), {"job_exceeds_%s" % resource_key: value})
-        if isinstance(event.value, Job):
-            logging.info(str(round(t)), {"job_waiting_times": event.value.waiting_time})
-    global last_step
-    if t > last_step:
-        # new data to be recorded
-        tmp = round(t)
-        last_step = tmp
-        pool_demand = 0
-        pool_supply = 0
-        pool_utilisation = 0
-        pool_allocation = 0
-        running_jobs = 0
-        used_resources = 0
-        unused_resources = 0
-        available_resources = 0
-        empty_drones = 0
-        result = {}
-        for pool in simulator.pools:
-            pool_demand += pool.demand
-            pool_supply += pool.supply
-            result["pool_%s_supply" % pool.name] = pool.supply
-            pool_utilisation += pool.utilisation
-            pool_allocation += pool.allocation
-            for drone in pool.drones:
-                running_jobs += drone.jobs
-                if drone.allocation == 0:
-                    empty_drones += 1
-                for resource_key, usage in drone.resources.items():
-                    normalisation_factor = resource_normalisation.get(resource_key, 1)
-                    used_resources += usage / normalisation_factor
-                    unused_resources += (pool.resources[resource_key] - usage) / normalisation_factor
-                    available_resources += pool.resources[resource_key] / normalisation_factor
-        result["user_demand"] = len(simulator.job_queue)
-        result["pool_demand"] = pool_demand
-        result["pool_supply"] = pool_supply
-        result["pool_utilisation"] = pool_utilisation
-        result["pool_allocation"] = pool_allocation
-        result["running_jobs"] = running_jobs
-        result["empty_drones"] = empty_drones
-        result["used_resources"] = used_resources
-        result["unused_resources"] = unused_resources
-        result["available_resources"] = available_resources
-        current_cost = cobald_cost(simulator)
-        result["cost"] = current_cost
-        simulator.cost += current_cost
-        result["acc_cost"] = simulator.cost
-        logging.info(str(tmp), result)
+class Monitoring(object):
+    # TODO: we need to check how to integrate the normalization factor
+    def __init__(self, simulator: Simulator):
+        self.simulator = simulator
+        self._statistics = []
+
+    async def run(self):
+        async for _ in each(delay=1):
+            await sampling_required
+            await sampling_required.set(False)
+            result = {}
+            for statistic in self._statistics:
+                # do the logging
+                result.update(statistic(self.simulator))
+            logging.info(str(round(time.now)), result)
+
+    def register_statistic(self, statistic: Callable):
+        self._statistics.append(statistic)
+
+
+def collect_resource_statistics(simulator: Simulator) -> dict:
+    empty_drones = 0
+    drone_resources = {}
+    for drone in simulator.job_scheduler.drone_list:
+        if drone.allocation == 0:
+            empty_drones += 1
+        for resource_key in {*drone.resources, *drone.used_resources}:
+            drone_resources.setdefault(resource_key, {})
+            try:
+                drone_resources[resource_key]["reserved"] += drone.resources[resource_key]
+            except KeyError:
+                drone_resources[resource_key]["reserved"] = drone.resources[resource_key]
+            try:
+                drone_resources[resource_key]["used"] += drone.used_resources[resource_key]
+            except KeyError:
+                drone_resources[resource_key]["used"] = drone.used_resources[resource_key]
+            try:
+                drone_resources[resource_key]["available"] += drone.pool_resources[resource_key] - drone.resources[resource_key]
+            except KeyError:
+                drone_resources[resource_key]["available"] = drone.pool_resources[resource_key] - drone.resources[resource_key]
+            try:
+                drone_resources[resource_key]["total"] += drone.pool_resources[resource_key]
+            except KeyError:
+                drone_resources[resource_key]["total"] = drone.pool_resources[resource_key]
+    return {
+        "empty_drones": empty_drones,
+        "drone_resources": drone_resources
+    }
+
+
+def collect_cobald_cost(simulator: Simulator) -> dict:
+    current_cost = cobald_cost(simulator)
+    simulator.cost += current_cost
+    return {
+        "cobald_cost": {
+            "current": current_cost,
+            "accumulated": simulator.cost
+        }
+    }
+
+
+def collect_user_demand(simulator: Simulator) -> dict:
+    return {
+        "user_demand": len(simulator.job_scheduler.job_queue)
+    }
+
+
+def collect_job_statistics(simulator: Simulator) -> dict:
+    result = 0
+    for drone in simulator.job_scheduler.drone_list:
+        result += drone.jobs
+    return {
+        "running_jobs": result
+    }
+
+
+def collect_pool_statistics(simulator: Simulator) -> dict:
+    pool_demand = {}
+    pool_supply = {}
+    pool_utilisation = {}
+    pool_allocation = {}
+    for pool in simulator.pools:
+        pool_demand[id(pool)] = pool.demand
+        pool_supply[id(pool)] = pool.supply
+        pool_utilisation[id(pool)] = pool.utilisation
+        pool_allocation[id(pool)] = pool.allocation
+    return {
+        "pool": {
+            "demand": pool_demand,
+            "supply": pool_supply,
+            "allocation": pool_allocation,
+            "utilisation": pool_utilisation
+        }
+    }

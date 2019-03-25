@@ -11,9 +11,6 @@ class SimulatedLinearController(LinearController):
     async def run(self):
         while True:
             self.regulate(interval=self.interval)
-            # print("[controller] demand %d -> %d, supply %d (global %d), allocation %.2f, utilisation %.2f "
-            #       "(available %d)" % (pre_demand, self.target.demand, self.target.supply, globals.global_demand.level,
-            #                           self.target.allocation, self.target.utilisation, self.target.level))
             await (time + self.interval)
 
 
