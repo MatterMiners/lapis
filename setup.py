@@ -33,7 +33,7 @@ if __name__ == '__main__':
         },
         dependency_links=[
             'git+https://github.com/MaineKuehn/usim.git#egg=usim-0.0.1',
-        ]
+        ],
         # metadata for package search
         license='MIT',
         # https://pypi.python.org/pypi?%3Aaction=list_classifiers
