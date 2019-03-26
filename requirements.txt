@@ -1,1 +1,0 @@
-git+https://github.com/MaineKuehn/usim.git@master#egg=usim

@@ -25,15 +25,12 @@ if __name__ == '__main__':
         # dependencies
         install_requires=[
             'cobald',
-            'usim',
+            'usim@git+https://github.com/MaineKuehn/usim.git@master#egg=usim-0.1.0',
             'click'
         ],
         extras_require={
             'docs':  ["sphinx", "sphinxcontrib-tikz"],
         },
-        dependency_links=[
-            'git+https://github.com/MaineKuehn/usim.git#egg=usim',
-        ],
         # metadata for package search
         license='MIT',
         # https://pypi.python.org/pypi?%3Aaction=list_classifiers
