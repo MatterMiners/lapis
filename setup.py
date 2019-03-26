@@ -29,7 +29,7 @@ if __name__ == '__main__':
             'click'
         ],
         extras_require={
-            # 'docs':  ["sphinx", "sphinxcontrib-tikz", "sphinx_rtd_theme"],
+            'docs':  ["sphinx", "sphinxcontrib-tikz"],
         },
         dependency_links=[
             'git+https://github.com/MaineKuehn/usim.git#egg=usim-0.0.1',
