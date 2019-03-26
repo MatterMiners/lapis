@@ -4,8 +4,6 @@ python:
   version: 3
   install:
     - method: pip
-      path: "git+https://github.com/MaineKuehn/usim.git#egg=usim"
-    - method: pip
       path: .
       extra_requirements:
         - docs
