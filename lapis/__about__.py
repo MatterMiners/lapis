@@ -12,5 +12,5 @@ __url__ = 'https://github.com/MaineKuehn/lapis'
 __version__ = '0.1.0'
 __author__ = 'Eileen Kuehn, Max Fischer'
 __email__ = 'mainekuehn@gmail.com'
-__copyright__ = '2018 %s' % __author__
+__copyright__ = '2019 %s' % __author__
 __keywords__ = 'opportunistic scheduling scheduler cobald simulator'
