@@ -32,7 +32,7 @@ if __name__ == '__main__':
             'docs':  ["sphinx", "sphinxcontrib-tikz"],
         },
         dependency_links=[
-            'git+https://github.com/MaineKuehn/usim.git#egg=usim-0.0.1',
+            'git+https://github.com/MaineKuehn/usim.git#egg=usim-0.1.0',
         ],
         # metadata for package search
         license='MIT',
