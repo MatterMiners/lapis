@@ -151,7 +151,11 @@ class Drone(interfaces.Pool):
                     usage = job.used_resources.get(resource_key, None) or job.resources.get(resource_key, None)
                     value = usage / (job.resources.get(resource_key, None) or self.pool_resources[resource_key])
                     if value > 1:
-                        logging.info(str(round(time.now)), {"job_exceeds_%s" % resource_key: value})
+                        logging.info(str(round(time.now)), {
+                            "job_exceeds_%s" % resource_key: {
+                                repr(job): value
+                            }
+                        })
             else:
                 self.jobs -= 1
             self._remove_resources(job_keys, self.resources, job.resources, job.used_resources)

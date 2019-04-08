@@ -93,10 +93,10 @@ def collect_pool_statistics(simulator: Simulator) -> dict:
     pool_utilisation = {}
     pool_allocation = {}
     for pool in simulator.pools:
-        pool_demand[id(pool)] = pool.demand
-        pool_supply[id(pool)] = pool.supply
-        pool_utilisation[id(pool)] = pool.utilisation
-        pool_allocation[id(pool)] = pool.allocation
+        pool_demand[repr(pool)] = pool.demand
+        pool_supply[repr(pool)] = pool.supply
+        pool_utilisation[repr(pool)] = pool.utilisation
+        pool_allocation[repr(pool)] = pool.allocation
     return {
         "pool": {
             "demand": pool_demand,

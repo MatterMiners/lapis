@@ -80,12 +80,17 @@ class Job(object):
     async def run(self):
         self.in_queue_until = time.now
         logging.info(str(round(time.now)), {
-            "job_queue_time": self.queue_date,
-            "job_waiting_time": self.waiting_time
+            "job_queue_time": {
+                repr(self): self.queue_date
+            }, "job_waiting_time": {
+                repr(self): self.waiting_time
+            }
         })
         await (time + self.walltime or self.requested_walltime)
         logging.info(str(round(time.now)), {
-            "job_wall_time": self.walltime or self.requested_walltime
+            "job_wall_time": {
+                repr(self): self.walltime or self.requested_walltime
+            }
         })
 
     def __repr__(self):
