@@ -126,7 +126,7 @@ class Drone(interfaces.Pool):
             except ResourcesExceeded:
                 job_execution.cancel()
             try:
-                # TODO: should we really kill the job if it is only about resources and not used resources?
+                # TODO: we should allow for overbooking of resources
                 self._add_resources(job_keys, self.resources, job.resources, job.used_resources)
             except ResourcesExceeded:
                 job_execution.cancel()
