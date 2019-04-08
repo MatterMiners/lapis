@@ -59,16 +59,17 @@ class Pool(interfaces.Pool):
                     scope.do(drone.run())
                     self._drones.append(drone)
                     self.put(1)
-                if self.level > self._demand:
-                    for drone in self.drones:  # only consider drones, that supply resources
+                if self.level > self._demand and self.level > 1:
+                    empty_drone_found = False
+                    for drone in self.drones:
                         if drone.jobs == 0:
+                            empty_drone_found = True
                             break
-                    else:
-                        break
-                    self.get(1)
-                    self._drones.remove(drone)
-                    scope.do(drone.shutdown())
-                    del drone
+                    if empty_drone_found:
+                        self.get(1)
+                        self._drones.remove(drone)
+                        scope.do(drone.shutdown())
+                        del drone
                 await (time + 1)
 
     @property
