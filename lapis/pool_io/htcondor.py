@@ -17,7 +17,7 @@ def htcondor_pool_reader(iterable, resource_name_mapping: dict={
     :param resource_name_mapping: Mapping from given header names to well-defined resources in simulation
     :param pool_type: The type of pool to be yielded
     :param make_drone:
-    :return: Yields the :py:class:`StaticPool`s found in the given iterable
+    :return: Yields the :py:class:`Pool`s found in the given iterable
     """
     assert make_drone
     reader = csv.DictReader(iterable, delimiter=' ', skipinitialspace=True)
