@@ -11,7 +11,13 @@ class ResourcesExceeded(Exception):
 
 
 class Drone(interfaces.Pool):
-    def __init__(self, scheduler, pool_resources: dict, scheduling_duration: float):
+    def __init__(self, scheduler, pool_resources: dict, scheduling_duration: float, exclusive: bool=False):
+        """
+        :param scheduler:
+        :param pool_resources:
+        :param scheduling_duration:
+        :param exclusive: Determines if the drone is used exclusively by jobs in sequential order
+        """
         super(Drone, self).__init__()
         self.scheduler = scheduler
         self.pool_resources = pool_resources
@@ -24,6 +30,7 @@ class Drone(interfaces.Pool):
             self.scheduler.register_drone(self)
         else:
             self._supply = 0
+        self.exclusive = exclusive
         self.jobs = 0
         self._allocation = None
         self._utilisation = None
