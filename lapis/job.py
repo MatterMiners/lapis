@@ -92,11 +92,6 @@ class Job(object):
         return '<%s: %s>' % (self.__class__.__name__, self._name or id(self))
 
 
-def job_property_generator(**kwargs):
-    while True:
-        yield 10, {"memory": 8, "cores": 1, "disk": 100}
-
-
 async def job_to_queue_scheduler(job_generator, job_queue, **kwargs):
     job = next(job_generator)
     base_date = job.queue_date
