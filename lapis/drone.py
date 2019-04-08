@@ -150,4 +150,7 @@ class Drone(interfaces.Pool):
             self._utilisation = self._allocation = None
             await sampling_required.set(True)
 
+    def __repr__(self):
+        return '<%s: %s>' % (self.__class__.__name__, id(self))
+
 

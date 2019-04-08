@@ -119,6 +119,10 @@ class Pool(interfaces.Pool):
         else:
             self._demand = 0
 
+    def __repr__(self):
+        return '<%s: %s>' % (
+            self.__class__.__name__, self._name or id(self))
+
 
 class StaticPool(Pool):
     """

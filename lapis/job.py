@@ -88,6 +88,9 @@ class Job(object):
             "job_wall_time": self.walltime or self.requested_walltime
         })
 
+    def __repr__(self):
+        return '<%s: %s>' % (self.__class__.__name__, self._name or id(self))
+
 
 def job_property_generator(**kwargs):
     while True:
