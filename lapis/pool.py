@@ -8,33 +8,33 @@ class Pool(interfaces.Pool):
     A pool encapsulating a number of pools or drones. Given a specific demand, allocation and utilisation, the
     pool is able to adapt in terms of number of drones providing the given resources.
 
-    :param env: Reference to the simulation env
     :param capacity: Maximum number of pools that can be instantiated within the pool
     :param init: Number of pools to instantiate at creation time of the pool
-    :param resources: Dictionary of resources available for each pool instantiated within the pool
+    :param name: Name of the pool
+    :param make_drone: Callable to create a drone with specific properties for this pool
     """
-    def __init__(self, capacity=float('inf'), init=0, name=None, make_drone: Callable=None):
+    def __init__(self, capacity: float=float('inf'), init: float=0, name: str=None, make_drone: Callable=None):
         super(Pool, self).__init__()
         assert make_drone
         self.make_drone = make_drone
         self._drones = []
         self.init_pool(init=init)
         self._demand = 1
-        self.name = name or id(self)
         self.level = init
         self._capacity = capacity
+        self._name = name
 
-    def put(self, amount):
+    def put(self, amount: float):
         if self.level + amount > self._capacity:
             raise ValueError
         self.level += amount
 
-    def get(self, amount):
+    def get(self, amount: float):
         if self.level - amount < 0:
             raise ValueError
         self.level -= amount
 
-    def init_pool(self, init=0):
+    def init_pool(self, init: float=0):
         """
         Initialisation of existing drones at creation time of pool.
 
@@ -102,18 +102,18 @@ class Pool(interfaces.Pool):
             return 1
 
     @property
-    def supply(self) -> int:
+    def supply(self) -> float:
         supply = 0
         for drone in self._drones:
             supply += drone.supply
         return supply
 
     @property
-    def demand(self) -> int:
+    def demand(self) -> float:
         return self._demand
 
     @demand.setter
-    def demand(self, value: int):
+    def demand(self, value: float):
         if value > 0:
             self._demand = value
         else:
@@ -128,7 +128,7 @@ class StaticPool(Pool):
     :param capacity: Maximum number of pools that can be instantiated within the pool
     :param resources: Dictionary of resources available for each pool instantiated within the pool
     """
-    def __init__(self, capacity=0, make_drone: Callable=None):
+    def __init__(self, capacity: float=0, make_drone: Callable=None):
         assert capacity > 0, "Static pool was initialised without any resources..."
         super(StaticPool, self).__init__(capacity=capacity, init=capacity, make_drone=make_drone)
         self._demand = capacity

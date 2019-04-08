@@ -37,7 +37,7 @@ def job_demand(simulator):
 
 class Job(object):
     __slots__ = ("resources", "used_resources", "walltime", "requested_walltime", "queue_date", "in_queue_since",
-                 "in_queue_until", "name")
+                 "in_queue_until", "_name")
 
     def __init__(self, resources: dict, used_resources: dict, in_queue_since: float=0, queue_date: float=0,
                  name: str=None):
@@ -60,7 +60,11 @@ class Job(object):
         self.queue_date = queue_date
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
-        self.name = name or id(self)
+        self._name = name
+
+    @property
+    def name(self) -> str:
+        return self._name or id(self)
 
     @property
     def waiting_time(self) -> float:
