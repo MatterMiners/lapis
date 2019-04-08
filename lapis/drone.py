@@ -11,7 +11,8 @@ class ResourcesExceeded(Exception):
 
 
 class Drone(interfaces.Pool):
-    def __init__(self, scheduler, pool_resources: dict, scheduling_duration: float, exclusive: bool=False):
+    def __init__(self, scheduler, pool_resources: dict, scheduling_duration: float, exclusive: bool=False,
+                 ignore_resources: list=None):
         """
         :param scheduler:
         :param pool_resources:
@@ -22,6 +23,7 @@ class Drone(interfaces.Pool):
         self.scheduler = scheduler
         self.pool_resources = pool_resources
         self.resources = {resource: 0 for resource in self.pool_resources}
+        self._valid_resource_keys = [resource for resource in self.pool_resources if resource not in ignore_resources]
         # shadowing requested resources to determine jobs to be killed
         self.used_resources = {resource: 0 for resource in self.pool_resources}
         self.scheduling_duration = scheduling_duration
@@ -68,8 +70,8 @@ class Drone(interfaces.Pool):
 
     def _init_allocation_and_utilisation(self):
         resources = []
-        for resource_key, value in self.used_resources.items():
-            resources.append(value / self.pool_resources[resource_key])
+        for resource_key in self._valid_resource_keys:
+            resources.append(self.resources[resource_key] / self.pool_resources[resource_key])
         self._allocation = max(resources)
         self._utilisation = min(resources)
 
