@@ -4,7 +4,7 @@ branch = TRUE
 cover_pylib = FALSE
 parallel = False
 omit =
-    __about__.py
+    lapis/__about__.py
 
 [report]
 exclude_lines =
