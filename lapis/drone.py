@@ -23,7 +23,10 @@ class Drone(interfaces.Pool):
         self.scheduler = scheduler
         self.pool_resources = pool_resources
         self.resources = {resource: 0 for resource in self.pool_resources}
-        self._valid_resource_keys = [resource for resource in self.pool_resources if resource not in ignore_resources]
+        if ignore_resources:
+            self._valid_resource_keys = [resource for resource in self.pool_resources if resource not in ignore_resources]
+        else:
+            self._valid_resource_keys = self.pool_resources.keys()
         # shadowing requested resources to determine jobs to be killed
         self.used_resources = {resource: 0 for resource in self.pool_resources}
         self.scheduling_duration = scheduling_duration
