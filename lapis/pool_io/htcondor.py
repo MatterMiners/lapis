@@ -7,8 +7,12 @@ from ..pool import Pool
 
 def htcondor_pool_reader(iterable, resource_name_mapping: dict={
     "cores": "TotalSlotCPUs",
-    "disk": "TotalSlotDisk",
-    "memory": "TotalSlotMemory"
+    "disk": "TotalSlotDisk",  # KiB
+    "memory": "TotalSlotMemory"  # MiB
+}, unit_conversion_mapping={
+    "TotalSlotCPUs": 1,
+    "TotalSlotDisk": 1.024/1024/1024,
+    "TotalSlotMemory": 1.024/1024
 }, pool_type: Callable=Pool, make_drone: Callable=None):
     """
     Load a pool configuration that was exported via htcondor from files or iterables
@@ -24,4 +28,5 @@ def htcondor_pool_reader(iterable, resource_name_mapping: dict={
     for row_idx, row in enumerate(reader):
         yield pool_type(
             capacity=int(row["Count"]),
-            make_drone=partial(make_drone, {key: float(row[value]) for key, value in resource_name_mapping.items()}))
+            make_drone=partial(make_drone, {key: float(row[value]) * unit_conversion_mapping.get(value, 1)
+                                            for key, value in resource_name_mapping.items()}))
