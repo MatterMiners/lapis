@@ -28,6 +28,7 @@ class TestJob(object):
     @via_usim
     async def test_run_job(self):
         job = Job(resources={"walltime": 50}, used_resources={"walltime": 10})
+        assert float("inf") == job.waiting_time
         async with Scope() as scope:
             scope.do(job.run())
         assert 10 == time
