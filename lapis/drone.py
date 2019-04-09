@@ -122,6 +122,7 @@ class Drone(interfaces.Pool):
             self._utilisation = self._allocation = None
 
             job_execution = scope.do(job.run())
+            await instant  # waiting just a moment to enable job to set parameters
             job_keys = {*job.resources, *job.used_resources}
 
             try:
@@ -144,7 +145,6 @@ class Drone(interfaces.Pool):
                 except KeyError:
                     # check is not relevant if the data is not stored
                     pass
-            await instant  # waiting just a moment to enable job to set parameters
             if job_execution.status != ActivityState.CANCELLED:
                 self.jobs += 1
                 await sampling_required.set(True)

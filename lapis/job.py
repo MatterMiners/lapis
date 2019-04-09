@@ -6,6 +6,9 @@ from usim import time
 
 
 # TODO: needs refactoring
+from usim._primitives.activity import CancelActivity
+
+
 def job_demand(simulator):
     """
     function randomly sets global user demand by using different strategies
@@ -37,7 +40,7 @@ def job_demand(simulator):
 
 class Job(object):
     __slots__ = ("resources", "used_resources", "walltime", "requested_walltime", "queue_date", "in_queue_since",
-                 "in_queue_until", "_name")
+                 "in_queue_until", "_name", "_success")
 
     def __init__(self, resources: dict, used_resources: dict, in_queue_since: float=0, queue_date: float=0,
                  name: str=None):
@@ -56,15 +59,21 @@ class Job(object):
         self.used_resources = used_resources
         self.walltime = used_resources.pop("walltime", None)
         self.requested_walltime = resources.pop("walltime", None)
-        assert self.walltime or self.requested_walltime, "Job does not provide any walltime"
+        assert self.walltime, "Job does not provide any walltime"
         self.queue_date = queue_date
+        assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
         self._name = name
+        self._success = False
 
     @property
     def name(self) -> str:
         return self._name or id(self)
+
+    @property
+    def successful(self) -> bool:
+        return self._success
 
     @property
     def waiting_time(self) -> float:
@@ -86,12 +95,23 @@ class Job(object):
                 repr(self): self.waiting_time
             }
         })
-        await (time + self.walltime or self.requested_walltime)
-        logging.info(str(round(time.now)), {
-            "job_wall_time": {
-                repr(self): self.walltime or self.requested_walltime
-            }
-        })
+        try:
+            await (time + self.walltime)
+        except CancelActivity:
+            self._success = False
+        except BaseException as err:
+            self._success = False
+            raise
+        else:
+            logging.info(str(round(time.now)), {
+                "job_wall_time": {
+                    repr(self): self.walltime
+                }
+            })
+            self._success = True
+        finally:
+            # release acquired resources
+            pass
 
     def __repr__(self):
         return '<%s: %s>' % (self.__class__.__name__, self._name or id(self))
