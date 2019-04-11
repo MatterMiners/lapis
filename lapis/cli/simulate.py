@@ -3,7 +3,7 @@ import logging.handlers
 
 from cobald.monitor.format_json import JsonFormatter
 
-from lapis.controller import SimulatedCostController
+from lapis.controller import SimulatedLinearController
 from lapis.job_io.htcondor import htcondor_job_reader
 from lapis.pool import StaticPool, Pool
 from lapis.pool_io.htcondor import htcondor_pool_reader
@@ -35,7 +35,7 @@ pool_import_mapper = {
 
 @click.group()
 @click.option("--seed", type=int, default=1234)
-@click.option("--until", default=2000)
+@click.option("--until", type=float)
 @click.option("--log-tcp", "log_tcp", is_flag=True)
 @click.option("--log-file", "log_file", type=click.File("w"))
 @click.pass_context
@@ -88,7 +88,7 @@ def dynamic(ctx, job_file, pool_file):
             pool_input=file,
             pool_reader=pool_import_mapper[file_type],
             pool_type=Pool,
-            controller=SimulatedCostController)
+            controller=SimulatedLinearController)
     simulator.run(until=ctx.obj["until"])
 
 
@@ -108,7 +108,11 @@ def hybrid(ctx, job_file, static_pool_file, dynamic_pool_file):
         simulator.create_pools(pool_input=file, pool_reader=pool_import_mapper[file_type], pool_type=StaticPool)
     for current_pool in dynamic_pool_file:
         file, file_type = current_pool
-        simulator.create_pools(pool_input=file, pool_reader=pool_import_mapper[file_type], pool_type=Pool, controller=SimulatedCostController)
+        simulator.create_pools(
+            pool_input=file,
+            pool_reader=pool_import_mapper[file_type],
+            pool_type=Pool,
+            controller=SimulatedLinearController)
     simulator.run(until=ctx.obj["until"])
 
 
