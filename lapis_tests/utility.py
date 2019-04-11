@@ -38,3 +38,11 @@ class DummyScheduler():
     @staticmethod
     def register_drone(drone: Drone):
         pass
+
+    @staticmethod
+    def unregister_drone(drone: Drone):
+        pass
+
+    @staticmethod
+    def update_drone(drone: Drone):
+        pass
