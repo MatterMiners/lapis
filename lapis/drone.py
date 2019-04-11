@@ -149,6 +149,7 @@ class Drone(interfaces.Pool):
                 except KeyError:
                     # check is not relevant if the data is not stored
                     pass
+            self.scheduler.update_drone(self)
             if job_execution.status != ActivityState.CANCELLED:
                 self.jobs += 1
                 await sampling_required.set(True)
@@ -168,6 +169,7 @@ class Drone(interfaces.Pool):
             self._remove_resources(job_keys, self.resources, job.resources, job.used_resources)
             self._remove_resources(job_keys, self.used_resources, job.used_resources, job.resources)
             self._utilisation = self._allocation = None
+            self.scheduler.update_drone(self)
             await sampling_required.set(True)
 
     def __repr__(self):

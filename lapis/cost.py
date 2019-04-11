@@ -1,5 +1,5 @@
 def cobald_cost(simulator):
-    result = len(simulator.job_scheduler.drone_list)
+    result = len(list(simulator.job_scheduler.drone_list))
     for drone in simulator.job_scheduler.drone_list:
         result += 1
         tmp = 0

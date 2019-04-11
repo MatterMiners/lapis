@@ -1,6 +1,4 @@
-from collections import deque
-
-from usim import time, Scope, each
+from usim import Scope, each, instant
 
 # TODO: does not work anymore as there is no method get_drone at pool
 from lapis.drone import Drone
@@ -31,15 +29,51 @@ class CondorJobScheduler(object):
     """
     def __init__(self, job_queue):
         self._stream_queue = job_queue
-        self.drone_list = []
+        self.drone_cluster = []
         self.interval = 60
         self.job_queue = []
 
+    @property
+    def drone_list(self):
+        for cluster in self.drone_cluster:
+            for drone in cluster:
+                yield drone
+
     def register_drone(self, drone: Drone):
-        self.drone_list.append(drone)
+        self._add_drone(drone)
 
     def unregister_drone(self, drone: Drone):
-        self.drone_list.remove(drone)
+        for cluster in self.drone_cluster:
+            try:
+                cluster.remove(drone)
+            except ValueError:
+                pass
+            else:
+                if len(cluster) == 0:
+                    self.drone_cluster.remove(cluster)
+
+    def _add_drone(self, drone: Drone):
+        minimum_distance_cluster = None
+        distance = float("Inf")
+        if len(self.drone_cluster) > 0:
+            for cluster in self.drone_cluster:
+                current_distance = 0
+                for key in {*cluster[0].theoretical_available_resources, *drone.theoretical_available_resources}:
+                    current_distance += abs(cluster[0].theoretical_available_resources.get(key, 0) -
+                                            drone.theoretical_available_resources.get(key, 0))
+                if current_distance < distance:
+                    minimum_distance_cluster = cluster
+                    distance = current_distance
+            if distance < 1:
+                minimum_distance_cluster.append(drone)
+            else:
+                self.drone_cluster.append([drone])
+        else:
+            self.drone_cluster.append([drone])
+
+    def update_drone(self, drone: Drone):
+        self.unregister_drone(drone)
+        self._add_drone(drone)
 
     async def run(self):
         async with Scope() as scope:
@@ -49,6 +83,7 @@ class CondorJobScheduler(object):
                     best_match = self._schedule_job(job)
                     if best_match:
                         scope.do(best_match.start_job(job))
+                        await instant
                         self.job_queue.remove(job)
 
     async def _collect_jobs(self):
@@ -57,12 +92,14 @@ class CondorJobScheduler(object):
 
     def _schedule_job(self, job) -> Drone:
         priorities = {}
-        for drone in self.drone_list:
+        for cluster in self.drone_cluster:
+            drone = cluster[0]
             cost = 0
             resource_types = {*drone.resources.keys(), *job.resources.keys()}
             for resource_type in resource_types:
                 if resource_type not in drone.resources.keys():
                     cost = float("Inf")
+                    break
                 elif resource_type not in job.resources:
                     cost += drone.pool_resources[resource_type] - drone.resources[resource_type]
                 elif (drone.pool_resources[resource_type] - drone.resources[resource_type]) < \
