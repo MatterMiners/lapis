@@ -7,11 +7,11 @@ from ..pool import Pool
 
 def htcondor_pool_reader(iterable, resource_name_mapping: dict={
     "cores": "TotalSlotCPUs",
-    "disk": "TotalSlotDisk",  # KiB
+    "disk": "TotalSlotDisk",  # MiB
     "memory": "TotalSlotMemory"  # MiB
 }, unit_conversion_mapping={
     "TotalSlotCPUs": 1,
-    "TotalSlotDisk": 1.024/1024/1024,
+    "TotalSlotDisk": 1.024/1024,
     "TotalSlotMemory": 1.024/1024
 }, pool_type: Callable=Pool, make_drone: Callable=None):
     """
