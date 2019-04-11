@@ -26,7 +26,13 @@ def htcondor_pool_reader(iterable, resource_name_mapping: dict={
     assert make_drone
     reader = csv.DictReader(iterable, delimiter=' ', skipinitialspace=True)
     for row_idx, row in enumerate(reader):
+        try:
+            capacity = int(row["Count"])
+        except ValueError:
+            if row["Count"] == "None":
+                capacity = float("Inf")
         yield pool_type(
-            capacity=int(row["Count"]),
+            capacity=capacity,
             make_drone=partial(make_drone, {key: float(row[value]) * unit_conversion_mapping.get(value, 1)
-                                            for key, value in resource_name_mapping.items()}))
+                                            for key, value in resource_name_mapping.items()},
+                               ignore_resources=["disk"]))
