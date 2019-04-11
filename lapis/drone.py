@@ -40,6 +40,10 @@ class Drone(interfaces.Pool):
         self._allocation = None
         self._utilisation = None
 
+    @property
+    def theoretical_available_resources(self):
+        return {key: self.pool_resources[key] - self.resources[key] for key in self.pool_resources}
+
     async def run(self):
         from lapis.utility.monitor import sampling_required
         await (time + self.scheduling_duration)
