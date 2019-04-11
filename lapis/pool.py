@@ -95,8 +95,7 @@ class Pool(interfaces.Pool):
     def utilisation(self) -> float:
         utilisations = []
         for drone in self._drones:
-            if drone.allocation > 0:
-                utilisations.append(drone.utilisation)
+            utilisations.append(drone.utilisation)
         try:
             return sum(utilisations) / len(utilisations)
         except ZeroDivisionError:
