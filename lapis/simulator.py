@@ -1,11 +1,13 @@
 import random
 from functools import partial
 
-from usim import run, time, until
+from usim import run, time, until, Scope
 from usim.basics import Queue
 
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
+from lapis.utility.monitor import Monitoring, collect_pool_statistics, collect_user_demand, collect_job_statistics, \
+    collect_resource_statistics, collect_cobald_cost
 
 
 class Simulator(object):
@@ -19,6 +21,16 @@ class Simulator(object):
         self.job_generator = None
         self.cost = 0
         self._job_generators = []
+        self.monitoring = None
+        self.enable_monitoring()
+
+    def enable_monitoring(self):
+        self.monitoring = Monitoring(self)
+        self.monitoring.register_statistic(collect_pool_statistics)
+        self.monitoring.register_statistic(collect_user_demand)
+        self.monitoring.register_statistic(collect_job_statistics)
+        self.monitoring.register_statistic(collect_resource_statistics)
+        self.monitoring.register_statistic(collect_cobald_cost)
 
     def create_job_generator(self, job_input, job_reader):
         self._job_generators.append((job_input, job_reader))
@@ -48,6 +60,7 @@ class Simulator(object):
             while_running.do(self.job_scheduler.run())
             for controller in self.controllers:
                 while_running.do(controller.run())
+            while_running.do(self.monitoring.run())
         print("Finished simulation at %s" % time.now)
 
     async def _queue_jobs(self, job_input, job_reader):

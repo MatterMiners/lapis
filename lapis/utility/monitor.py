@@ -1,19 +1,21 @@
 from functools import wraps
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 
 import logging
 
 from usim import each, Flag, time
 
 from lapis.cost import cobald_cost
-from lapis.simulator import Simulator
+
+if TYPE_CHECKING:
+    from lapis.simulator import Simulator
 
 sampling_required = Flag()
 
 
 class Monitoring(object):
     # TODO: we need to check how to integrate the normalization factor
-    def __init__(self, simulator: Simulator):
+    def __init__(self, simulator: "Simulator"):
         self.simulator = simulator
         self._statistics = []
 
@@ -31,7 +33,7 @@ class Monitoring(object):
         self._statistics.append(statistic)
 
 
-def collect_resource_statistics(simulator: Simulator) -> dict:
+def collect_resource_statistics(simulator: "Simulator") -> dict:
     empty_drones = 0
     drone_resources = {}
     for drone in simulator.job_scheduler.drone_list:
@@ -61,7 +63,7 @@ def collect_resource_statistics(simulator: Simulator) -> dict:
     }
 
 
-def collect_cobald_cost(simulator: Simulator) -> dict:
+def collect_cobald_cost(simulator: "Simulator") -> dict:
     current_cost = cobald_cost(simulator)
     simulator.cost += current_cost
     return {
@@ -72,13 +74,13 @@ def collect_cobald_cost(simulator: Simulator) -> dict:
     }
 
 
-def collect_user_demand(simulator: Simulator) -> dict:
+def collect_user_demand(simulator: "Simulator") -> dict:
     return {
         "user_demand": len(simulator.job_scheduler.job_queue)
     }
 
 
-def collect_job_statistics(simulator: Simulator) -> dict:
+def collect_job_statistics(simulator: "Simulator") -> dict:
     result = 0
     for drone in simulator.job_scheduler.drone_list:
         result += drone.jobs
@@ -87,7 +89,7 @@ def collect_job_statistics(simulator: Simulator) -> dict:
     }
 
 
-def collect_pool_statistics(simulator: Simulator) -> dict:
+def collect_pool_statistics(simulator: "Simulator") -> dict:
     pool_demand = {}
     pool_supply = {}
     pool_utilisation = {}
