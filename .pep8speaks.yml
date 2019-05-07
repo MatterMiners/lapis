@@ -4,3 +4,5 @@ scanner:
 
 flake8:
   max-line-length: 88  # flake8-bugbear uses 80*1.1
+  ignore:
+    - W503
