@@ -59,8 +59,8 @@ class CondorJobScheduler(object):
             for cluster in self.drone_cluster:
                 current_distance = 0
                 for key in {*cluster[0].theoretical_available_resources, *drone.theoretical_available_resources}:
-                    current_distance += abs(cluster[0].theoretical_available_resources.get(key, 0) -
-                                            drone.theoretical_available_resources.get(key, 0))
+                    current_distance += abs(cluster[0].theoretical_available_resources.get(key, 0)
+                                            - drone.theoretical_available_resources.get(key, 0))
                 if current_distance < distance:
                     minimum_distance_cluster = cluster
                     distance = current_distance
