@@ -24,9 +24,9 @@ class CondorJobScheduler(object):
     is calculated based on the current strategy that is used at GridKa. The scheduler checks if a job either
     exactly fits a slot or if it does fit into it several times. The cost for putting a job at a given slot is
     given by the amount of resources that might remain unallocated.
-    :param env:
     :return:
     """
+
     def __init__(self, job_queue):
         self._stream_queue = job_queue
         self.drone_cluster = []

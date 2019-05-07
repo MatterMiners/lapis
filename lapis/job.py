@@ -99,7 +99,7 @@ class Job(object):
             await (time + self.walltime)
         except CancelActivity:
             self._success = False
-        except BaseException as err:
+        except BaseException:
             self._success = False
             raise
         else:

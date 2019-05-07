@@ -13,7 +13,6 @@ from lapis.utility.monitor import Monitoring, collect_pool_statistics, collect_u
 class Simulator(object):
     def __init__(self, seed=1234):
         random.seed(seed)
-        resource_normalisation = {"memory": 2000}
         self.job_queue = Queue()
         self.pools = []
         self.controllers = []
