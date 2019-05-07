@@ -4,18 +4,18 @@ import logging
 from lapis.job import Job
 
 
-def htcondor_job_reader(iterable, resource_name_mapping={
+def htcondor_job_reader(iterable, resource_name_mapping={  # noqa: B006
     "cores": "RequestCpus",
     "walltime": "RequestWalltime",  # s
     "memory": "RequestMemory",  # MiB
     "disk": "RequestDisk"  # KiB
-}, used_resource_name_mapping={
+}, used_resource_name_mapping={  # noqa: B006
     "queuetime": "QDate",
     "walltime": "RemoteWallClockTime",  # s
     "cores": "Number of Allocated Processors",
     "memory": "MemoryUsage",  # MB
     "disk": "DiskUsage_RAW"  # KiB
-}, unit_conversion_mapping={
+}, unit_conversion_mapping={  # noqa: B006
     "RequestCpus": 1,
     "RequestWalltime": 1,
     "RequestMemory": 1.024 / 1024,

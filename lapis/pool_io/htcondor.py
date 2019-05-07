@@ -5,11 +5,11 @@ from typing import Callable
 from ..pool import Pool
 
 
-def htcondor_pool_reader(iterable, resource_name_mapping: dict = {
+def htcondor_pool_reader(iterable, resource_name_mapping: dict = {  # noqa: B006
     "cores": "TotalSlotCPUs",
     "disk": "TotalSlotDisk",  # MiB
     "memory": "TotalSlotMemory"  # MiB
-}, unit_conversion_mapping: dict = {
+}, unit_conversion_mapping: dict = {  # noqa: B006
     "TotalSlotCPUs": 1,
     "TotalSlotDisk": 1.024 / 1024,
     "TotalSlotMemory": 1.024 / 1024

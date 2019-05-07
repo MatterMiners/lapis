@@ -8,16 +8,16 @@ import csv
 from lapis.job import Job
 
 
-def swf_job_reader(iterable, resource_name_mapping={
+def swf_job_reader(iterable, resource_name_mapping={  # noqa: B006
     "cores": "Requested Number of Processors",
     "walltime": "Requested Time",
     "memory": "Requested Memory"
-}, used_resource_name_mapping={
+}, used_resource_name_mapping={  # noqa: B006
     "walltime": "Run Time",
     "cores": "Number of Allocated Processors",
     "memory": "Used Memory",
     "queuetime": "Submit Time"
-}, unit_conversion_mapping={
+}, unit_conversion_mapping={  # noqa: B006
     "Used Memory": 1 / 1024 / 1024,
     "Requested Memory": 1 / 2114 / 1024
 }):

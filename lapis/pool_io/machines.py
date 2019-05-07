@@ -5,7 +5,7 @@ from typing import Callable
 from ..pool import Pool
 
 
-def machines_pool_reader(iterable, resource_name_mapping: dict = {
+def machines_pool_reader(iterable, resource_name_mapping: dict = {  # noqa: B006
     "cores": "CPUs_per_node",
     "memory": "RAM_per_node_in_KB"
 }, pool_type: Callable = Pool, make_drone: Callable = None):
