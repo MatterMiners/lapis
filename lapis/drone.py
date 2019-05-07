@@ -1,7 +1,7 @@
 import logging
 
 from cobald import interfaces
-from usim import time, Scope, instant, ActivityState
+from usim import time, Scope, instant, TaskState
 
 from lapis.job import Job
 
@@ -165,11 +165,11 @@ class Drone(interfaces.Pool):
                     # check is not relevant if the data is not stored
                     pass
             self.scheduler.update_drone(self)
-            if job_execution.status != ActivityState.CANCELLED:
+            if job_execution.status != TaskState.CANCELLED:
                 self.jobs += 1
                 await sampling_required.set(True)
-            await job_execution
-            if job_execution.status == ActivityState.CANCELLED:
+            await job_execution.done
+            if job_execution.status == TaskState.CANCELLED:
                 for resource_key in job_keys:
                     usage = job.used_resources.get(resource_key, None) \
                         or job.resources.get(resource_key, None)

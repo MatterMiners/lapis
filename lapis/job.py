@@ -3,10 +3,7 @@ import math
 import logging
 
 from usim import time
-
-
-# TODO: needs refactoring
-from usim._primitives.activity import CancelActivity
+from usim import TaskCancelled
 
 
 def job_demand(simulator):
@@ -99,7 +96,7 @@ class Job(object):
         })
         try:
             await (time + self.walltime)
-        except CancelActivity:
+        except TaskCancelled:
             self._success = False
         except BaseException:
             self._success = False
