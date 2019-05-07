@@ -27,7 +27,7 @@ def htcondor_pool_reader(iterable, resource_name_mapping: dict = {  # noqa: B006
     """
     assert make_drone
     reader = csv.DictReader(iterable, delimiter=' ', skipinitialspace=True)
-    for row_idx, row in enumerate(reader):
+    for row in reader:
         try:
             capacity = int(row["Count"])
         except ValueError:

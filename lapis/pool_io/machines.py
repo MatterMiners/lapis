@@ -22,7 +22,7 @@ def machines_pool_reader(iterable, resource_name_mapping: dict = {  # noqa: B006
     """
     assert make_drone
     reader = csv.DictReader(iterable, delimiter=' ', skipinitialspace=True)
-    for row_idx, row in enumerate(reader):
+    for row in reader:
         yield pool_type(
             capacity=int(row["number_of_nodes"]),
             make_drone=partial(make_drone, {
