@@ -28,7 +28,8 @@ class Drone(interfaces.Pool):
         if ignore_resources:
             self._valid_resource_keys = [
                 resource for resource in self.pool_resources
-                if resource not in ignore_resources]
+                if resource not in ignore_resources
+            ]
         else:
             self._valid_resource_keys = self.pool_resources.keys()
         # shadowing requested resources to determine jobs to be killed
