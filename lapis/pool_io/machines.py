@@ -12,6 +12,7 @@ def machines_pool_reader(iterable, resource_name_mapping: dict = {
     """
     Load a pool configuration that was exported via htcondor from files or iterables
 
+    :param make_drone: The callable to create the drone
     :param iterable: an iterable yielding lines of CSV, such as an open file
     :param resource_name_mapping: Mapping from given header names to well-defined resources in simulation
     :param pool_type: The type of pool to be yielded

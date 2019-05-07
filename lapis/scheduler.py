@@ -108,7 +108,7 @@ class CondorJobScheduler(object):
                     break
                 else:
                     cost += (drone.pool_resources[resource_type] - drone.resources[resource_type]) // \
-                            job.resources[resource_type]
+                        job.resources[resource_type]
             cost /= len(resource_types)
             if cost <= 1:
                 # directly start job
