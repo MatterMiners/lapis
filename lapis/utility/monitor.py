@@ -1,4 +1,3 @@
-from functools import wraps
 from typing import Callable, TYPE_CHECKING
 
 import logging

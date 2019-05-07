@@ -1,7 +1,7 @@
 import logging
 
 from cobald import interfaces
-from usim import time, Scope, ActivityCancelled, instant, ActivityState
+from usim import time, Scope, instant, ActivityState
 
 from lapis.job import Job
 
