@@ -16,14 +16,18 @@ def job_scheduler(simulator):
 
 class CondorJobScheduler(object):
     """
-    Goal of the htcondor job scheduler is to have a scheduler that somehow mimics how htcondor does schedule jobs.
-    Htcondor does scheduling based on a priority queue. The priorities itself are managed by operators of htcondor.
+    Goal of the htcondor job scheduler is to have a scheduler that somehow
+    mimics how htcondor does schedule jobs.
+    Htcondor does scheduling based on a priority queue. The priorities itself
+    are managed by operators of htcondor.
     So different instances can apparently behave very different.
 
-    In my case I am going to try building a priority queue that sorts job slots by increasing cost. The cost itself
-    is calculated based on the current strategy that is used at GridKa. The scheduler checks if a job either
-    exactly fits a slot or if it does fit into it several times. The cost for putting a job at a given slot is
-    given by the amount of resources that might remain unallocated.
+    In my case I am going to try building a priority queue that sorts job slots
+    by increasing cost. The cost itself is calculated based on the current
+    strategy that is used at GridKa. The scheduler checks if a job either
+    exactly fits a slot or if it does fit into it several times. The cost for
+    putting a job at a given slot is given by the amount of resources that
+    might remain unallocated.
     :return:
     """
 
@@ -58,9 +62,11 @@ class CondorJobScheduler(object):
         if len(self.drone_cluster) > 0:
             for cluster in self.drone_cluster:
                 current_distance = 0
-                for key in {*cluster[0].theoretical_available_resources, *drone.theoretical_available_resources}:
-                    current_distance += abs(cluster[0].theoretical_available_resources.get(key, 0)
-                                            - drone.theoretical_available_resources.get(key, 0))
+                for key in {*cluster[0].theoretical_available_resources,
+                            *drone.theoretical_available_resources}:
+                    current_distance += abs(
+                        cluster[0].theoretical_available_resources.get(key, 0)
+                        - drone.theoretical_available_resources.get(key, 0))
                 if current_distance < distance:
                     minimum_distance_cluster = cluster
                     distance = current_distance
@@ -101,13 +107,15 @@ class CondorJobScheduler(object):
                     cost = float("Inf")
                     break
                 elif resource_type not in job.resources:
-                    cost += drone.pool_resources[resource_type] - drone.resources[resource_type]
-                elif (drone.pool_resources[resource_type] - drone.resources[resource_type]) < \
-                        job.resources[resource_type]:
+                    cost += drone.pool_resources[resource_type] \
+                        - drone.resources[resource_type]
+                elif (drone.pool_resources[resource_type]
+                      - drone.resources[resource_type]) < job.resources[resource_type]:
                     cost = float("Inf")
                     break
                 else:
-                    cost += (drone.pool_resources[resource_type] - drone.resources[resource_type]) // \
+                    cost += (drone.pool_resources[resource_type]
+                             - drone.resources[resource_type]) // \
                         job.resources[resource_type]
             cost /= len(resource_types)
             if cost <= 1:

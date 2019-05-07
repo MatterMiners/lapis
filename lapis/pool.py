@@ -5,15 +5,17 @@ from usim import time, eternity, Scope
 
 class Pool(interfaces.Pool):
     """
-    A pool encapsulating a number of pools or drones. Given a specific demand, allocation and utilisation, the
-    pool is able to adapt in terms of number of drones providing the given resources.
+    A pool encapsulating a number of pools or drones. Given a specific demand,
+    allocation and utilisation, the pool is able to adapt in terms of number of
+    drones providing the given resources.
 
     :param capacity: Maximum number of pools that can be instantiated within the pool
     :param init: Number of pools to instantiate at creation time of the pool
     :param name: Name of the pool
     :param make_drone: Callable to create a drone with specific properties for this pool
     """
-    def __init__(self, capacity: float = float('inf'), init: float = 0, name: str = None, make_drone: Callable = None):
+    def __init__(self, capacity: float = float('inf'), init: float = 0,
+                 name: str = None, make_drone: Callable = None):
         super(Pool, self).__init__()
         assert make_drone
         self.make_drone = make_drone
@@ -46,8 +48,9 @@ class Pool(interfaces.Pool):
     # TODO: the run method currently needs to be called manually
     async def run(self):
         """
-        Pool periodically checks the current demand and provided drones. If demand is higher than the current level,
-        the pool takes care of initialising new drones. Otherwise drones get removed.
+        Pool periodically checks the current demand and provided drones.
+        If demand is higher than the current level, the pool takes care of
+        initialising new drones. Otherwise drones get removed.
         """
         async with Scope() as scope:
             while True:
@@ -126,15 +129,19 @@ class Pool(interfaces.Pool):
 
 class StaticPool(Pool):
     """
-    A static pool does not react on changing conditions regarding demand, allocation and utilisation but instead
-    initialises the `capacity` of given drones with initialised `resources`.
+    A static pool does not react on changing conditions regarding demand,
+    allocation and utilisation but instead initialises the `capacity` of given
+    drones with initialised `resources`.
 
-    :param capacity: Maximum number of pools that can be instantiated within the pool
-    :param resources: Dictionary of resources available for each pool instantiated within the pool
+    :param capacity: Maximum number of pools that can be instantiated within
+    the pool
+    :param resources: Dictionary of resources available for each pool
+    instantiated within the pool
     """
     def __init__(self, capacity: float = 0, make_drone: Callable = None):
         assert capacity > 0, "Static pool was initialised without any resources..."
-        super(StaticPool, self).__init__(capacity=capacity, init=capacity, make_drone=make_drone)
+        super(StaticPool, self).__init__(capacity=capacity, init=capacity,
+                                         make_drone=make_drone)
         self._demand = capacity
 
     async def run(self):

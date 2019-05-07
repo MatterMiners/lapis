@@ -35,23 +35,24 @@ def job_demand(simulator):
         if value > 0:
             simulator.global_demand.put(value)
             logging.info(str(round(simulator.env.now)), {"user_demand_new": value})
-            # print("[demand] raising user demand for %f at %d to %d" % (value, env.now, globals.global_demand.level))
 
 
 class Job(object):
-    __slots__ = ("resources", "used_resources", "walltime", "requested_walltime", "queue_date", "in_queue_since",
-                 "in_queue_until", "_name", "_success")
+    __slots__ = ("resources", "used_resources", "walltime", "requested_walltime",
+                 "queue_date", "in_queue_since", "in_queue_until", "_name", "_success")
 
-    def __init__(self, resources: dict, used_resources: dict, in_queue_since: float = 0, queue_date: float = 0,
-                 name: str = None):
+    def __init__(self, resources: dict, used_resources: dict, in_queue_since: float = 0,
+                 queue_date: float = 0, name: str = None):
         """
-        Definition of a job that uses a specified amount of resources `used_resources` over a given amount of time,
-        `walltime`. A job is described by its user via the parameter `resources`. This is a user prediction and is
-        expected to deviate from `used_resources`.
+        Definition of a job that uses a specified amount of resources `used_resources`
+        over a given amount of time, `walltime`. A job is described by its user
+        via the parameter `resources`. This is a user prediction and is expected
+        to deviate from `used_resources`.
 
         :param resources: Requested resources of the job
         :param used_resources: Resource usage of the job
-        :param in_queue_since: Time when job was inserted into the queue of the simulation scheduler
+        :param in_queue_since: Time when job was inserted into the queue of the
+        simulation scheduler
         :param queue_date: Time when job was inserted into queue in real life
         :param name: Name of the job
         """
@@ -78,7 +79,8 @@ class Job(object):
     @property
     def waiting_time(self) -> float:
         """
-        The time the job spent in the simulators scheduling queue. `Inf` when the job is still waitiing.
+        The time the job spent in the simulators scheduling queue. `Inf` when
+        the job is still waitiing.
 
         :return: Time in queue
         """

@@ -41,7 +41,8 @@ def swf_job_reader(iterable, resource_name_mapping={
         "Preceding Job Number": 16,
         "Think Time from Preceding Job": 17  # s
     }
-    reader = csv.reader((line for line in iterable if line[0] != ';'), delimiter=' ', skipinitialspace=True)
+    reader = csv.reader((line for line in iterable if line[0] != ';'),
+                        delimiter=' ', skipinitialspace=True)
     for row in reader:
         resources = {}
         used_resources = {}
@@ -49,16 +50,22 @@ def swf_job_reader(iterable, resource_name_mapping={
             value = float(row[header[resource_name_mapping[key]]])
             used_value = float(row[header[used_resource_name_mapping[key]]])
             if value >= 0:
-                resources[key] = value * used_resource_name_mapping.get(resource_name_mapping[key], 1)
+                resources[key] = value * used_resource_name_mapping.get(
+                    resource_name_mapping[key], 1)
             if used_value >= 0:
-                used_resources[key] = used_value * used_resource_name_mapping.get(used_resource_name_mapping[key], 1)
+                used_resources[key] = used_value * used_resource_name_mapping.get(
+                    used_resource_name_mapping[key], 1)
             resources[key] = float()
         # handle memory
         key = "memory"
-        resources[key] = (float(row[header[resource_name_mapping[key]]]) * float(
-            row[header[resource_name_mapping["cores"]]])) * unit_conversion_mapping.get(resource_name_mapping[key], 1)
-        used_resources[key] = (float(row[header[used_resource_name_mapping[key]]]) * float(
-            row[header[used_resource_name_mapping["cores"]]])) * unit_conversion_mapping.get(used_resource_name_mapping[key], 1)
+        resources[key] = \
+            (float(row[header[resource_name_mapping[key]]])
+             * float(row[header[resource_name_mapping["cores"]]])) \
+            * unit_conversion_mapping.get(resource_name_mapping[key], 1)
+        used_resources[key] = \
+            (float(row[header[used_resource_name_mapping[key]]])
+             * float(row[header[used_resource_name_mapping["cores"]]])) \
+            * unit_conversion_mapping.get(used_resource_name_mapping[key], 1)
 
         yield Job(
             resources=resources,

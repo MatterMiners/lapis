@@ -30,20 +30,25 @@ def htcondor_job_reader(iterable, resource_name_mapping={
 
     for row in htcondor_reader:
         if float(row[used_resource_name_mapping["walltime"]]) <= 0:
-            logging.getLogger("implementation").warning("removed job from htcondor import", row)
+            logging.getLogger("implementation").warning(
+                "removed job from htcondor import", row)
             continue
         resources = {}
         for key, original_key in resource_name_mapping.items():
             try:
-                resources[key] = float(row[original_key]) * unit_conversion_mapping.get(original_key, 1)
+                resources[key] = float(row[original_key]) \
+                    * unit_conversion_mapping.get(original_key, 1)
             except ValueError:
                 pass
-        used_resources = {"cores": (float(row["RemoteSysCpu"]) + float(row["RemoteUserCpu"])
-                                    / float(row[used_resource_name_mapping["walltime"]])) * unit_conversion_mapping.get(
-            used_resource_name_mapping[key], 1)}
+        used_resources = {
+            "cores": (float(row["RemoteSysCpu"]) + float(row["RemoteUserCpu"])
+                      / float(row[used_resource_name_mapping["walltime"]]))
+            * unit_conversion_mapping.get(used_resource_name_mapping[key], 1)
+        }
         for key in ["memory", "walltime", "disk"]:
             original_key = used_resource_name_mapping[key]
-            used_resources[key] = float(row[original_key]) * unit_conversion_mapping.get(original_key, 1)
+            used_resources[key] = \
+                float(row[original_key]) * unit_conversion_mapping.get(original_key, 1)
         yield Job(
             resources=resources,
             used_resources=used_resources,
