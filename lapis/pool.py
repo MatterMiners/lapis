@@ -134,9 +134,9 @@ class StaticPool(Pool):
     drones with initialised `resources`.
 
     :param capacity: Maximum number of pools that can be instantiated within
-    the pool
+                     the pool
     :param resources: Dictionary of resources available for each pool
-    instantiated within the pool
+                      instantiated within the pool
     """
     def __init__(self, capacity: float = 0, make_drone: Callable = None):
         assert capacity > 0, "Static pool was initialised without any resources..."

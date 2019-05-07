@@ -19,7 +19,7 @@ class Drone(interfaces.Pool):
         :param pool_resources:
         :param scheduling_duration:
         :param exclusive: Determines if the drone is used exclusively by jobs
-        in sequential order
+                          in sequential order
         """
         super(Drone, self).__init__()
         self.scheduler = scheduler
@@ -129,7 +129,7 @@ class Drone(interfaces.Pool):
 
         :param job: the job to start
         :param kill: if True, a job is killed when used resources exceed
-        requested resources
+                     requested resources
         :return:
         """
         # TODO: ensure that jobs cannot immediately started on the same drone

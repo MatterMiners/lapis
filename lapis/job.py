@@ -49,7 +49,7 @@ class Job(object):
         :param resources: Requested resources of the job
         :param used_resources: Resource usage of the job
         :param in_queue_since: Time when job was inserted into the queue of the
-        simulation scheduler
+                               simulation scheduler
         :param queue_date: Time when job was inserted into queue in real life
         :param name: Name of the job
         """

@@ -16,7 +16,7 @@ def machines_pool_reader(iterable, resource_name_mapping: dict = {  # noqa: B006
     :param make_drone: The callable to create the drone
     :param iterable: an iterable yielding lines of CSV, such as an open file
     :param resource_name_mapping: Mapping from given header names to well-defined
-    resources in simulation
+                                  resources in simulation
     :param pool_type: The type of pool to be yielded
     :return: Yields the :py:class:`StaticPool`s found in the given iterable
     """
