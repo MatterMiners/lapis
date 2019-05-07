@@ -5,10 +5,10 @@ from typing import Callable
 from ..pool import Pool
 
 
-def machines_pool_reader(iterable, resource_name_mapping={
+def machines_pool_reader(iterable, resource_name_mapping: dict = {
     "cores": "CPUs_per_node",
     "memory": "RAM_per_node_in_KB"
-}, pool_type=Pool, make_drone: Callable=None):
+}, pool_type: Callable = Pool, make_drone: Callable = None):
     """
     Load a pool configuration that was exported via htcondor from files or iterables
 

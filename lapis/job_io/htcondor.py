@@ -18,13 +18,13 @@ def htcondor_job_reader(iterable, resource_name_mapping={
 }, unit_conversion_mapping={
     "RequestCpus": 1,
     "RequestWalltime": 1,
-    "RequestMemory": 1.024/1024,
-    "RequestDisk": 1.024/1024/1024,
+    "RequestMemory": 1.024 / 1024,
+    "RequestDisk": 1.024 / 1024 / 1024,
     "queuetime": 1,
     "RemoteWallClockTime": 1,
     "Number of Allocated Processors": 1,
-    "MemoryUsage": 1/1024,
-    "DiskUsage_RAW": 1.024/1024/1024
+    "MemoryUsage": 1 / 1024,
+    "DiskUsage_RAW": 1.024 / 1024 / 1024
 }):
     htcondor_reader = csv.DictReader(iterable, delimiter=' ', quotechar="'")
 

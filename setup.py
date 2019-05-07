@@ -29,7 +29,7 @@ if __name__ == '__main__':
             'click'
         ],
         extras_require={
-            'docs':  ["sphinx", "sphinxcontrib-tikz"],
+            'docs': ["sphinx", "sphinxcontrib-tikz"],
         },
         # metadata for package search
         license='MIT',

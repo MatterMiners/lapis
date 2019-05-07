@@ -18,18 +18,18 @@ def job_demand(simulator):
     while True:
         delay = random.randint(0, 100)
         strategy = random.random()
-        if strategy < 1/3:
+        if strategy < 1 / 3:
             # linear amount
             # print("strategy: linear amount")
-            amount = random.randint(0, int(random.random()*100))
-        elif strategy < 2/3:
+            amount = random.randint(0, int(random.random() * 100))
+        elif strategy < 2 / 3:
             # exponential amount
             # print("strategy: exponential amount")
-            amount = (math.e**(random.random())-1)*random.random()*1000
+            amount = (math.e ** (random.random()) - 1) * random.random() * 1000
         else:
             # sqrt
             # print("strategy: sqrt amount")
-            amount = math.sqrt(random.random()*random.random()*100)
+            amount = math.sqrt(random.random() * random.random() * 100)
         value = yield simulator.env.timeout(delay=delay, value=amount)
         value = round(value)
         if value > 0:
@@ -42,8 +42,8 @@ class Job(object):
     __slots__ = ("resources", "used_resources", "walltime", "requested_walltime", "queue_date", "in_queue_since",
                  "in_queue_until", "_name", "_success")
 
-    def __init__(self, resources: dict, used_resources: dict, in_queue_since: float=0, queue_date: float=0,
-                 name: str=None):
+    def __init__(self, resources: dict, used_resources: dict, in_queue_since: float = 0, queue_date: float = 0,
+                 name: str = None):
         """
         Definition of a job that uses a specified amount of resources `used_resources` over a given amount of time,
         `walltime`. A job is described by its user via the parameter `resources`. This is a user prediction and is

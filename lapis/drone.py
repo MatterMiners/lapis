@@ -11,8 +11,8 @@ class ResourcesExceeded(Exception):
 
 
 class Drone(interfaces.Pool):
-    def __init__(self, scheduler, pool_resources: dict, scheduling_duration: float, exclusive: bool=False,
-                 ignore_resources: list=None):
+    def __init__(self, scheduler, pool_resources: dict, scheduling_duration: float, exclusive: bool = False,
+                 ignore_resources: list = None):
         """
         :param scheduler:
         :param pool_resources:
@@ -111,7 +111,7 @@ class Drone(interfaces.Pool):
             except KeyError:
                 target[resource_key] -= alternative_source[resource_key]
 
-    async def start_job(self, job: Job, kill: bool=False):
+    async def start_job(self, job: Job, kill: bool = False):
         """
         Method manages to start a job in the context of the given drone.
         The job is started independent of available resources. If resources of drone are exceeded, the job is killed.

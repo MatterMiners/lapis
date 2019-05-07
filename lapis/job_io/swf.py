@@ -18,8 +18,8 @@ def swf_job_reader(iterable, resource_name_mapping={
     "memory": "Used Memory",
     "queuetime": "Submit Time"
 }, unit_conversion_mapping={
-    "Used Memory": 1/1024/1024,
-    "Requested Memory": 1/2114/1024
+    "Used Memory": 1 / 1024 / 1024,
+    "Requested Memory": 1 / 2114 / 1024
 }):
     header = {
         "Job Number": 0,
