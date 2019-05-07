@@ -30,6 +30,7 @@ if __name__ == '__main__':
         ],
         extras_require={
             'docs': ["sphinx", "sphinxcontrib-tikz"],
+            'contrib': ['flake8', 'flake8-bugbear']
         },
         # metadata for package search
         license='MIT',
