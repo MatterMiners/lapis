@@ -1,4 +1,3 @@
-from functools import wraps
 from typing import Callable, TYPE_CHECKING
 
 import logging
@@ -42,21 +41,29 @@ def collect_resource_statistics(simulator: "Simulator") -> dict:
         for resource_key in {*drone.resources, *drone.used_resources}:
             drone_resources.setdefault(resource_key, {})
             try:
-                drone_resources[resource_key]["reserved"] += drone.resources[resource_key]
+                drone_resources[resource_key]["reserved"] += \
+                    drone.resources[resource_key]
             except KeyError:
-                drone_resources[resource_key]["reserved"] = drone.resources[resource_key]
+                drone_resources[resource_key]["reserved"] = \
+                    drone.resources[resource_key]
             try:
-                drone_resources[resource_key]["used"] += drone.used_resources[resource_key]
+                drone_resources[resource_key]["used"] += \
+                    drone.used_resources[resource_key]
             except KeyError:
-                drone_resources[resource_key]["used"] = drone.used_resources[resource_key]
+                drone_resources[resource_key]["used"] = \
+                    drone.used_resources[resource_key]
             try:
-                drone_resources[resource_key]["available"] += drone.pool_resources[resource_key] - drone.resources[resource_key]
+                drone_resources[resource_key]["available"] += \
+                    drone.pool_resources[resource_key] - drone.resources[resource_key]
             except KeyError:
-                drone_resources[resource_key]["available"] = drone.pool_resources[resource_key] - drone.resources[resource_key]
+                drone_resources[resource_key]["available"] = \
+                    drone.pool_resources[resource_key] - drone.resources[resource_key]
             try:
-                drone_resources[resource_key]["total"] += drone.pool_resources[resource_key]
+                drone_resources[resource_key]["total"] += \
+                    drone.pool_resources[resource_key]
             except KeyError:
-                drone_resources[resource_key]["total"] = drone.pool_resources[resource_key]
+                drone_resources[resource_key]["total"] = \
+                    drone.pool_resources[resource_key]
     return {
         "empty_drones": empty_drones,
         "drone_resources": drone_resources

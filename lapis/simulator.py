@@ -6,14 +6,14 @@ from usim.basics import Queue
 
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
-from lapis.utility.monitor import Monitoring, collect_pool_statistics, collect_user_demand, collect_job_statistics, \
-    collect_resource_statistics, collect_cobald_cost
+from lapis.utility.monitor import Monitoring, collect_pool_statistics, \
+    collect_user_demand, collect_job_statistics, collect_resource_statistics, \
+    collect_cobald_cost
 
 
 class Simulator(object):
     def __init__(self, seed=1234):
         random.seed(seed)
-        resource_normalisation = {"memory": 2000}
         self.job_queue = Queue()
         self.pools = []
         self.controllers = []
@@ -37,7 +37,8 @@ class Simulator(object):
 
     def create_pools(self, pool_input, pool_reader, pool_type, controller=None):
         assert self.job_scheduler, "Scheduler needs to be created before pools"
-        for pool in pool_reader(iterable=pool_input, pool_type=pool_type, make_drone=partial(Drone, self.job_scheduler)):
+        for pool in pool_reader(iterable=pool_input, pool_type=pool_type,
+                                make_drone=partial(Drone, self.job_scheduler)):
             self.pools.append(pool)
             if controller:
                 self.controllers.append(controller(target=pool, rate=1))

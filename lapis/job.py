@@ -3,10 +3,7 @@ import math
 import logging
 
 from usim import time
-
-
-# TODO: needs refactoring
-from usim._primitives.activity import CancelActivity
+from usim import TaskCancelled
 
 
 def job_demand(simulator):
@@ -18,40 +15,41 @@ def job_demand(simulator):
     while True:
         delay = random.randint(0, 100)
         strategy = random.random()
-        if strategy < 1/3:
+        if strategy < 1 / 3:
             # linear amount
             # print("strategy: linear amount")
-            amount = random.randint(0, int(random.random()*100))
-        elif strategy < 2/3:
+            amount = random.randint(0, int(random.random() * 100))
+        elif strategy < 2 / 3:
             # exponential amount
             # print("strategy: exponential amount")
-            amount = (math.e**(random.random())-1)*random.random()*1000
+            amount = (math.e ** (random.random()) - 1) * random.random() * 1000
         else:
             # sqrt
             # print("strategy: sqrt amount")
-            amount = math.sqrt(random.random()*random.random()*100)
+            amount = math.sqrt(random.random() * random.random() * 100)
         value = yield simulator.env.timeout(delay=delay, value=amount)
         value = round(value)
         if value > 0:
             simulator.global_demand.put(value)
             logging.info(str(round(simulator.env.now)), {"user_demand_new": value})
-            # print("[demand] raising user demand for %f at %d to %d" % (value, env.now, globals.global_demand.level))
 
 
 class Job(object):
-    __slots__ = ("resources", "used_resources", "walltime", "requested_walltime", "queue_date", "in_queue_since",
-                 "in_queue_until", "_name", "_success")
+    __slots__ = ("resources", "used_resources", "walltime", "requested_walltime",
+                 "queue_date", "in_queue_since", "in_queue_until", "_name", "_success")
 
-    def __init__(self, resources: dict, used_resources: dict, in_queue_since: float=0, queue_date: float=0,
-                 name: str=None):
+    def __init__(self, resources: dict, used_resources: dict, in_queue_since: float = 0,
+                 queue_date: float = 0, name: str = None):
         """
-        Definition of a job that uses a specified amount of resources `used_resources` over a given amount of time,
-        `walltime`. A job is described by its user via the parameter `resources`. This is a user prediction and is
-        expected to deviate from `used_resources`.
+        Definition of a job that uses a specified amount of resources `used_resources`
+        over a given amount of time, `walltime`. A job is described by its user
+        via the parameter `resources`. This is a user prediction and is expected
+        to deviate from `used_resources`.
 
         :param resources: Requested resources of the job
         :param used_resources: Resource usage of the job
-        :param in_queue_since: Time when job was inserted into the queue of the simulation scheduler
+        :param in_queue_since: Time when job was inserted into the queue of the
+                               simulation scheduler
         :param queue_date: Time when job was inserted into queue in real life
         :param name: Name of the job
         """
@@ -78,7 +76,8 @@ class Job(object):
     @property
     def waiting_time(self) -> float:
         """
-        The time the job spent in the simulators scheduling queue. `Inf` when the job is still waitiing.
+        The time the job spent in the simulators scheduling queue. `Inf` when
+        the job is still waitiing.
 
         :return: Time in queue
         """
@@ -97,9 +96,9 @@ class Job(object):
         })
         try:
             await (time + self.walltime)
-        except CancelActivity:
+        except TaskCancelled:
             self._success = False
-        except BaseException as err:
+        except BaseException:
             self._success = False
             raise
         else:

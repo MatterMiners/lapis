@@ -44,7 +44,8 @@ def cli(ctx, seed, until, log_tcp, log_file):
     ctx.obj['seed'] = seed
     ctx.obj['until'] = until
     if log_tcp:
-        socketHandler = JSONSocketHandler('localhost', logging.handlers.DEFAULT_TCP_LOGGING_PORT)
+        socketHandler = JSONSocketHandler(
+            'localhost', logging.handlers.DEFAULT_TCP_LOGGING_PORT)
         socketHandler.setFormatter(JsonFormatter())
         monitoring_logger.addHandler(socketHandler)
     if log_file:
@@ -54,14 +55,17 @@ def cli(ctx, seed, until, log_tcp, log_file):
 
 
 @cli.command()
-@click.option("--job-file", "job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
-@click.option("--pool-file", "pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
+@click.option("--job-file", "job_file", type=(
+    click.File("r"), click.Choice(list(job_import_mapper.keys()))))
+@click.option("--pool-file", "pool_file", type=(
+    click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
 @click.pass_context
 def static(ctx, job_file, pool_file):
     click.echo("starting static environment")
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
-    simulator.create_job_generator(job_input=file, job_reader=job_import_mapper[file_type])
+    simulator.create_job_generator(
+        job_input=file, job_reader=job_import_mapper[file_type])
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     for current_pool in pool_file:
         pool_file, pool_file_type = current_pool
@@ -73,14 +77,17 @@ def static(ctx, job_file, pool_file):
 
 
 @cli.command()
-@click.option("--job-file", "job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
-@click.option("--pool-file", "pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
+@click.option("--job-file", "job_file", type=(
+    click.File("r"), click.Choice(list(job_import_mapper.keys()))))
+@click.option("--pool-file", "pool_file", type=(
+    click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
 @click.pass_context
 def dynamic(ctx, job_file, pool_file):
     click.echo("starting dynamic environment")
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
-    simulator.create_job_generator(job_input=file, job_reader=job_import_mapper[file_type])
+    simulator.create_job_generator(
+        job_input=file, job_reader=job_import_mapper[file_type])
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     for current_pool in pool_file:
         file, file_type = current_pool
@@ -93,19 +100,25 @@ def dynamic(ctx, job_file, pool_file):
 
 
 @cli.command()
-@click.option("--job-file", "job_file", type=(click.File("r"), click.Choice(list(job_import_mapper.keys()))))
-@click.option("--static-pool-file", "static_pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
-@click.option("--dynamic-pool-file", "dynamic_pool_file", type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
+@click.option("--job-file", "job_file", type=(
+    click.File("r"), click.Choice(list(job_import_mapper.keys()))))
+@click.option("--static-pool-file", "static_pool_file", type=(
+    click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
+@click.option("--dynamic-pool-file", "dynamic_pool_file", type=(
+    click.File("r"), click.Choice(list(pool_import_mapper.keys()))), multiple=True)
 @click.pass_context
 def hybrid(ctx, job_file, static_pool_file, dynamic_pool_file):
     click.echo("starting hybrid environment")
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
-    simulator.create_job_generator(job_input=file, job_reader=job_import_mapper[file_type])
+    simulator.create_job_generator(
+        job_input=file, job_reader=job_import_mapper[file_type])
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     for current_pool in static_pool_file:
         file, file_type = current_pool
-        simulator.create_pools(pool_input=file, pool_reader=pool_import_mapper[file_type], pool_type=StaticPool)
+        simulator.create_pools(
+            pool_input=file, pool_reader=pool_import_mapper[file_type],
+            pool_type=StaticPool)
     for current_pool in dynamic_pool_file:
         file, file_type = current_pool
         simulator.create_pools(

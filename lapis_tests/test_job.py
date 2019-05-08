@@ -110,4 +110,3 @@ class TestJob(object):
         assert job_two.successful
         assert 0 == job_one.waiting_time
         assert 0 == job_two.waiting_time
-
