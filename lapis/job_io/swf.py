@@ -50,12 +50,11 @@ def swf_job_reader(iterable, resource_name_mapping={  # noqa: B006
             value = float(row[header[resource_name_mapping[key]]])
             used_value = float(row[header[used_resource_name_mapping[key]]])
             if value >= 0:
-                resources[key] = value * used_resource_name_mapping.get(
+                resources[key] = value * unit_conversion_mapping.get(
                     resource_name_mapping[key], 1)
             if used_value >= 0:
-                used_resources[key] = used_value * used_resource_name_mapping.get(
+                used_resources[key] = used_value * unit_conversion_mapping.get(
                     used_resource_name_mapping[key], 1)
-            resources[key] = float()
         # handle memory
         key = "memory"
         resources[key] = \
