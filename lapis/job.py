@@ -31,7 +31,7 @@ def job_demand(simulator):
         value = round(value)
         if value > 0:
             simulator.global_demand.put(value)
-            logging.info(str(round(simulator.env.now)), {"user_demand_new": value})
+            logging.info("user_demand", {"user_demand_new": value})
 
 
 class Job(object):
@@ -87,7 +87,7 @@ class Job(object):
 
     async def run(self):
         self.in_queue_until = time.now
-        logging.info(str(round(time.now)), {
+        logging.info("job_status", {
             "job_queue_time": {
                 repr(self): self.queue_date
             }, "job_waiting_time": {
@@ -102,7 +102,7 @@ class Job(object):
             self._success = False
             raise
         else:
-            logging.info(str(round(time.now)), {
+            logging.info("job_status", {
                 "job_wall_time": {
                     repr(self): self.walltime
                 }
@@ -133,6 +133,6 @@ async def job_to_queue_scheduler(job_generator, job_queue, **kwargs):
             job = None
         else:
             if count > 0:
-                logging.info(str(round(time.now)), {"user_demand_new": count})
+                logging.info("user_demand", {"user_demand_new": count})
                 count = 0
             await (time == current_time)
