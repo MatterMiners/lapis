@@ -13,7 +13,11 @@ sampling_required = Flag()
 
 
 class TimeFilter(logging.Filter):
-    def filter(self, record):
+    """
+    py:class:`TimeFilter` takes care to modify the created timestamp of a log
+    record to be set to the current simulation time.
+    """
+    def filter(self, record) -> bool:
         record.created = time.now
         return True
 
