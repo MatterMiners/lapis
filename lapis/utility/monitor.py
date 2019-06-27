@@ -2,6 +2,7 @@ import copy
 from typing import Callable, TYPE_CHECKING
 
 import logging
+import logging.handlers
 
 from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
