@@ -2,7 +2,7 @@ from typing import Callable, TYPE_CHECKING
 
 import logging
 
-from usim import each, Flag, time
+from usim import each, Flag
 
 from lapis.cost import cobald_cost
 
@@ -22,14 +22,13 @@ class Monitoring(object):
         async for _ in each(delay=1):
             await sampling_required
             await sampling_required.set(False)
-            result = {}
-            for statistic in self._statistics:
+            for name, statistic in self._statistics:
                 # do the logging
-                result.update(statistic(self.simulator))
-            logging.info(str(round(time.now)), result)
+                logging.info(name, statistic(self.simulator))
 
-    def register_statistic(self, statistic: Callable):
-        self._statistics.append(statistic)
+    def register_statistic(self, statistic: Callable, name: str = "lapis_data"):
+        assert name is not None
+        self._statistics.append((name, statistic))
 
 
 def collect_resource_statistics(simulator: "Simulator") -> dict:

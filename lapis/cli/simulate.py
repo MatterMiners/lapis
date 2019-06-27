@@ -2,6 +2,7 @@ import click
 import logging.handlers
 
 from cobald.monitor.format_json import JsonFormatter
+from cobald.monitor.format_line import LineProtocolFormatter
 
 from lapis.controller import SimulatedLinearController
 from lapis.job_io.htcondor import htcondor_job_reader
@@ -12,14 +13,29 @@ from lapis.job_io.swf import swf_job_reader
 from lapis.scheduler import CondorJobScheduler
 from lapis.simulator import Simulator
 
+from usim import time
 
-class JSONSocketHandler(logging.handlers.SocketHandler):
+
+class LoggingSocketHandler(logging.handlers.SocketHandler):
     def makePickle(self, record):
         return self.format(record).encode()
 
 
+class LoggingUDPSocketHandler(logging.handlers.DatagramHandler):
+    def makePickle(self, record):
+        return self.format(record).encode()
+
+
+class TimeFilter(logging.Filter):
+    def filter(self, record):
+        record.created = time.now
+        return True
+
+
 monitoring_logger = logging.getLogger()
 monitoring_logger.setLevel(logging.DEBUG)
+time_filter = TimeFilter()
+monitoring_logger.addFilter(time_filter)
 
 last_step = 0
 
@@ -38,13 +54,14 @@ pool_import_mapper = {
 @click.option("--until", type=float)
 @click.option("--log-tcp", "log_tcp", is_flag=True)
 @click.option("--log-file", "log_file", type=click.File("w"))
+@click.option("--log-telegraf", "log_telegraf", is_flag=True)
 @click.pass_context
-def cli(ctx, seed, until, log_tcp, log_file):
+def cli(ctx, seed, until, log_tcp, log_file, log_telegraf):
     ctx.ensure_object(dict)
     ctx.obj['seed'] = seed
     ctx.obj['until'] = until
     if log_tcp:
-        socketHandler = JSONSocketHandler(
+        socketHandler = LoggingSocketHandler(
             'localhost', logging.handlers.DEFAULT_TCP_LOGGING_PORT)
         socketHandler.setFormatter(JsonFormatter())
         monitoring_logger.addHandler(socketHandler)
@@ -52,6 +69,11 @@ def cli(ctx, seed, until, log_tcp, log_file):
         streamHandler = logging.StreamHandler(stream=log_file)
         streamHandler.setFormatter(JsonFormatter())
         monitoring_logger.addHandler(streamHandler)
+    if log_telegraf:
+        telegrafHandler = LoggingUDPSocketHandler(
+            "localhost", logging.handlers.DEFAULT_UDP_LOGGING_PORT)
+        telegrafHandler.setFormatter(LineProtocolFormatter(resolution=1))
+        monitoring_logger.addHandler(telegrafHandler)
 
 
 @cli.command()

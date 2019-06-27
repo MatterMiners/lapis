@@ -177,7 +177,7 @@ class Drone(interfaces.Pool):
                     value = usage / (job.resources.get(resource_key, None)
                                      or self.pool_resources[resource_key])
                     if value > 1:
-                        logging.info(str(round(time.now)), {
+                        logging.info("job_status", {
                             "job_exceeds_%s" % resource_key: {
                                 repr(job): value
                             }
