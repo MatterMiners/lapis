@@ -1,3 +1,4 @@
+import copy
 from typing import Callable, TYPE_CHECKING
 
 import logging
@@ -35,7 +36,6 @@ class TimeFilter(logging.Filter):
 
 
 class Monitoring(object):
-    # TODO: we need to check how to integrate the normalization factor
     def __init__(self, simulator: "Simulator"):
         self.simulator = simulator
         self._statistics = []
@@ -44,51 +44,52 @@ class Monitoring(object):
         async for _ in each(delay=1):
             await sampling_required
             await sampling_required.set(False)
-            for name, statistic in self._statistics:
+            for statistic in self._statistics:
                 # do the logging
-                logging.info(name, statistic(self.simulator))
+                for record in statistic(self.simulator):
+                    logging.getLogger(statistic.name).info(
+                        statistic.name, record
+                    )
 
-    def register_statistic(self, statistic: Callable, name: str = "lapis_data"):
-        assert name is not None
-        self._statistics.append((name, statistic))
+    def register_statistic(self, statistic: Callable):
+        assert hasattr(statistic, "name") and hasattr(statistic, "logging_formatter")
+        self._statistics.append(statistic)
+
+        # prepare the logger
+        logger = logging.getLogger(statistic.name)
+        if len(logger.handlers) == 0:
+            # append handlers of default logger and add required formatters
+            root_logger = logging.getLogger()
+            for handler in root_logger.handlers:
+                new_handler = copy.copy(handler)
+                new_handler.setFormatter(statistic.logging_formatter.get(
+                    type(handler).__name__, JsonFormatter()))
 
 
-def collect_resource_statistics(simulator: "Simulator") -> dict:
-    empty_drones = 0
-    drone_resources = {}
+def collect_resource_statistics(simulator: "Simulator") -> list:
+    results = []
     for drone in simulator.job_scheduler.drone_list:
-        if drone.allocation == 0:
-            empty_drones += 1
-        for resource_key in {*drone.resources, *drone.used_resources}:
-            drone_resources.setdefault(resource_key, {})
-            try:
-                drone_resources[resource_key]["reserved"] += \
-                    drone.resources[resource_key]
-            except KeyError:
-                drone_resources[resource_key]["reserved"] = \
-                    drone.resources[resource_key]
-            try:
-                drone_resources[resource_key]["used"] += \
-                    drone.used_resources[resource_key]
-            except KeyError:
-                drone_resources[resource_key]["used"] = \
-                    drone.used_resources[resource_key]
-            try:
-                drone_resources[resource_key]["available"] += \
-                    drone.pool_resources[resource_key] - drone.resources[resource_key]
-            except KeyError:
-                drone_resources[resource_key]["available"] = \
-                    drone.pool_resources[resource_key] - drone.resources[resource_key]
-            try:
-                drone_resources[resource_key]["total"] += \
-                    drone.pool_resources[resource_key]
-            except KeyError:
-                drone_resources[resource_key]["total"] = \
-                    drone.pool_resources[resource_key]
-    return {
-        "empty_drones": empty_drones,
-        "drone_resources": drone_resources
-    }
+        for resource_type in {*drone.resources, *drone.used_resources}:
+            results.append({
+                "resource_type": resource_type,
+                "pool_configuration": None,
+                "pool_type": "drone",
+                "pool": repr(drone),
+                "used_ratio": drone.used_resources.get(resource_type, 0) /
+                              drone.resources.get(resource_type, 0)
+            })
+    return results
+
+
+collect_resource_statistics.logging_formatter = {
+    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
+    logging.StreamHandler.__class__.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
+        tags={"tardis", "resource_type", "pool_configuration", "pool_type"},
+        resolution=1
+    )
+}
+collect_resource_statistics.name = "resource_status"
 
 
 def collect_cobald_cost(simulator: "Simulator") -> dict:
@@ -102,36 +103,91 @@ def collect_cobald_cost(simulator: "Simulator") -> dict:
     }
 
 
-def collect_user_demand(simulator: "Simulator") -> dict:
-    return {
-        "user_demand": len(simulator.job_scheduler.job_queue)
-    }
+def collect_user_demand(simulator: "Simulator") -> list:
+    return [{
+        "value": len(simulator.job_scheduler.job_queue)
+    }]
 
 
-def collect_job_statistics(simulator: "Simulator") -> dict:
+collect_user_demand.logging_formatter = {
+    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
+    logging.StreamHandler.__class__.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
+        resolution=1
+    )
+}
+collect_user_demand.name = "user_demand"
+
+
+def collect_job_statistics(simulator: "Simulator") -> list:
     result = 0
     for drone in simulator.job_scheduler.drone_list:
         result += drone.jobs
-    return {
-        "running_jobs": result
-    }
+    return [{
+        "job_count": result
+    }]
 
 
-def collect_pool_statistics(simulator: "Simulator") -> dict:
-    pool_demand = {}
-    pool_supply = {}
-    pool_utilisation = {}
-    pool_allocation = {}
+collect_job_statistics.logging_formatter = {
+    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
+    logging.StreamHandler.__class__.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
+        tags={"tardis", "pool_configuration", "pool_type"},
+        resolution=1
+    )
+}
+collect_job_statistics.name = "cobald_status"
+
+
+def collect_drone_cobald_statistics(simulator: "Simulator") -> list:
+    results = []
+    for drone in simulator.job_scheduler.drone_list:
+        results.append({
+            "pool_configuration": None,
+            "pool_type": "drone",
+            "pool": repr(drone),
+            "allocation": drone.allocation,
+            "utilisation": drone.utilisation,
+            "demand": drone.demand,
+            "supply": drone.supply,
+            "job_count": drone.jobs
+        })
+    return results
+
+
+collect_drone_cobald_statistics.logging_formatter = {
+    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
+    logging.StreamHandler.__class__.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
+        tags={"tardis", "resource_type", "pool_configuration", "pool_type"},
+        resolution=1
+    )
+}
+collect_drone_cobald_statistics.name = "cobald_status"
+
+
+def collect_pool_cobald_statistics(simulator: "Simulator") -> list:
+    results = []
     for pool in simulator.pools:
-        pool_demand[repr(pool)] = pool.demand
-        pool_supply[repr(pool)] = pool.supply
-        pool_utilisation[repr(pool)] = pool.utilisation
-        pool_allocation[repr(pool)] = pool.allocation
-    return {
-        "pool": {
-            "demand": pool_demand,
-            "supply": pool_supply,
-            "allocation": pool_allocation,
-            "utilisation": pool_utilisation
-        }
-    }
+        results.append({
+            "pool_configuration": None,
+            "pool_type": "pool",
+            "pool": repr(pool),
+            "allocation": pool.allocation,
+            "utilisation": pool.utilisation,
+            "demand": pool.demand,
+            "supply": pool.supply,
+        })
+    return results
+
+
+collect_pool_cobald_statistics.logging_formatter = {
+    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
+    logging.StreamHandler.__class__.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
+        tags={"tardis", "pool_configuration", "pool_type"},
+        resolution=1
+    )
+}
+collect_pool_cobald_statistics.name = "cobald_status"
+
