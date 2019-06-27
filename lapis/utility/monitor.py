@@ -193,3 +193,46 @@ collect_pool_cobald_statistics.logging_formatter = {
 }
 collect_pool_cobald_statistics.name = "cobald_status"
 
+
+def collect_pool_status(simulator: "Simulator") -> list:
+    """
+    Function takes care on logging information about when pools and drones
+    did change state within the system, e.g. were integrated or removed.
+
+    :param simulator: the simulator
+    :return: list of records for logging
+    """
+    pass
+
+
+collect_pool_status.name = "pool_status"
+collect_pool_status.logging_formatter = {
+    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
+    logging.StreamHandler.__class__.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
+        tags={"tardis", "parent_pool", "pool_configuration", "pool_type"},
+        resolution=1
+    )
+}
+
+
+def collect_configuration_information(simulator: "Simulator") -> list:
+    """
+    Function takes care on logging information about the configuration of
+    pools and drones, e.g. provided resources.
+
+    :param simulator: the simulator
+    :return: list of records for logging
+    """
+    pass
+
+
+collect_configuration_information.name = "configuration"
+collect_configuration_information.logging_formatter = {
+    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
+    logging.StreamHandler.__class__.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
+        tags={"tardis", "pool_configuration", "resource_type"},
+        resolution=1
+    )
+}
