@@ -2,7 +2,7 @@ from typing import Callable, TYPE_CHECKING
 
 import logging
 
-from usim import each, Flag
+from usim import each, Flag, time
 
 from lapis.cost import cobald_cost
 
@@ -10,6 +10,12 @@ if TYPE_CHECKING:
     from lapis.simulator import Simulator
 
 sampling_required = Flag()
+
+
+class TimeFilter(logging.Filter):
+    def filter(self, record):
+        record.created = time.now
+        return True
 
 
 class Monitoring(object):

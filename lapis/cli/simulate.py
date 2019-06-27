@@ -13,7 +13,7 @@ from lapis.job_io.swf import swf_job_reader
 from lapis.scheduler import CondorJobScheduler
 from lapis.simulator import Simulator
 
-from usim import time
+from lapis.utility.monitor import TimeFilter
 
 
 class LoggingSocketHandler(logging.handlers.SocketHandler):
@@ -24,12 +24,6 @@ class LoggingSocketHandler(logging.handlers.SocketHandler):
 class LoggingUDPSocketHandler(logging.handlers.DatagramHandler):
     def makePickle(self, record):
         return self.format(record).encode()
-
-
-class TimeFilter(logging.Filter):
-    def filter(self, record):
-        record.created = time.now
-        return True
 
 
 monitoring_logger = logging.getLogger()
