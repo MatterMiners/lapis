@@ -13,23 +13,8 @@ from lapis.job_io.swf import swf_job_reader
 from lapis.scheduler import CondorJobScheduler
 from lapis.simulator import Simulator
 
-from lapis.utility.monitor import TimeFilter
-
-
-class LoggingSocketHandler(logging.handlers.SocketHandler):
-    def makePickle(self, record):
-        return self.format(record).encode()
-
-
-class LoggingUDPSocketHandler(logging.handlers.DatagramHandler):
-    def makePickle(self, record):
-        return self.format(record).encode()
-
-
-monitoring_logger = logging.getLogger()
-monitoring_logger.setLevel(logging.DEBUG)
-time_filter = TimeFilter()
-monitoring_logger.addFilter(time_filter)
+from lapis.utility.monitor import TimeFilter, LoggingSocketHandler, \
+    LoggingUDPSocketHandler
 
 last_step = 0
 
@@ -54,6 +39,10 @@ def cli(ctx, seed, until, log_tcp, log_file, log_telegraf):
     ctx.ensure_object(dict)
     ctx.obj['seed'] = seed
     ctx.obj['until'] = until
+    monitoring_logger = logging.getLogger()
+    monitoring_logger.setLevel(logging.DEBUG)
+    time_filter = TimeFilter()
+    monitoring_logger.addFilter(time_filter)
     if log_tcp:
         socketHandler = LoggingSocketHandler(
             'localhost', logging.handlers.DEFAULT_TCP_LOGGING_PORT)

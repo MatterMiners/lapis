@@ -2,6 +2,8 @@ from typing import Callable, TYPE_CHECKING
 
 import logging
 
+from cobald.monitor.format_json import JsonFormatter
+from cobald.monitor.format_line import LineProtocolFormatter
 from usim import each, Flag, time
 
 from lapis.cost import cobald_cost
@@ -10,6 +12,16 @@ if TYPE_CHECKING:
     from lapis.simulator import Simulator
 
 sampling_required = Flag()
+
+
+class LoggingSocketHandler(logging.handlers.SocketHandler):
+    def makePickle(self, record):
+        return self.format(record).encode()
+
+
+class LoggingUDPSocketHandler(logging.handlers.DatagramHandler):
+    def makePickle(self, record):
+        return self.format(record).encode()
 
 
 class TimeFilter(logging.Filter):
