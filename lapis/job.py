@@ -6,12 +6,13 @@ from usim import time
 from usim import TaskCancelled
 
 
-def job_demand(simulator):
+async def job_demand(simulator):
     """
     function randomly sets global user demand by using different strategies
     :param env:
     :return:
     """
+    from lapis.utility.monitor import sampling_required
     while True:
         delay = random.randint(0, 100)
         strategy = random.random()
@@ -31,7 +32,7 @@ def job_demand(simulator):
         value = round(value)
         if value > 0:
             simulator.global_demand.put(value)
-            logging.info("user_demand", {"user_demand_new": value})
+            await sampling_required.set(True)
 
 
 class Job(object):
@@ -117,6 +118,7 @@ class Job(object):
 
 
 async def job_to_queue_scheduler(job_generator, job_queue, **kwargs):
+    from lapis.utility.monitor import sampling_required
     job = next(job_generator)
     base_date = job.queue_date
     current_time = 0
@@ -133,6 +135,6 @@ async def job_to_queue_scheduler(job_generator, job_queue, **kwargs):
             job = None
         else:
             if count > 0:
-                logging.info("user_demand", {"user_demand_new": count})
+                await sampling_required.set(True)
                 count = 0
             await (time == current_time)
