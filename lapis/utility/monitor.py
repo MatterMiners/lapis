@@ -8,8 +8,6 @@ from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
 from usim import each, Flag, time
 
-from lapis.cost import cobald_cost
-
 if TYPE_CHECKING:
     from lapis.simulator import Simulator
 
@@ -92,17 +90,6 @@ collect_resource_statistics.logging_formatter = {
     )
 }
 collect_resource_statistics.name = "resource_status"
-
-
-def collect_cobald_cost(simulator: "Simulator") -> dict:
-    current_cost = cobald_cost(simulator)
-    simulator.cost += current_cost
-    return {
-        "cobald_cost": {
-            "current": current_cost,
-            "accumulated": simulator.cost
-        }
-    }
 
 
 def collect_user_demand(simulator: "Simulator") -> list:
