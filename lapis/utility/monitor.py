@@ -74,7 +74,7 @@ def collect_resource_statistics(simulator: "Simulator") -> list:
         for resource_type in {*drone.resources, *drone.used_resources}:
             results.append({
                 "resource_type": resource_type,
-                "pool_configuration": None,
+                "pool_configuration": "None",
                 "pool_type": "drone",
                 "pool": repr(drone),
                 "used_ratio":
@@ -84,15 +84,15 @@ def collect_resource_statistics(simulator: "Simulator") -> list:
     return results
 
 
+collect_resource_statistics.name = "resource_status"
 collect_resource_statistics.logging_formatter = {
-    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
-    logging.StreamHandler.__class__.__name__: JsonFormatter(),
-    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
-        tags={"tardis", "resource_type", "pool_configuration", "pool_type"},
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "resource_type", "pool_configuration", "pool_type", "pool"},
         resolution=1
     )
 }
-collect_resource_statistics.name = "resource_status"
 
 
 def collect_user_demand(simulator: "Simulator") -> list:
@@ -101,14 +101,15 @@ def collect_user_demand(simulator: "Simulator") -> list:
     }]
 
 
+collect_user_demand.name = "user_demand"
 collect_user_demand.logging_formatter = {
-    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
-    logging.StreamHandler.__class__.__name__: JsonFormatter(),
-    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis"},
         resolution=1
     )
 }
-collect_user_demand.name = "user_demand"
 
 
 def collect_job_statistics(simulator: "Simulator") -> list:
@@ -120,22 +121,22 @@ def collect_job_statistics(simulator: "Simulator") -> list:
     }]
 
 
+collect_job_statistics.name = "cobald_status"
 collect_job_statistics.logging_formatter = {
-    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
-    logging.StreamHandler.__class__.__name__: JsonFormatter(),
-    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type"},
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "pool_configuration", "pool_type", "pool"},
         resolution=1
     )
 }
-collect_job_statistics.name = "cobald_status"
 
 
 def collect_drone_cobald_statistics(simulator: "Simulator") -> list:
     results = []
     for drone in simulator.job_scheduler.drone_list:
         results.append({
-            "pool_configuration": None,
+            "pool_configuration": "None",
             "pool_type": "drone",
             "pool": repr(drone),
             "allocation": drone.allocation,
@@ -147,22 +148,29 @@ def collect_drone_cobald_statistics(simulator: "Simulator") -> list:
     return results
 
 
+collect_drone_cobald_statistics.name = "cobald_status"
 collect_drone_cobald_statistics.logging_formatter = {
-    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
-    logging.StreamHandler.__class__.__name__: JsonFormatter(),
-    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
-        tags={"tardis", "resource_type", "pool_configuration", "pool_type"},
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "pool_configuration", "pool_type", "pool"},
         resolution=1
     )
 }
-collect_drone_cobald_statistics.name = "cobald_status"
 
 
 def collect_pool_cobald_statistics(simulator: "Simulator") -> list:
+    """
+    Function takes care on collecting statistics of pools, i.e. allocation,
+    utilisation, demand, and supply.
+
+    :param simulator: the simulator
+    :return: list of records to log
+    """
     results = []
     for pool in simulator.pools:
         results.append({
-            "pool_configuration": None,
+            "pool_configuration": "None",
             "pool_type": "pool",
             "pool": repr(pool),
             "allocation": pool.allocation,
@@ -173,15 +181,15 @@ def collect_pool_cobald_statistics(simulator: "Simulator") -> list:
     return results
 
 
+collect_pool_cobald_statistics.name = "cobald_status"
 collect_pool_cobald_statistics.logging_formatter = {
-    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
-    logging.StreamHandler.__class__.__name__: JsonFormatter(),
-    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type"},
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "pool_configuration", "pool_type", "pool"},
         resolution=1
     )
 }
-collect_pool_cobald_statistics.name = "cobald_status"
 
 
 def collect_pool_status(simulator: "Simulator") -> list:
@@ -197,10 +205,10 @@ def collect_pool_status(simulator: "Simulator") -> list:
 
 collect_pool_status.name = "pool_status"
 collect_pool_status.logging_formatter = {
-    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
-    logging.StreamHandler.__class__.__name__: JsonFormatter(),
-    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
-        tags={"tardis", "parent_pool", "pool_configuration", "pool_type"},
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "parent_pool", "pool_configuration", "pool_type", "pool"},
         resolution=1
     )
 }
@@ -219,9 +227,9 @@ def collect_configuration_information(simulator: "Simulator") -> list:
 
 collect_configuration_information.name = "configuration"
 collect_configuration_information.logging_formatter = {
-    LoggingSocketHandler.__class__.__name__: JsonFormatter(),
-    logging.StreamHandler.__class__.__name__: JsonFormatter(),
-    LoggingUDPSocketHandler.__class__.__name__: LineProtocolFormatter(
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "pool_configuration", "resource_type"},
         resolution=1
     )
