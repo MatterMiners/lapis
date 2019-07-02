@@ -56,7 +56,7 @@ class Monitoring(object):
 
         # prepare the logger
         logger = logging.getLogger(statistic.name)
-        if len(logger.handlers) == 0:
+        if not logger.handlers:
             logger.addFilter(TimeFilter())
             logger.propagate = False
             # append handlers of default logger and add required formatters
