@@ -79,7 +79,10 @@ def collect_resource_statistics(simulator: "Simulator") -> list:
                 "pool": repr(drone),
                 "used_ratio":
                     drone.used_resources.get(resource_type, 0)
-                    / drone.resources.get(resource_type, 0)
+                    / drone.pool_resources.get(resource_type, 0),
+                "requested_ratio":
+                    drone.resources.get(resource_type, 0)
+                    / drone.pool_resources.get(resource_type, 0)
             })
     return results
 
