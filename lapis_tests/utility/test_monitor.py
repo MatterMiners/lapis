@@ -3,13 +3,14 @@ import pytest
 from time import time as pytime
 
 from cobald.monitor.format_line import LineProtocolFormatter
-from usim import Scope, time, until, eternity
+from usim import Scope, time
 
 from lapis_tests import via_usim, DummyScheduler
 
 from . import make_test_logger
 
-from lapis.utility.monitor import TimeFilter, Monitoring, collect_resource_statistics
+from lapis.monitor.general import resource_statistics
+from lapis.monitor import TimeFilter, Monitoring
 
 
 def parse_line_protocol(literal: str):
@@ -35,13 +36,11 @@ class TestTimeFilter(object):
         logger, handler = make_test_logger(__name__)
         handler.formatter = LineProtocolFormatter(resolution=1)
         logger.addFilter(TimeFilter())
-        async with Scope() as _:
-            logger.critical("message", payload)
+        logger.critical("message", payload)
         _, _, _, timestamp = parse_line_protocol(handler.content)
         handler.clear()
         assert timestamp == 0
-        async with until(time == 10):
-            await eternity
+        await (time + 10)
         logger.critical("message", payload)
         _, _, _, timestamp = parse_line_protocol(handler.content)
         assert timestamp == 10000000000
@@ -65,7 +64,7 @@ class TestMonitoring(object):
     def test_registration(self):
         scheduler = DummyScheduler()
         monitoring = Monitoring(scheduler)
-        statistics = collect_resource_statistics
+        statistics = resource_statistics
         monitoring.register_statistic(statistics)
         assert statistics in monitoring._statistics
 

@@ -13,8 +13,7 @@ from lapis.job_io.swf import swf_job_reader
 from lapis.scheduler import CondorJobScheduler
 from lapis.simulator import Simulator
 
-from lapis.utility.monitor import TimeFilter, LoggingSocketHandler, \
-    LoggingUDPSocketHandler
+from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler, TimeFilter
 
 last_step = 0
 

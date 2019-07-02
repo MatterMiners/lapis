@@ -3,6 +3,8 @@ import logging
 from usim import time
 from usim import TaskCancelled
 
+from lapis.monitor import sampling_required
+
 
 class Job(object):
     __slots__ = ("resources", "used_resources", "walltime", "requested_walltime",
@@ -87,7 +89,6 @@ class Job(object):
 
 
 async def job_to_queue_scheduler(job_generator, job_queue, **kwargs):
-    from lapis.utility.monitor import sampling_required
     job = next(job_generator)
     base_date = job.queue_date
     current_time = 0
