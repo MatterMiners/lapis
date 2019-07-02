@@ -20,7 +20,7 @@ class LoggingUDPSocketHandler(logging.handlers.DatagramHandler):
         return self.format(record).encode()
 
 
-class TimeFilter(logging.Filter):
+class SimulationTimeFilter(logging.Filter):
     """
     Dummy filter to replace log record timestamp with simulation time.
     """
@@ -55,7 +55,7 @@ class Monitoring(object):
         # prepare the logger
         logger = logging.getLogger(statistic.name)
         if not logger.handlers:
-            logger.addFilter(TimeFilter())
+            logger.addFilter(SimulationTimeFilter())
             logger.propagate = False
             # append handlers of default logger and add required formatters
             root_logger = logging.getLogger()

@@ -10,7 +10,7 @@ from lapis_tests import via_usim, DummyScheduler
 from . import make_test_logger
 
 from lapis.monitor.general import resource_statistics
-from lapis.monitor import TimeFilter, Monitoring
+from lapis.monitor import SimulationTimeFilter, Monitoring
 
 
 def parse_line_protocol(literal: str):
@@ -29,13 +29,13 @@ def parse_line_protocol(literal: str):
     }, None if not stamp else int(stamp)
 
 
-class TestTimeFilter(object):
+class TestSimulationTimeFilter(object):
     @via_usim
     async def test_simple(self):
         payload = {"a": "a"}
         logger, handler = make_test_logger(__name__)
         handler.formatter = LineProtocolFormatter(resolution=1)
-        logger.addFilter(TimeFilter())
+        logger.addFilter(SimulationTimeFilter())
         logger.critical("message", payload)
         _, _, _, timestamp = parse_line_protocol(handler.content)
         handler.clear()
@@ -50,7 +50,7 @@ class TestTimeFilter(object):
         def record():
             pass
         record.created = pytime()
-        filter = TimeFilter()
+        filter = SimulationTimeFilter()
         async with Scope() as _:
             filter.filter(record)
         assert record.created == 0

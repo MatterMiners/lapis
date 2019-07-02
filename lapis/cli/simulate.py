@@ -13,7 +13,8 @@ from lapis.job_io.swf import swf_job_reader
 from lapis.scheduler import CondorJobScheduler
 from lapis.simulator import Simulator
 
-from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler, TimeFilter
+from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler, \
+    SimulationTimeFilter
 
 last_step = 0
 
@@ -40,7 +41,7 @@ def cli(ctx, seed, until, log_tcp, log_file, log_telegraf):
     ctx.obj['until'] = until
     monitoring_logger = logging.getLogger()
     monitoring_logger.setLevel(logging.DEBUG)
-    time_filter = TimeFilter()
+    time_filter = SimulationTimeFilter()
     monitoring_logger.addFilter(time_filter)
     if log_tcp:
         socketHandler = LoggingSocketHandler(
