@@ -203,7 +203,7 @@ def collect_pool_status(simulator: "Simulator") -> list:
     :param simulator: the simulator
     :return: list of records for logging
     """
-    pass
+    return []
 
 
 collect_pool_status.name = "pool_status"
@@ -225,7 +225,7 @@ def collect_configuration_information(simulator: "Simulator") -> list:
     :param simulator: the simulator
     :return: list of records for logging
     """
-    pass
+    return []
 
 
 collect_configuration_information.name = "configuration"
