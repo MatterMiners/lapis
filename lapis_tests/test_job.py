@@ -3,7 +3,7 @@ from usim import Scope, time
 
 from lapis.drone import Drone
 from lapis.job import Job
-from lapis_tests.utility import via_usim, DummyScheduler
+from lapis_tests import via_usim, DummyScheduler
 
 
 class TestJob(object):

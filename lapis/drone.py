@@ -53,7 +53,7 @@ class Drone(interfaces.Pool):
         }
 
     async def run(self):
-        from lapis.utility.monitor import sampling_required
+        from lapis.monitor import sampling_required
         await (time + self.scheduling_duration)
         self._supply = 1
         self.scheduler.register_drone(self)
@@ -92,7 +92,7 @@ class Drone(interfaces.Pool):
         self._utilisation = min(resources)
 
     async def shutdown(self):
-        from lapis.utility.monitor import sampling_required
+        from lapis.monitor import sampling_required
         self._supply = 0
         self.scheduler.unregister_drone(self)
         await sampling_required.set(True)
@@ -136,7 +136,7 @@ class Drone(interfaces.Pool):
         # TODO: ensure that jobs cannot immediately started on the same drone
         # until the jobs did not allocate resources
         async with Scope() as scope:
-            from lapis.utility.monitor import sampling_required
+            from lapis.monitor import sampling_required
             self._utilisation = self._allocation = None
 
             job_execution = scope.do(job.run())

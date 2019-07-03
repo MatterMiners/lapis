@@ -1,37 +1,9 @@
-import random
-import math
 import logging
 
 from usim import time
 from usim import TaskCancelled
 
-
-def job_demand(simulator):
-    """
-    function randomly sets global user demand by using different strategies
-    :param env:
-    :return:
-    """
-    while True:
-        delay = random.randint(0, 100)
-        strategy = random.random()
-        if strategy < 1 / 3:
-            # linear amount
-            # print("strategy: linear amount")
-            amount = random.randint(0, int(random.random() * 100))
-        elif strategy < 2 / 3:
-            # exponential amount
-            # print("strategy: exponential amount")
-            amount = (math.e ** (random.random()) - 1) * random.random() * 1000
-        else:
-            # sqrt
-            # print("strategy: sqrt amount")
-            amount = math.sqrt(random.random() * random.random() * 100)
-        value = yield simulator.env.timeout(delay=delay, value=amount)
-        value = round(value)
-        if value > 0:
-            simulator.global_demand.put(value)
-            logging.info("user_demand", {"user_demand_new": value})
+from lapis.monitor import sampling_required
 
 
 class Job(object):
@@ -133,6 +105,6 @@ async def job_to_queue_scheduler(job_generator, job_queue, **kwargs):
             job = None
         else:
             if count > 0:
-                logging.info("user_demand", {"user_demand_new": count})
+                await sampling_required.set(True)
                 count = 0
             await (time == current_time)
