@@ -25,7 +25,7 @@ if __name__ == '__main__':
         # dependencies
         install_requires=[
             'cobald',
-            'usim@git+https://github.com/MaineKuehn/usim.git@master#egg=usim-0.1.0',
+            'usim',
             'click'
         ],
         extras_require={
