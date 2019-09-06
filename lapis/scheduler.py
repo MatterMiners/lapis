@@ -110,8 +110,8 @@ class CondorJobScheduler(object):
                     break
                 else:
                     try:
-                        cost += 1 / (resources.get(resource_type, 0) //
-                                     job.resources[resource_type])
+                        cost += 1 / (resources.get(resource_type, 0)
+                                     // job.resources[resource_type])
                     except ZeroDivisionError:
                         pass
             for additional_resource_type in [key for key in drone.pool_resources
