@@ -102,23 +102,22 @@ class CondorJobScheduler(object):
             drone = cluster[0]
             cost = 0
             resources = drone.theoretical_available_resources
-            resource_types = {*resources.keys(), *job.resources.keys()}
-            for resource_type in resource_types:
-                if resource_type not in drone.pool_resources.keys():
-                    cost = float("Inf")
-                    break
-                elif resource_type not in job.resources:
-                    cost += drone.pool_resources[resource_type] \
-                        - resources.get(resource_type, 0)
-                elif (drone.pool_resources[resource_type]
-                      - resources.get(resource_type, 0)) < job.resources[resource_type]:
+            for resource_type in job.resources:
+                if resources.get(resource_type, 0) < job.resources[resource_type]:
+                    # Inf for all job resources that a drone does not support
+                    # and all resources that are too small to even be considered
                     cost = float("Inf")
                     break
                 else:
-                    cost += (drone.pool_resources[resource_type]
-                             - resources.get(resource_type, 0)) // \
-                        job.resources[resource_type]
-            cost /= len(resource_types)
+                    try:
+                        cost += 1 / (resources.get(resource_type, 0) //
+                                     job.resources[resource_type])
+                    except ZeroDivisionError:
+                        pass
+            for additional_resource_type in [key for key in drone.pool_resources
+                                             if key not in job.resources]:
+                cost += resources[additional_resource_type]
+            cost /= len((*job.resources, *drone.pool_resources))
             if cost <= 1:
                 # directly start job
                 return drone
