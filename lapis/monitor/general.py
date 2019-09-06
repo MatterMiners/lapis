@@ -20,17 +20,19 @@ def resource_statistics(simulator: "Simulator") -> list:
     """
     results = []
     for drone in simulator.job_scheduler.drone_list:
-        for resource_type in {*drone.resources, *drone.used_resources}:
+        resources = drone.theoretical_available_resources
+        used_resources = drone.available_resources
+        for resource_type in resources:
             results.append({
                 "resource_type": resource_type,
                 "pool_configuration": "None",
                 "pool_type": "drone",
                 "pool": repr(drone),
                 "used_ratio":
-                    drone.used_resources.get(resource_type, 0)
+                    used_resources.get(resource_type, 0)
                     / drone.pool_resources.get(resource_type, 0),
                 "requested_ratio":
-                    drone.resources.get(resource_type, 0)
+                    resources.get(resource_type, 0)
                     / drone.pool_resources.get(resource_type, 0)
             })
     return results

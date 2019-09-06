@@ -62,8 +62,8 @@ class CondorJobScheduler(object):
         if len(self.drone_cluster) > 0:
             for cluster in self.drone_cluster:
                 current_distance = 0
-                for key in {*cluster[0].theoretical_available_resources,
-                            *drone.theoretical_available_resources}:
+                for key in {*cluster[0].pool_resources,
+                            *drone.pool_resources}:
                     current_distance += abs(
                         cluster[0].theoretical_available_resources.get(key, 0)
                         - drone.theoretical_available_resources.get(key, 0))
@@ -101,21 +101,22 @@ class CondorJobScheduler(object):
         for cluster in self.drone_cluster:
             drone = cluster[0]
             cost = 0
-            resource_types = {*drone.resources.keys(), *job.resources.keys()}
+            resources = drone.theoretical_available_resources
+            resource_types = {*resources.keys(), *job.resources.keys()}
             for resource_type in resource_types:
-                if resource_type not in drone.resources.keys():
+                if resource_type not in drone.pool_resources.keys():
                     cost = float("Inf")
                     break
                 elif resource_type not in job.resources:
                     cost += drone.pool_resources[resource_type] \
-                        - drone.resources[resource_type]
+                        - resources.get(resource_type, 0)
                 elif (drone.pool_resources[resource_type]
-                      - drone.resources[resource_type]) < job.resources[resource_type]:
+                      - resources.get(resource_type, 0)) < job.resources[resource_type]:
                     cost = float("Inf")
                     break
                 else:
                     cost += (drone.pool_resources[resource_type]
-                             - drone.resources[resource_type]) // \
+                             - resources.get(resource_type, 0)) // \
                         job.resources[resource_type]
             cost /= len(resource_types)
             if cost <= 1:
