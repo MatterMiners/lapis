@@ -36,6 +36,7 @@ class CondorJobScheduler(object):
         self.drone_cluster = []
         self.interval = 60
         self.job_queue = []
+        self._collecting = True
 
     @property
     def drone_list(self):
@@ -91,10 +92,13 @@ class CondorJobScheduler(object):
                         scope.do(best_match.start_job(job))
                         await instant
                         self.job_queue.remove(job)
+                if not self._collecting and len(self.job_queue) == 0:
+                    break
 
     async def _collect_jobs(self):
         async for job in self._stream_queue:
             self.job_queue.append(job)
+        self._collecting = False
 
     def _schedule_job(self, job) -> Drone:
         priorities = {}
