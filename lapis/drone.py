@@ -48,17 +48,11 @@ class Drone(interfaces.Pool):
 
     @property
     def theoretical_available_resources(self):
-        levels = self.resources.levels
-        return {
-            key: getattr(levels, key) for key in self.pool_resources
-        }
+        return dict(self.resources.levels)
 
     @property
     def available_resources(self):
-        levels = self.used_resources.levels
-        return {
-            key: getattr(levels, key) for key in self.pool_resources
-        }
+        return dict(self.used_resources.levels)
 
     async def run(self):
         from lapis.monitor import sampling_required
