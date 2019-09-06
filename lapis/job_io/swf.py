@@ -46,6 +46,10 @@ def swf_job_reader(iterable, resource_name_mapping={  # noqa: B006
     for row in reader:
         resources = {}
         used_resources = {}
+        # correct request parameters
+        for key in ["cores", "walltime", "memory"]:
+            if float(row[header[resource_name_mapping[key]]]) < 0:
+                row[header[resource_name_mapping[key]]] = 0
         for key in ["cores", "walltime"]:
             value = float(row[header[resource_name_mapping[key]]])
             used_value = float(row[header[used_resource_name_mapping[key]]])
@@ -65,7 +69,6 @@ def swf_job_reader(iterable, resource_name_mapping={  # noqa: B006
             (float(row[header[used_resource_name_mapping[key]]])
              * float(row[header[used_resource_name_mapping["cores"]]])) \
             * unit_conversion_mapping.get(used_resource_name_mapping[key], 1)
-
         yield Job(
             resources=resources,
             used_resources=used_resources,
