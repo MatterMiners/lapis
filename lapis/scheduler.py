@@ -92,7 +92,7 @@ class CondorJobScheduler(object):
                         scope.do(best_match.start_job(job))
                         await instant
                         self.job_queue.remove(job)
-                if not self._collecting and len(self.job_queue) == 0:
+                if not self._collecting and not self.job_queue:
                     break
 
     async def _collect_jobs(self):
