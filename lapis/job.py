@@ -27,6 +27,12 @@ class Job(object):
         """
         self.resources = resources
         self.used_resources = used_resources
+        for key in used_resources:
+            if key not in resources:
+                logging.getLogger("implementation")\
+                    .info("job uses different resources than specified, added",
+                          key, self.used_resources[key])
+                self.resources[key] = self.used_resources[key]
         self.walltime = used_resources.pop("walltime", None)
         self.requested_walltime = resources.pop("walltime", None)
         assert self.walltime, "Job does not provide any walltime"

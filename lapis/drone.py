@@ -2,6 +2,7 @@ import logging
 
 from cobald import interfaces
 from usim import time, Scope, instant, TaskState
+from usim.basics import Capacities, ResourcesUnavailable
 
 from lapis.job import Job
 
@@ -24,7 +25,9 @@ class Drone(interfaces.Pool):
         super(Drone, self).__init__()
         self.scheduler = scheduler
         self.pool_resources = pool_resources
-        self.resources = {resource: 0 for resource in self.pool_resources}
+        self.resources = Capacities(**pool_resources)
+        # shadowing requested resources to determine jobs to be killed
+        self.used_resources = Capacities(**pool_resources)
         if ignore_resources:
             self._valid_resource_keys = [
                 resource for resource in self.pool_resources
@@ -32,8 +35,6 @@ class Drone(interfaces.Pool):
             ]
         else:
             self._valid_resource_keys = self.pool_resources.keys()
-        # shadowing requested resources to determine jobs to be killed
-        self.used_resources = {resource: 0 for resource in self.pool_resources}
         self.scheduling_duration = scheduling_duration
         if scheduling_duration == 0:
             self._supply = 1
@@ -47,10 +48,11 @@ class Drone(interfaces.Pool):
 
     @property
     def theoretical_available_resources(self):
-        return {
-            key: self.pool_resources[key] - self.resources[key]
-            for key in self.pool_resources
-        }
+        return dict(self.resources.levels)
+
+    @property
+    def available_resources(self):
+        return dict(self.used_resources.levels)
 
     async def run(self):
         from lapis.monitor import sampling_required
@@ -84,10 +86,11 @@ class Drone(interfaces.Pool):
         return self._allocation
 
     def _init_allocation_and_utilisation(self):
+        levels = self.resources.levels
         resources = []
         for resource_key in self._valid_resource_keys:
             resources.append(
-                self.resources[resource_key] / self.pool_resources[resource_key])
+                getattr(levels, resource_key) / self.pool_resources[resource_key])
         self._allocation = max(resources)
         self._utilisation = min(resources)
 
@@ -98,29 +101,6 @@ class Drone(interfaces.Pool):
         await sampling_required.set(True)
         await (time + 1)
         # print("[drone %s] has been shut down" % self)
-
-    def _add_resources(self, keys: list, target: dict, source: dict,
-                       alternative_source: dict):
-        resources_exceeded = False
-        for resource_key in keys:
-            try:
-                value = target[resource_key] + source[resource_key]
-            except KeyError:
-                value = target[resource_key] + alternative_source[resource_key]
-            if value > self.pool_resources[resource_key]:
-                resources_exceeded = True
-            target[resource_key] = value
-        if resources_exceeded:
-            raise ResourcesExceeded()
-
-    @staticmethod
-    def _remove_resources(keys: list, target: dict, source: dict,
-                          alternative_source: dict):
-        for resource_key in keys:
-            try:
-                target[resource_key] -= source[resource_key]
-            except KeyError:
-                target[resource_key] -= alternative_source[resource_key]
 
     async def start_job(self, job: Job, kill: bool = False):
         """
@@ -133,45 +113,37 @@ class Drone(interfaces.Pool):
                      requested resources
         :return:
         """
-        # TODO: ensure that jobs cannot immediately started on the same drone
-        # until the jobs did not allocate resources
         async with Scope() as scope:
             from lapis.monitor import sampling_required
             self._utilisation = self._allocation = None
 
             job_execution = scope.do(job.run())
             await instant  # waiting just a moment to enable job to set parameters
-            job_keys = {*job.resources, *job.used_resources}
-
             try:
-                self._add_resources(
-                    job_keys, self.used_resources, job.used_resources, job.resources)
-            except ResourcesExceeded:
-                job_execution.cancel()
-            try:
-                # TODO: we should allow for overbooking of resources
-                self._add_resources(
-                    job_keys, self.resources, job.resources, job.used_resources)
-            except ResourcesExceeded:
-                job_execution.cancel()
-
-            for resource_key in job_keys:
-                try:
-                    if job.resources[resource_key] < job.used_resources[resource_key]:
-                        if kill:
-                            job_execution.cancel()
-                        else:
+                async with self.resources.claim(**job.resources), \
+                        self.used_resources.claim(**job.used_resources):
+                    self.jobs += 1
+                    await sampling_required.set(True)
+                    for resource_key in job.resources:
+                        try:
+                            if job.resources[resource_key] < \
+                                    job.used_resources[resource_key]:
+                                if kill:
+                                    job_execution.cancel()
+                        except KeyError:
+                            # check is not relevant if the data is not stored
                             pass
-                except KeyError:
-                    # check is not relevant if the data is not stored
-                    pass
-            self.scheduler.update_drone(self)
-            if job_execution.status != TaskState.CANCELLED:
-                self.jobs += 1
-                await sampling_required.set(True)
-            await job_execution.done
+                    self.scheduler.update_drone(self)
+                    await job_execution.done
+            except ResourcesUnavailable:
+                job_execution.cancel()
+            except AssertionError:
+                job_execution.cancel()
+            else:
+                self.jobs -= 1
+
             if job_execution.status == TaskState.CANCELLED:
-                for resource_key in job_keys:
+                for resource_key in job.resources:
                     usage = job.used_resources.get(resource_key, None) \
                         or job.resources.get(resource_key, None)
                     value = usage / (job.resources.get(resource_key, None)
@@ -182,12 +154,6 @@ class Drone(interfaces.Pool):
                                 repr(job): value
                             }
                         })
-            else:
-                self.jobs -= 1
-            self._remove_resources(
-                job_keys, self.resources, job.resources, job.used_resources)
-            self._remove_resources(
-                job_keys, self.used_resources, job.used_resources, job.resources)
             self._utilisation = self._allocation = None
             self.scheduler.update_drone(self)
             await sampling_required.set(True)
