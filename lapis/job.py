@@ -105,6 +105,7 @@ async def job_to_queue_scheduler(job_generator, job_queue, **kwargs):
             try:
                 job = next(job_generator)
             except StopIteration:
+                await job_queue.close()
                 return
             current_time = job.queue_date - base_date
         if time.now >= current_time:
