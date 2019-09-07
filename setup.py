@@ -29,7 +29,7 @@ if __name__ == '__main__':
             'click'
         ],
         extras_require={
-            'docs': ["sphinx", "sphinxcontrib-tikz"],
+            'docs': ["sphinx", "sphinx_rtd_theme"],
             'contrib': ['flake8', 'flake8-bugbear']
         },
         # metadata for package search
