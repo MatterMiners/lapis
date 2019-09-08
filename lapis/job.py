@@ -33,9 +33,8 @@ class Job(object):
                     .info("job uses different resources than specified, added",
                           key, self.used_resources[key])
                 self.resources[key] = self.used_resources[key]
-        self.walltime = used_resources.pop("walltime", None)
+        self.walltime = used_resources.pop("walltime")
         self.requested_walltime = resources.pop("walltime", None)
-        assert self.walltime, "Job does not provide any walltime"
         self.queue_date = queue_date
         assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since

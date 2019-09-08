@@ -8,9 +8,9 @@ from lapis_tests import via_usim, DummyScheduler
 
 class TestJob(object):
     def test_init(self):
-        with pytest.raises(AssertionError):
+        with pytest.raises(KeyError):
             Job(resources={}, used_resources={})
-        with pytest.raises(AssertionError):
+        with pytest.raises(KeyError):
             Job(resources={"walltime": 100}, used_resources={})
         assert Job(resources={}, used_resources={"walltime": 100})
         with pytest.raises(AssertionError):
