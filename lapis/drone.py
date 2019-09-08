@@ -1,7 +1,7 @@
 import logging
 
 from cobald import interfaces
-from usim import time, Scope, instant, TaskState
+from usim import time, Scope, instant
 from usim.basics import Capacities, ResourcesUnavailable
 
 from lapis.job import Job
@@ -13,14 +13,12 @@ class ResourcesExceeded(Exception):
 
 class Drone(interfaces.Pool):
     def __init__(self, scheduler, pool_resources: dict,
-                 scheduling_duration: float, exclusive: bool = False,
+                 scheduling_duration: float,
                  ignore_resources: list = None):
         """
         :param scheduler:
         :param pool_resources:
         :param scheduling_duration:
-        :param exclusive: Determines if the drone is used exclusively by jobs
-                          in sequential order
         """
         super(Drone, self).__init__()
         self.scheduler = scheduler
@@ -41,7 +39,6 @@ class Drone(interfaces.Pool):
             self.scheduler.register_drone(self)
         else:
             self._supply = 0
-        self.exclusive = exclusive
         self.jobs = 0
         self._allocation = None
         self._utilisation = None
@@ -124,15 +121,15 @@ class Drone(interfaces.Pool):
                         self.used_resources.claim(**job.used_resources):
                     self.jobs += 1
                     await sampling_required.set(True)
-                    for resource_key in job.resources:
-                        try:
-                            if job.resources[resource_key] < \
-                                    job.used_resources[resource_key]:
-                                if kill:
+                    if kill:
+                        for resource_key in job.resources:
+                            try:
+                                if job.resources[resource_key] < \
+                                        job.used_resources[resource_key]:
                                     job_execution.cancel()
-                        except KeyError:
-                            # check is not relevant if the data is not stored
-                            pass
+                            except KeyError:
+                                # check is not relevant if the data is not stored
+                                pass
                     self.scheduler.update_drone(self)
                     await job_execution.done
             except ResourcesUnavailable:
@@ -142,12 +139,15 @@ class Drone(interfaces.Pool):
             else:
                 self.jobs -= 1
 
-            if job_execution.status == TaskState.CANCELLED:
+            if not job.successful:
                 for resource_key in job.resources:
-                    usage = job.used_resources.get(resource_key, None) \
-                        or job.resources.get(resource_key, None)
-                    value = usage / (job.resources.get(resource_key, None)
-                                     or self.pool_resources[resource_key])
+                    usage = job.used_resources.get(
+                        resource_key,
+                        job.resources.get(resource_key, None),
+                    )
+                    value = usage / job.resources.get(
+                        resource_key, self.pool_resources[resource_key]
+                    )
                     if value > 1:
                         logging.info("job_status", {
                             "job_exceeds_%s" % resource_key: {

@@ -33,9 +33,8 @@ class Job(object):
                     .info("job uses different resources than specified, added",
                           key, self.used_resources[key])
                 self.resources[key] = self.used_resources[key]
-        self.walltime = used_resources.pop("walltime", None)
+        self.walltime = used_resources.pop("walltime")
         self.requested_walltime = resources.pop("walltime", None)
-        assert self.walltime, "Job does not provide any walltime"
         self.queue_date = queue_date
         assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since
@@ -86,35 +85,20 @@ class Job(object):
                 }
             })
             self._success = True
-        finally:
-            # release acquired resources
-            pass
 
     def __repr__(self):
         return '<%s: %s>' % (self.__class__.__name__, self._name or id(self))
 
 
-async def job_to_queue_scheduler(job_generator, job_queue, **kwargs):
-    job = next(job_generator)
-    base_date = job.queue_date
-    current_time = 0
-
-    count = 0
-    while True:
-        if not job:
-            try:
-                job = next(job_generator)
-            except StopIteration:
-                await job_queue.close()
-                return
-            current_time = job.queue_date - base_date
-        if time.now >= current_time:
-            count += 1
-            job.in_queue_since = time.now
-            await job_queue.put(job)
-            job = None
-        else:
-            if count > 0:
-                await sampling_required.set(True)
-                count = 0
-            await (time == current_time)
+async def job_to_queue_scheduler(job_generator, job_queue):
+    base_date = None
+    for job in job_generator:
+        if base_date is None:
+            base_date = job.queue_date
+        current_time = job.queue_date - base_date
+        if time.now < current_time:
+            await sampling_required.set(True)
+            await (time >= current_time)
+        job.in_queue_since = time.now
+        await job_queue.put(job)
+    await job_queue.close()
