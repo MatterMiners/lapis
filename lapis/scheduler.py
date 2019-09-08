@@ -1,9 +1,9 @@
 from usim import Scope, each, instant
 
-# TODO: does not work anymore as there is no method get_drone at pool
 from lapis.drone import Drone
 
 
+# TODO: does not work anymore as there is no method get_drone at pool
 def job_scheduler(simulator):
     while True:
         for pool in simulator.pools:
