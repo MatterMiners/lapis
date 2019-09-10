@@ -10,7 +10,8 @@ LAPIS -- Simulations for Opportunistic Resources
    :maxdepth: 2
    :caption: Contents:
 
-
+   source/topics/overview
+   source/api/modules
 
 Indices and tables
 ==================
