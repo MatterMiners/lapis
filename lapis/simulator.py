@@ -50,11 +50,11 @@ class Simulator(object):
         self.job_scheduler = scheduler_type(job_queue=self.job_queue)
 
     def run(self, until=None):
-        print("running until", until)
+        print(f"running until {until}")
         run(self._simulate(until))
 
     async def _simulate(self, end):
-        print("Starting simulation at %s" % time.now)
+        print(f"Starting simulation at {time.now}")
         async with until(time == end) if end else Scope() as while_running:
             for pool in self.pools:
                 while_running.do(pool.run())
@@ -64,7 +64,7 @@ class Simulator(object):
             for controller in self.controllers:
                 while_running.do(controller.run())
             while_running.do(self.monitoring.run())
-        print("Finished simulation at %s" % time.now)
+        print(f"Finished simulation at {time.now}")
 
     async def _queue_jobs(self, job_input, job_reader):
         await job_to_queue_scheduler(job_generator=job_reader(job_input),
