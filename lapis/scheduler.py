@@ -1,3 +1,5 @@
+from typing import Optional
+
 from usim import Scope, each, instant
 
 from lapis.drone import Drone
@@ -100,7 +102,7 @@ class CondorJobScheduler(object):
             self.job_queue.append(job)
         self._collecting = False
 
-    def _schedule_job(self, job) -> Drone:
+    def _schedule_job(self, job) -> Optional[Drone]:
         priorities = {}
         for cluster in self.drone_cluster:
             drone = cluster[0]
