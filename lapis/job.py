@@ -1,7 +1,8 @@
 import logging
 
-from usim import time
-from usim import TaskCancelled
+from typing import Dict
+from usim import time, TaskCancelled
+from usim.basics import Queue
 
 from lapis.monitor import sampling_required
 
@@ -10,8 +11,8 @@ class Job(object):
     __slots__ = ("resources", "used_resources", "walltime", "requested_walltime",
                  "queue_date", "in_queue_since", "in_queue_until", "_name", "_success")
 
-    def __init__(self, resources: dict, used_resources: dict, in_queue_since: float = 0,
-                 queue_date: float = 0, name: str = None):
+    def __init__(self, resources: Dict[str, float], used_resources: Dict[str, float],
+                 in_queue_since: float = 0, queue_date: float = 0, name: str = None):
         """
         Definition of a job that uses a specified amount of resources `used_resources`
         over a given amount of time, `walltime`. A job is described by its user
@@ -90,7 +91,7 @@ class Job(object):
         return '<%s: %s>' % (self.__class__.__name__, self._name or id(self))
 
 
-async def job_to_queue_scheduler(job_generator, job_queue):
+async def job_to_queue_scheduler(job_generator, job_queue: Queue):
     base_date = None
     for job in job_generator:
         if base_date is None:

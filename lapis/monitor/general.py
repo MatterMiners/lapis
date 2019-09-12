@@ -19,7 +19,7 @@ def resource_statistics(simulator: "Simulator") -> list:
     :return: list of records for logging
     """
     results = []
-    for drone in simulator.job_scheduler.drone_list:
+    for drone in simulator.job_scheduler.drones:
         resources = drone.theoretical_available_resources
         used_resources = drone.available_resources
         for resource_type in resources:
@@ -80,7 +80,7 @@ def job_statistics(simulator: "Simulator") -> list:
     :return: list of records for logging
     """
     result = 0
-    for drone in simulator.job_scheduler.drone_list:
+    for drone in simulator.job_scheduler.drones:
         result += drone.jobs
     return [{
         "job_count": result

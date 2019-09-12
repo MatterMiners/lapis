@@ -1,6 +1,7 @@
 import logging
 
 from cobald import interfaces
+from typing import Dict
 from usim import time, Scope, instant
 from usim.basics import Capacities, ResourcesUnavailable
 
@@ -12,9 +13,8 @@ class ResourcesExceeded(Exception):
 
 
 class Drone(interfaces.Pool):
-    def __init__(self, scheduler, pool_resources: dict,
-                 scheduling_duration: float,
-                 ignore_resources: list = None):
+    def __init__(self, scheduler, pool_resources: Dict[str, float],
+                 scheduling_duration: float, ignore_resources: list = None):
         """
         :param scheduler:
         :param pool_resources:
@@ -44,11 +44,11 @@ class Drone(interfaces.Pool):
         self._utilisation = None
 
     @property
-    def theoretical_available_resources(self):
+    def theoretical_available_resources(self) -> Dict[str, float]:
         return dict(self.resources.levels)
 
     @property
-    def available_resources(self):
+    def available_resources(self) -> Dict[str, float]:
         return dict(self.used_resources.levels)
 
     async def run(self):

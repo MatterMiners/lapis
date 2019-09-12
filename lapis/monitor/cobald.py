@@ -18,7 +18,7 @@ def drone_statistics(simulator: "Simulator") -> list:
     :return: list of records for logging
     """
     results = []
-    for drone in simulator.job_scheduler.drone_list:
+    for drone in simulator.job_scheduler.drones:
         results.append({
             "pool_configuration": "None",
             "pool_type": "drone",

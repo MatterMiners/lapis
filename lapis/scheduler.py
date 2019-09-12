@@ -1,6 +1,7 @@
-from typing import Optional
+from typing import Optional, Generator
 
 from usim import Scope, each, instant
+from usim.basics import Queue
 
 from lapis.drone import Drone
 
@@ -33,7 +34,7 @@ class CondorJobScheduler(object):
     :return:
     """
 
-    def __init__(self, job_queue):
+    def __init__(self, job_queue: Queue):
         self._stream_queue = job_queue
         self.drone_cluster = []
         self.interval = 60
@@ -41,7 +42,7 @@ class CondorJobScheduler(object):
         self._collecting = True
 
     @property
-    def drone_list(self):
+    def drones(self) -> Generator[Drone, None, None]:
         for cluster in self.drone_cluster:
             for drone in cluster:
                 yield drone
