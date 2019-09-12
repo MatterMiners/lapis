@@ -8,3 +8,4 @@ This is a collection of separate topics on LAPIS.
 
     cli
     support
+    monitoring
