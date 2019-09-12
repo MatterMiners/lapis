@@ -1,14 +1,17 @@
 import csv
 from functools import partial
 
-from typing import Callable
+from typing import Callable, Dict
 from ..pool import Pool
 
-
-def machines_pool_reader(iterable, resource_name_mapping: dict = {  # noqa: B006
+default_resource_name_mapping: Dict[str, str] = {
     "cores": "CPUs_per_node",
     "memory": "RAM_per_node_in_KB"
-}, pool_type: Callable = Pool, make_drone: Callable = None):
+}
+
+
+def machines_pool_reader(iterable, resource_name_mapping: Dict[str, str] = None,
+                         pool_type: Callable = Pool, make_drone: Callable = None):
     """
     Load a pool configuration that was exported via htcondor from files or
     iterables
@@ -21,6 +24,8 @@ def machines_pool_reader(iterable, resource_name_mapping: dict = {  # noqa: B006
     :return: Yields the :py:class:`StaticPool`s found in the given iterable
     """
     assert make_drone
+    if resource_name_mapping is None:
+        resource_name_mapping = default_resource_name_mapping
     reader = csv.DictReader(iterable, delimiter=' ', skipinitialspace=True)
     for row in reader:
         yield pool_type(

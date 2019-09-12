@@ -1,19 +1,24 @@
 import csv
 from functools import partial
 
-from typing import Callable
+from typing import Callable, Dict
 from ..pool import Pool
 
-
-def htcondor_pool_reader(iterable, resource_name_mapping: dict = {  # noqa: B006
+default_resource_name_mapping: Dict[str, str] = {
     "cores": "TotalSlotCPUs",
     "disk": "TotalSlotDisk",  # MiB
     "memory": "TotalSlotMemory"  # MiB
-}, unit_conversion_mapping: dict = {  # noqa: B006
+}
+default_unit_conversion_mapping: Dict[str, float] = {
     "TotalSlotCPUs": 1,
     "TotalSlotDisk": 1.024 / 1024,
     "TotalSlotMemory": 1.024 / 1024
-}, pool_type: Callable = Pool, make_drone: Callable = None):
+}
+
+
+def htcondor_pool_reader(iterable, resource_name_mapping: Dict[str, str] = None,
+                         unit_conversion_mapping: Dict[str, float] = None,
+                         pool_type: Callable = Pool, make_drone: Callable = None):
     """
     Load a pool configuration that was exported via htcondor from files or
     iterables
@@ -21,11 +26,16 @@ def htcondor_pool_reader(iterable, resource_name_mapping: dict = {  # noqa: B006
     :param iterable: an iterable yielding lines of CSV, such as an open file
     :param resource_name_mapping: Mapping from given header names to well-defined
                                   resources in simulation
+    :param unit_conversion_mapping: Mapping of units conversion
     :param pool_type: The type of pool to be yielded
     :param make_drone:
     :return: Yields the :py:class:`Pool`s found in the given iterable
     """
     assert make_drone
+    if resource_name_mapping is None:
+        resource_name_mapping = default_resource_name_mapping
+    if unit_conversion_mapping is None:
+        unit_conversion_mapping = default_unit_conversion_mapping
     reader = csv.DictReader(iterable, delimiter=' ', skipinitialspace=True)
     for row in reader:
         try:

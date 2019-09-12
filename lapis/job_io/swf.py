@@ -5,22 +5,36 @@ Current implementation is based on version 2.2 of the
 """
 import csv
 
+from typing import Dict
+
 from lapis.job import Job
 
-
-def swf_job_reader(iterable, resource_name_mapping={  # noqa: B006
+default_resource_name_mapping: Dict[str, str] = {
     "cores": "Requested Number of Processors",
     "walltime": "Requested Time",
     "memory": "Requested Memory"
-}, used_resource_name_mapping={  # noqa: B006
+}
+default_used_resource_name_mapping: Dict[str, str] = {
     "walltime": "Run Time",
     "cores": "Number of Allocated Processors",
     "memory": "Used Memory",
     "queuetime": "Submit Time"
-}, unit_conversion_mapping={  # noqa: B006
+}
+default_unit_conversion_mapping: Dict[str, float] = {
     "Used Memory": 1 / 1024 / 1024,
     "Requested Memory": 1 / 2114 / 1024
-}):
+}
+
+
+def swf_job_reader(iterable, resource_name_mapping: Dict[str, str]=None,
+                   used_resource_name_mapping: Dict[str, str]=None,
+                   unit_conversion_mapping: Dict[str, float]=None):
+    if resource_name_mapping is None:
+        resource_name_mapping = default_resource_name_mapping
+    if used_resource_name_mapping is None:
+        used_resource_name_mapping = default_used_resource_name_mapping
+    if unit_conversion_mapping is None:
+        unit_conversion_mapping = default_unit_conversion_mapping
     header = {
         "Job Number": 0,
         "Submit Time": 1,

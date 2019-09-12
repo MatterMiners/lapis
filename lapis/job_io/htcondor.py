@@ -1,21 +1,24 @@
 import csv
 import logging
 
+from typing import Dict
+
 from lapis.job import Job
 
-
-def htcondor_job_reader(iterable, resource_name_mapping={  # noqa: B006
+default_resource_name_mapping: Dict[str, str] = {
     "cores": "RequestCpus",
     "walltime": "RequestWalltime",  # s
     "memory": "RequestMemory",  # MiB
     "disk": "RequestDisk"  # KiB
-}, used_resource_name_mapping={  # noqa: B006
+}
+default_used_resource_name_mapping: Dict[str, str] = {
     "queuetime": "QDate",
     "walltime": "RemoteWallClockTime",  # s
     "cores": "Number of Allocated Processors",
     "memory": "MemoryUsage",  # MB
     "disk": "DiskUsage_RAW"  # KiB
-}, unit_conversion_mapping={  # noqa: B006
+}
+default_unit_conversion_mapping: Dict[str, float] = {
     "RequestCpus": 1,
     "RequestWalltime": 1,
     "RequestMemory": 1.024 / 1024,
@@ -25,7 +28,18 @@ def htcondor_job_reader(iterable, resource_name_mapping={  # noqa: B006
     "Number of Allocated Processors": 1,
     "MemoryUsage": 1 / 1024,
     "DiskUsage_RAW": 1.024 / 1024 / 1024
-}):
+}
+
+
+def htcondor_job_reader(iterable, resource_name_mapping: Dict[str, str]=None,
+                        used_resource_name_mapping: Dict[str, str]=None,
+                        unit_conversion_mapping: Dict[str, float]=None):
+    if resource_name_mapping is None:
+        resource_name_mapping = default_resource_name_mapping
+    if used_resource_name_mapping is None:
+        used_resource_name_mapping = default_used_resource_name_mapping
+    if unit_conversion_mapping is None:
+        unit_conversion_mapping = default_unit_conversion_mapping
     htcondor_reader = csv.DictReader(iterable, delimiter=' ', quotechar="'")
 
     for row in htcondor_reader:
