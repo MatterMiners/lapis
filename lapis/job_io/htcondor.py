@@ -31,9 +31,9 @@ default_unit_conversion_mapping: Dict[str, float] = {
 }
 
 
-def htcondor_job_reader(iterable, resource_name_mapping: Dict[str, str]=None,
-                        used_resource_name_mapping: Dict[str, str]=None,
-                        unit_conversion_mapping: Dict[str, float]=None):
+def htcondor_job_reader(iterable, resource_name_mapping: Dict[str, str] = None,
+                        used_resource_name_mapping: Dict[str, str] = None,
+                        unit_conversion_mapping: Dict[str, float] = None):
     if resource_name_mapping is None:
         resource_name_mapping = default_resource_name_mapping
     if used_resource_name_mapping is None:
