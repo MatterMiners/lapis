@@ -17,18 +17,18 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import os
 import sys
+import lapis
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from lapis import __about__
 
 
 # -- Project information -----------------------------------------------------
 
-project = __about__.__title__
-copyright = __about__.__copyright__
-author = __about__.__author__
+project = "lapis"
+author = "Eileen Kuehn, Max Fischer"
+copyright = f"2019 {author}"
 
 # The short X.Y version
-version = __about__.__version__
+version = lapis.__version__
 # The full version, including alpha/beta/rc tags
 release = version
 
@@ -204,7 +204,7 @@ def run_apidoc(_):
     """Run the `apidoc` tool to generate `autodoc` documentation for all modules"""
     from sphinx.apidoc import main
     output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'source', 'api'))
-    source_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', __about__.__title__))
+    source_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', "lapis"))
     main(['--module-first', '--separate', '--output-dir=' + output_dir, source_dir, '--force'])
 
 
