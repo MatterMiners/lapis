@@ -1,6 +1,6 @@
 from typing import Generator, Callable
 from cobald import interfaces
-from usim import eternity, Scope, each
+from usim import eternity, Scope, interval
 
 from .drone import Drone
 
@@ -48,7 +48,7 @@ class Pool(interfaces.Pool):
         initialising new drones. Otherwise drones get removed.
         """
         async with Scope() as scope:
-            async for _ in each(interval=1):
+            async for _ in interval(1):
                 drones_required = min(self._demand, self._capacity) - self._level
                 while drones_required > 0:
                     drones_required -= 1
