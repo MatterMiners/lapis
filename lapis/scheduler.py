@@ -3,17 +3,6 @@ from usim import Scope, each, instant
 from lapis.drone import Drone
 
 
-# TODO: does not work anymore as there is no method get_drone at pool
-def job_scheduler(simulator):
-    while True:
-        for pool in simulator.pools:
-            while pool.level > 0 and simulator.global_demand.level > 0:
-                drone = yield from pool.get_drone(1)
-                simulator.env.process(drone.start_job(*next(simulator.job_generator)))
-                yield simulator.env.timeout(0)
-        yield simulator.env.timeout(1)
-
-
 class CondorJobScheduler(object):
     """
     Goal of the htcondor job scheduler is to have a scheduler that somehow
