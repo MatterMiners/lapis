@@ -1,7 +1,7 @@
 import logging
 
 from usim import time
-from usim import TaskCancelled
+from usim import CancelTask
 
 from lapis.monitor import sampling_required
 
@@ -73,7 +73,7 @@ class Job(object):
         })
         try:
             await (time + self.walltime)
-        except TaskCancelled:
+        except CancelTask:
             self._success = False
         except BaseException:
             self._success = False
