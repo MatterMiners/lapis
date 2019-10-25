@@ -96,7 +96,6 @@ class Drone(interfaces.Pool):
         self.scheduler.unregister_drone(self)
         await sampling_required.set(True)
         await (time + 1)
-        # print("[drone %s] has been shut down" % self)
 
     async def start_job(self, job: Job, kill: bool = False):
         """
@@ -139,6 +138,7 @@ class Drone(interfaces.Pool):
                 self.jobs -= 1
 
             if not job.successful:
+                error_logged = False
                 for resource_key in job.resources:
                     usage = job.used_resources.get(
                         resource_key,
@@ -153,6 +153,13 @@ class Drone(interfaces.Pool):
                                 repr(job): value
                             }
                         })
+                        error_logged = True
+                if not error_logged:
+                    logging.info("job_status", {
+                        "job_refused": {
+                            repr(job): repr(self)
+                        }
+                    })
             self._utilisation = self._allocation = None
             self.scheduler.update_drone(self)
             await sampling_required.set(True)
