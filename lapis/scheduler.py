@@ -1,4 +1,4 @@
-from usim import Scope, each, instant
+from usim import Scope, instant, interval
 
 from lapis.drone import Drone
 
@@ -74,7 +74,7 @@ class CondorJobScheduler(object):
     async def run(self):
         async with Scope() as scope:
             scope.do(self._collect_jobs())
-            async for _ in each(interval=self.interval):
+            async for _ in interval(self.interval):
                 for job in self.job_queue:
                     best_match = self._schedule_job(job)
                     if best_match:

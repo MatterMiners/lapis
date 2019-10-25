@@ -4,7 +4,7 @@ import logging.handlers
 from typing import Callable, TYPE_CHECKING
 
 from cobald.monitor.format_json import JsonFormatter
-from usim import time, Flag, each
+from usim import time, Flag, delay
 
 if TYPE_CHECKING:
     from lapis.simulator import Simulator
@@ -38,7 +38,7 @@ class Monitoring(object):
         self._statistics = []
 
     async def run(self):
-        async for _ in each(delay=1):
+        async for _ in delay(1):
             await sampling_required
             await sampling_required.set(False)
             for statistic in self._statistics:

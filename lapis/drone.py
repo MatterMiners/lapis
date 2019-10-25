@@ -1,8 +1,7 @@
 import logging
 
 from cobald import interfaces
-from usim import time, Scope, instant
-from usim.basics import Capacities, ResourcesUnavailable
+from usim import time, Scope, instant, Capacities, ResourcesUnavailable
 
 from lapis.job import Job
 
