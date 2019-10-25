@@ -113,7 +113,6 @@ class Drone(interfaces.Pool):
             self._utilisation = self._allocation = None
 
             job_execution = scope.do(job.run())
-            await instant  # waiting just a moment to enable job to set parameters
             try:
                 async with self.resources.claim(**job.resources), \
                         self.used_resources.claim(**job.used_resources):
@@ -131,8 +130,10 @@ class Drone(interfaces.Pool):
                     self.scheduler.update_drone(self)
                     await job_execution.done
             except ResourcesUnavailable:
+                await instant
                 job_execution.cancel()
             except AssertionError:
+                await instant
                 job_execution.cancel()
             else:
                 self.jobs -= 1
