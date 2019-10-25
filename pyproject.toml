@@ -1,0 +1,43 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "lapis"
+dist-name = "lapis-sim"
+author = "Eileen Kuehn, Max Fischer"
+author-email = "mainekuehn@gmail.com"
+home-page = "https://github.com/MatterMiners/lapis"
+description-file = "README.rst"
+keywords = "htcondor simulation python cobald tardis opportunistic scheduling scheduler"
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    'Development Status :: 2 - Pre-Alpha',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Information Technology',
+    'Intended Audience :: Science/Research',
+    'Intended Audience :: System Administrators',
+    'Topic :: Adaptive Technologies',
+    'Topic :: Office/Business :: Scheduling',
+    'Topic :: System :: Distributed Computing',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7'
+]
+requires = [
+    "cobald",
+    "usim == 0.4",
+    "click",
+]
+
+[tool.flit.metadata.requires-extra]
+test = [
+    "pytest >=4.3.0",
+    "flake8",
+    "flake8-bugbear",
+]
+doc = ["sphinx", "sphinx_rtd_theme"]
+dev = ["pre-commit"]
+
+[tool.flit.metadata.urls]
+Documentation = "https://lapis-sim.readthedocs.io/en/latest/"

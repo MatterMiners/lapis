@@ -1,17 +1,6 @@
-from usim import Scope, each, instant
+from usim import Scope, instant, interval
 
 from lapis.drone import Drone
-
-
-# TODO: does not work anymore as there is no method get_drone at pool
-def job_scheduler(simulator):
-    while True:
-        for pool in simulator.pools:
-            while pool.level > 0 and simulator.global_demand.level > 0:
-                drone = yield from pool.get_drone(1)
-                simulator.env.process(drone.start_job(*next(simulator.job_generator)))
-                yield simulator.env.timeout(0)
-        yield simulator.env.timeout(1)
 
 
 class CondorJobScheduler(object):
@@ -85,7 +74,7 @@ class CondorJobScheduler(object):
     async def run(self):
         async with Scope() as scope:
             scope.do(self._collect_jobs())
-            async for _ in each(interval=self.interval):
+            async for _ in interval(self.interval):
                 for job in self.job_queue:
                     best_match = self._schedule_job(job)
                     if best_match:

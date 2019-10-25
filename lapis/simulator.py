@@ -1,8 +1,7 @@
 import random
 from functools import partial
 
-from usim import run, time, until, Scope
-from usim.basics import Queue
+from usim import run, time, until, Scope, Queue
 
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
