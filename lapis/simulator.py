@@ -56,14 +56,14 @@ class Simulator(object):
         print("Starting simulation at %s" % time.now)
         async with until(time == end) if end else Scope() as while_running:
             for pool in self.pools:
-                while_running.do(pool.run())
+                while_running.do(pool.run(), volatile=True)
             for job_input, job_reader in self._job_generators:
                 while_running.do(self._queue_jobs(job_input, job_reader))
             while_running.do(self.job_scheduler.run())
             for controller in self.controllers:
-                while_running.do(controller.run())
-            while_running.do(self.monitoring.run())
-        print("Finished simulation at %s" % time.now)
+                while_running.do(controller.run(), volatile=True)
+            while_running.do(self.monitoring.run(), volatile=True)
+        print(f"Finished simulation at {time.now}")
 
     async def _queue_jobs(self, job_input, job_reader):
         await job_to_queue_scheduler(job_generator=job_reader(job_input),
