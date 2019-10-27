@@ -7,7 +7,7 @@ from usim import run, time, until, Scope, Queue
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
 from lapis.monitor.general import user_demand, job_statistics, \
-    resource_statistics, pool_status, configuration_information
+    resource_statistics, pool_status, configuration_information, job_events
 from lapis.monitor import Monitoring
 from lapis.monitor.cobald import drone_statistics, pool_statistics
 
@@ -32,6 +32,7 @@ class Simulator(object):
         self.monitoring = Monitoring(self)
         self.monitoring.register_statistic(user_demand)
         self.monitoring.register_statistic(job_statistics)
+        self.monitoring.register_statistic(job_events)
         self.monitoring.register_statistic(pool_statistics)
         self.monitoring.register_statistic(drone_statistics)
         self.monitoring.register_statistic(resource_statistics)
