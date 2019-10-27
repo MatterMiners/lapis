@@ -33,6 +33,12 @@ sampling_required = Queue()
 
 
 class Monitoring(object):
+    """
+    Enable monitoring of a simulation. Objects that change during simulation are
+    registered in a queue. Whenever objects in the queue become available, the
+    monitoring object takes care to dispatch the object to registered statistic
+    callables taking care to generate relevant monitoring output.
+    """
     def __init__(self):
         self._statistics = {}
 
@@ -45,7 +51,22 @@ class Monitoring(object):
                         statistic.name, record
                     )
 
-    def register_statistic(self, statistic: Callable):
+    def register_statistic(self, statistic: Callable) -> None:
+        """
+        Register a callable that takes an object for logging and generates a list
+        of records. The callable should have the following accessible attributes:
+
+        name:
+            The identifying name of the statistic for logging
+        logging_formatter:
+            Pre-defined formatters for the different supported logging formats
+            including socket, stream, and telegraf logging.
+        whitelist:
+            A tuple of objects the statistic callable is interested in to create
+            the required logging messages.
+
+        :param statistic: Callable that returns a list of records for logging
+        """
         assert hasattr(statistic, "name") and hasattr(statistic, "logging_formatter")
         try:
             for element in statistic.whitelist:
