@@ -1,17 +1,22 @@
 import logging
+from typing import Optional, TYPE_CHECKING
 
 from usim import time
 from usim import CancelTask
 
 from lapis.monitor import sampling_required
 
+if TYPE_CHECKING:
+    from lapis.drone import Drone
+
 
 class Job(object):
     __slots__ = ("resources", "used_resources", "walltime", "requested_walltime",
-                 "queue_date", "in_queue_since", "in_queue_until", "_name", "_success")
+                 "queue_date", "in_queue_since", "in_queue_until", "_name", "drone",
+                 "_success")
 
     def __init__(self, resources: dict, used_resources: dict, in_queue_since: float = 0,
-                 queue_date: float = 0, name: str = None):
+                 queue_date: float = 0, name: str = None, drone: "Drone" = None):
         """
         Definition of a job that uses a specified amount of resources `used_resources`
         over a given amount of time, `walltime`. A job is described by its user
@@ -24,6 +29,7 @@ class Job(object):
                                simulation scheduler
         :param queue_date: Time when job was inserted into queue in real life
         :param name: Name of the job
+        :param drone: Drone where the job is running on
         """
         self.resources = resources
         self.used_resources = used_resources
@@ -39,15 +45,16 @@ class Job(object):
         assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
+        self.drone = drone
         self._name = name
-        self._success = False
+        self._success: Optional[bool] = None
 
     @property
     def name(self) -> str:
         return self._name or id(self)
 
     @property
-    def successful(self) -> bool:
+    def successful(self) -> Optional[bool]:
         return self._success
 
     @property
