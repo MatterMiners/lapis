@@ -66,7 +66,8 @@ class TestMonitoring(object):
         monitoring = Monitoring(scheduler)
         statistics = resource_statistics
         monitoring.register_statistic(statistics)
-        assert statistics in monitoring._statistics
+        for element in statistics.whitelist:
+            assert statistics in monitoring._statistics.get(element)
 
     def test_registration_failure(self):
         scheduler = DummyScheduler()
