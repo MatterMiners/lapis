@@ -73,4 +73,12 @@ class TestMonitoring(object):
         statistics = dummy_statistics
         with pytest.raises(AssertionError):
             monitoring.register_statistic(statistics)
-        assert statistics not in monitoring._statistics
+        assert all(statistics not in stat for stat in monitoring._statistics.values())
+        # define required attributes except whitelist
+        statistics.name = "test"
+        statistics.logging_formatter = {}
+        monitoring.register_statistic(statistics)
+        assert all(statistics not in stat for stat in monitoring._statistics.values())
+        statistics.whitelist = str,
+        monitoring.register_statistic(statistics)
+        assert all(statistics in stat for stat in monitoring._statistics.values())
