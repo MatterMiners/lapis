@@ -5,39 +5,43 @@ import logging.handlers
 from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
 
+from lapis.drone import Drone
+from lapis.job import Job
 from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler
+from lapis.pool import Pool
+from lapis.scheduler import CondorJobScheduler, JobQueue
 
 if TYPE_CHECKING:
     from lapis.simulator import Simulator
 
 
-def resource_statistics(simulator: "Simulator") -> list:
+def resource_statistics(drone: Drone) -> list:
     """
     Log ratio of used and requested resources for drones.
 
-    :param simulator: the simulator
+    :param drone: the drone
     :return: list of records for logging
     """
     results = []
-    for drone in simulator.job_scheduler.drone_list:
-        resources = drone.theoretical_available_resources
-        used_resources = drone.available_resources
-        for resource_type in resources:
-            results.append({
-                "resource_type": resource_type,
-                "pool_configuration": "None",
-                "pool_type": "drone",
-                "pool": repr(drone),
-                "used_ratio":
-                    1 - used_resources[resource_type]
-                    / drone.pool_resources[resource_type],
-                "requested_ratio":
-                    1 - resources[resource_type] / drone.pool_resources[resource_type]
-            })
+    resources = drone.theoretical_available_resources
+    used_resources = drone.available_resources
+    for resource_type in resources:
+        results.append({
+            "resource_type": resource_type,
+            "pool_configuration": "None",
+            "pool_type": "drone",
+            "pool": repr(drone),
+            "used_ratio":
+                1 - used_resources[resource_type]
+                / drone.pool_resources[resource_type],
+            "requested_ratio":
+                1 - resources[resource_type] / drone.pool_resources[resource_type]
+        })
     return results
 
 
 resource_statistics.name = "resource_status"
+resource_statistics.whitelist = Drone,
 resource_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
@@ -48,19 +52,21 @@ resource_statistics.logging_formatter = {
 }
 
 
-def user_demand(simulator: "Simulator") -> list:
+def user_demand(job_queue: JobQueue) -> list:
     """
     Log global user demand.
 
-    :param simulator: the simulator
+    :param scheduler: the scheduler
     :return: list of records for logging
     """
-    return [{
-        "value": len(simulator.job_scheduler.job_queue)
+    result = [{
+        "value": len(job_queue)
     }]
+    return result
 
 
 user_demand.name = "user_demand"
+user_demand.whitelist = JobQueue,
 user_demand.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
@@ -71,22 +77,33 @@ user_demand.logging_formatter = {
 }
 
 
-def job_statistics(simulator: "Simulator") -> list:
+def job_statistics(scheduler: CondorJobScheduler) -> list:
     """
-    Log number of jobs running in a drone.
+    Log number of jobs running in all drones.
 
-    :param simulator: the simulator
+    .. Note:
+
+        The logging is currently synchronised with the frequency of the
+        scheduler. If a finer resolution is required, the update of drones
+        can be considered additionally.
+
+    :param scheduler: the scheduler
     :return: list of records for logging
     """
     result = 0
-    for drone in simulator.job_scheduler.drone_list:
-        result += drone.jobs
+    for cluster in scheduler.drone_cluster.copy():
+        for drone in cluster:
+            result += drone.jobs
     return [{
+        "pool_configuration": "None",
+        "pool_type": "obs",
+        "pool": repr(scheduler),
         "job_count": result
     }]
 
 
 job_statistics.name = "cobald_status"
+job_statistics.whitelist = CondorJobScheduler,
 job_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
@@ -97,7 +114,7 @@ job_statistics.logging_formatter = {
 }
 
 
-def pool_status(simulator: "Simulator") -> list:
+def pool_status(pool: Pool) -> list:
     """
     Log state changes of pools and drones.
 
@@ -108,6 +125,7 @@ def pool_status(simulator: "Simulator") -> list:
 
 
 pool_status.name = "pool_status"
+pool_status.whitelist = Pool,
 pool_status.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
