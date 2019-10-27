@@ -4,7 +4,7 @@ import logging.handlers
 from typing import Callable, TYPE_CHECKING
 
 from cobald.monitor.format_json import JsonFormatter
-from usim import time, Flag, delay
+from usim import time, Queue
 
 if TYPE_CHECKING:
     from lapis.simulator import Simulator
@@ -29,28 +29,33 @@ class SimulationTimeFilter(logging.Filter):
         return True
 
 
-sampling_required = Flag()
+sampling_required = Queue()
 
 
 class Monitoring(object):
     def __init__(self, simulator: "Simulator"):
         self.simulator = simulator
-        self._statistics = []
+        self._statistics = {}
 
     async def run(self):
-        async for _ in delay(1):
-            await sampling_required
-            await sampling_required.set(False)
-            for statistic in self._statistics:
+        async for log_object in sampling_required:
+            for statistic in self._statistics.get(type(log_object), set()):
                 # do the logging
-                for record in statistic(self.simulator):
+                for record in statistic(log_object):
                     logging.getLogger(statistic.name).info(
                         statistic.name, record
                     )
 
     def register_statistic(self, statistic: Callable):
         assert hasattr(statistic, "name") and hasattr(statistic, "logging_formatter")
-        self._statistics.append(statistic)
+        try:
+            for element in statistic.whitelist:
+                self._statistics.setdefault(element, set()).add(statistic)
+        except AttributeError:
+            logging.getLogger("implementation").warning(
+                f"Removing statistic {statistic.name} as no whitelist has been defined."
+            )
+            return
 
         # prepare the logger
         logger = logging.getLogger(statistic.name)
