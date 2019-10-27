@@ -1,13 +1,10 @@
 import copy
 import logging
 import logging.handlers
-from typing import Callable, TYPE_CHECKING
+from typing import Callable
 
 from cobald.monitor.format_json import JsonFormatter
 from usim import time, Queue
-
-if TYPE_CHECKING:
-    from lapis.simulator import Simulator
 
 
 class LoggingSocketHandler(logging.handlers.SocketHandler):
