@@ -1,6 +1,11 @@
 from usim import Scope, instant, interval
 
 from lapis.drone import Drone
+from lapis.monitor import sampling_required
+
+
+class JobQueue(list):
+    pass
 
 
 class CondorJobScheduler(object):
@@ -24,7 +29,7 @@ class CondorJobScheduler(object):
         self._stream_queue = job_queue
         self.drone_cluster = []
         self.interval = 60
-        self.job_queue = []
+        self.job_queue = JobQueue()
         self._collecting = True
 
     @property
@@ -81,12 +86,16 @@ class CondorJobScheduler(object):
                         scope.do(best_match.start_job(job))
                         await instant
                         self.job_queue.remove(job)
+                        await sampling_required.put(self.job_queue)
                 if not self._collecting and not self.job_queue:
                     break
+                await sampling_required.put(self)
 
     async def _collect_jobs(self):
         async for job in self._stream_queue:
             self.job_queue.append(job)
+            # TODO: logging happens with each job
+            await sampling_required.put(self.job_queue)
         self._collecting = False
 
     def _schedule_job(self, job) -> Drone:
