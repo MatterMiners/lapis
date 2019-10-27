@@ -71,13 +71,8 @@ class Job(object):
 
     async def run(self):
         self.in_queue_until = time.now
-        logging.info("job_status", {
-            "job_queue_time": {
-                repr(self): self.queue_date
-            }, "job_waiting_time": {
-                repr(self): self.waiting_time
-            }
-        })
+        self._success = None
+        await sampling_required.put(self)
         try:
             await (time + self.walltime)
         except CancelTask:
@@ -86,12 +81,8 @@ class Job(object):
             self._success = False
             raise
         else:
-            logging.info("job_status", {
-                "job_wall_time": {
-                    repr(self): self.walltime
-                }
-            })
             self._success = True
+        await sampling_required.put(self)
 
     def __repr__(self):
         return '<%s: %s>' % (self.__class__.__name__, self._name or id(self))
@@ -104,7 +95,6 @@ async def job_to_queue_scheduler(job_generator, job_queue):
             base_date = job.queue_date
         current_time = job.queue_date - base_date
         if time.now < current_time:
-            await sampling_required.set(True)
             await (time >= current_time)
         job.in_queue_since = time.now
         await job_queue.put(job)
