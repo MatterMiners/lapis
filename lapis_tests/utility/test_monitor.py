@@ -5,7 +5,7 @@ from time import time as pytime
 from cobald.monitor.format_line import LineProtocolFormatter
 from usim import Scope, time
 
-from lapis_tests import via_usim, DummyScheduler
+from lapis_tests import via_usim
 
 from . import make_test_logger
 
@@ -62,7 +62,6 @@ def dummy_statistics():
 
 class TestMonitoring(object):
     def test_registration(self):
-        scheduler = DummyScheduler()
         monitoring = Monitoring()
         statistics = resource_statistics
         monitoring.register_statistic(statistics)
@@ -70,7 +69,6 @@ class TestMonitoring(object):
             assert statistics in monitoring._statistics.get(element)
 
     def test_registration_failure(self):
-        scheduler = DummyScheduler()
         monitoring = Monitoring()
         statistics = dummy_statistics
         with pytest.raises(AssertionError):
