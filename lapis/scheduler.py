@@ -1,4 +1,5 @@
-from usim import Scope, instant, interval
+from typing import Dict
+from usim import Scope, interval
 
 from lapis.drone import Drone
 from lapis.monitor import sampling_required
@@ -51,7 +52,7 @@ class CondorJobScheduler(object):
                 if len(cluster) == 0:
                     self.drone_cluster.remove(cluster)
 
-    def _add_drone(self, drone: Drone):
+    def _add_drone(self, drone: Drone, drone_resources: Dict = None):
         minimum_distance_cluster = None
         distance = float("Inf")
         if len(self.drone_cluster) > 0:
@@ -59,9 +60,14 @@ class CondorJobScheduler(object):
                 current_distance = 0
                 for key in {*cluster[0].pool_resources,
                             *drone.pool_resources}:
-                    current_distance += abs(
-                        cluster[0].theoretical_available_resources.get(key, 0)
-                        - drone.theoretical_available_resources.get(key, 0))
+                    if drone_resources:
+                        current_distance += abs(
+                            cluster[0].theoretical_available_resources.get(key, 0)
+                            - drone_resources.get(key, 0))
+                    else:
+                        current_distance += abs(
+                            cluster[0].theoretical_available_resources.get(key, 0)
+                            - drone.theoretical_available_resources.get(key, 0))
                 if current_distance < distance:
                     minimum_distance_cluster = cluster
                     distance = current_distance
@@ -84,9 +90,15 @@ class CondorJobScheduler(object):
                     best_match = self._schedule_job(job)
                     if best_match:
                         scope.do(best_match.start_job(job))
-                        await instant
                         self.job_queue.remove(job)
                         await sampling_required.put(self.job_queue)
+                        self.unregister_drone(best_match)
+                        left_resources = best_match.theoretical_available_resources
+                        left_resources = {
+                            key: value - job.resources.get(key, 0) for
+                            key, value in left_resources.items()
+                        }
+                        self._add_drone(best_match, left_resources)
                 if not self._collecting and not self.job_queue:
                     break
                 await sampling_required.put(self)
