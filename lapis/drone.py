@@ -92,7 +92,7 @@ class Drone(interfaces.Pool):
         from lapis.monitor import sampling_required
         self._supply = 0
         self.scheduler.unregister_drone(self)
-        sampling_required.put(self)  # TODO: introduce state of drone
+        await sampling_required.put(self)  # TODO: introduce state of drone
         await (time + 1)
 
     async def start_job(self, job: Job, kill: bool = False):
