@@ -23,7 +23,7 @@ class Pool(interfaces.Pool):
         *,
         capacity: int = float("inf"),
         init: int = 0,
-        name: str = None
+        name: str = None,
     ):
         super(Pool, self).__init__()
         assert init <= capacity
