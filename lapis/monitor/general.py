@@ -114,6 +114,48 @@ job_statistics.logging_formatter = {
 }
 
 
+def job_events(job: Job) -> list:
+    result = {
+        "pool_configuration": "None",
+        "pool_type": "drone",
+        "pool": repr(job.drone),
+        "job": repr(job),
+    }
+    if job.successful is None:
+        result["queue_time"] = job.queue_date
+        result["waiting_time"] = job.waiting_time
+    elif job.successful:
+        result["wall_time"] = job.walltime
+        result["success"] = 1
+    else:
+        result["success"] = 0
+        error_logged = False
+        for resource_key in job.resources:
+            usage = job.used_resources.get(
+                resource_key, job.resources.get(resource_key, None))
+            value = usage / job.resources.get(
+                resource_key, job.drone.pool_resources[resource_key]
+            )
+            if value > 1:
+                result[f"exceeded_{resource_key}"] = value
+                error_logged = True
+        if not error_logged:
+            result["refused_by"] = repr(job.drone)
+    return [result]
+
+
+job_events.name = "job_event"
+job_events.whitelist = Job,
+job_events.logging_formatter = {
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "pool_configuration", "pool_type", "pool", "job"},
+        resolution=1
+    )
+}
+
+
 def pool_status(pool: Pool) -> list:
     """
     Log state changes of pools and drones.
