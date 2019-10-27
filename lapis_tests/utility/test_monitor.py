@@ -14,19 +14,19 @@ from lapis.monitor import SimulationTimeFilter, Monitoring
 
 
 def parse_line_protocol(literal: str):
-    name_tags, _, fields_stamp = literal.strip().partition(' ')
-    fields, _, stamp = fields_stamp.partition(' ')
-    fields = fields.split(',') if fields else []
-    name, *tags = name_tags.split(',')
-    return name, {
-        key: value
-        for key, value
-        in (tag.split('=') for tag in tags)
-    }, {
-        key: ast.literal_eval(value)
-        for key, value
-        in (field.split('=') for field in fields)
-    }, None if not stamp else int(stamp)
+    name_tags, _, fields_stamp = literal.strip().partition(" ")
+    fields, _, stamp = fields_stamp.partition(" ")
+    fields = fields.split(",") if fields else []
+    name, *tags = name_tags.split(",")
+    return (
+        name,
+        {key: value for key, value in (tag.split("=") for tag in tags)},
+        {
+            key: ast.literal_eval(value)
+            for key, value in (field.split("=") for field in fields)
+        },
+        None if not stamp else int(stamp),
+    )
 
 
 class TestSimulationTimeFilter(object):
@@ -49,6 +49,7 @@ class TestSimulationTimeFilter(object):
     async def test_explicit(self):
         def record():
             pass
+
         record.created = pytime()
         filter = SimulationTimeFilter()
         async with Scope() as _:
@@ -79,6 +80,6 @@ class TestMonitoring(object):
         statistics.logging_formatter = {}
         monitoring.register_statistic(statistics)
         assert all(statistics not in stat for stat in monitoring._statistics.values())
-        statistics.whitelist = str,
+        statistics.whitelist = (str,)
         monitoring.register_statistic(statistics)
         assert all(statistics in stat for stat in monitoring._statistics.values())

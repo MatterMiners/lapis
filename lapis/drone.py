@@ -9,9 +9,13 @@ class ResourcesExceeded(Exception):
 
 
 class Drone(interfaces.Pool):
-    def __init__(self, scheduler, pool_resources: dict,
-                 scheduling_duration: float,
-                 ignore_resources: list = None):
+    def __init__(
+        self,
+        scheduler,
+        pool_resources: dict,
+        scheduling_duration: float,
+        ignore_resources: list = None,
+    ):
         """
         :param scheduler:
         :param pool_resources:
@@ -25,7 +29,8 @@ class Drone(interfaces.Pool):
         self.used_resources = Capacities(**pool_resources)
         if ignore_resources:
             self._valid_resource_keys = [
-                resource for resource in self.pool_resources
+                resource
+                for resource in self.pool_resources
                 if resource not in ignore_resources
             ]
         else:
@@ -50,6 +55,7 @@ class Drone(interfaces.Pool):
 
     async def run(self):
         from lapis.monitor import sampling_required
+
         await (time + self.scheduling_duration)
         self._supply = 1
         self.scheduler.register_drone(self)
@@ -84,12 +90,14 @@ class Drone(interfaces.Pool):
         resources = []
         for resource_key in self._valid_resource_keys:
             resources.append(
-                getattr(levels, resource_key) / self.pool_resources[resource_key])
+                getattr(levels, resource_key) / self.pool_resources[resource_key]
+            )
         self._allocation = max(resources)
         self._utilisation = min(resources)
 
     async def shutdown(self):
         from lapis.monitor import sampling_required
+
         self._supply = 0
         self.scheduler.unregister_drone(self)
         await sampling_required.put(self)  # TODO: introduce state of drone
@@ -109,19 +117,23 @@ class Drone(interfaces.Pool):
         job.drone = self
         async with Scope() as scope:
             from lapis.monitor import sampling_required
+
             self._utilisation = self._allocation = None
 
             job_execution = scope.do(job.run())
             self.jobs += 1
             try:
-                async with self.resources.claim(**job.resources), \
-                        self.used_resources.claim(**job.used_resources):
+                async with self.resources.claim(
+                    **job.resources
+                ), self.used_resources.claim(**job.used_resources):
                     await sampling_required.put(self)
                     if kill:
                         for resource_key in job.resources:
                             try:
-                                if job.resources[resource_key] < \
-                                        job.used_resources[resource_key]:
+                                if (
+                                    job.resources[resource_key]
+                                    < job.used_resources[resource_key]
+                                ):
                                     job_execution.cancel()
                             except KeyError:
                                 # check is not relevant if the data is not stored
@@ -140,4 +152,4 @@ class Drone(interfaces.Pool):
             await sampling_required.put(self)
 
     def __repr__(self):
-        return '<%s: %s>' % (self.__class__.__name__, id(self))
+        return "<%s: %s>" % (self.__class__.__name__, id(self))

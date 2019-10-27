@@ -15,28 +15,29 @@ def drone_statistics(drone: Drone) -> list:
     :param drone: the drone
     :return: list of records for logging
     """
-    results = [{
-        "pool_configuration": "None",
-        "pool_type": "drone",
-        "pool": repr(drone),
-        "allocation": drone.allocation,
-        "utilisation": drone.utilisation,
-        "demand": drone.demand,
-        "supply": drone.supply,
-        "job_count": drone.jobs
-    }]
+    results = [
+        {
+            "pool_configuration": "None",
+            "pool_type": "drone",
+            "pool": repr(drone),
+            "allocation": drone.allocation,
+            "utilisation": drone.utilisation,
+            "demand": drone.demand,
+            "supply": drone.supply,
+            "job_count": drone.jobs,
+        }
+    ]
     return results
 
 
 drone_statistics.name = "cobald_status"
-drone_statistics.whitelist = Drone,
+drone_statistics.whitelist = (Drone,)
 drone_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"},
-        resolution=1
-    )
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+    ),
 }
 
 
@@ -47,25 +48,26 @@ def pool_statistics(pool: Pool) -> list:
     :param pool: the pool
     :return: list of records to log
     """
-    results = [{
-        "pool_configuration": "None",
-        "pool_type": "pool",
-        "pool": repr(pool),
-        "allocation": pool.allocation,
-        "utilisation": pool.utilisation,
-        "demand": pool.demand,
-        "supply": pool.supply,
-    }]
+    results = [
+        {
+            "pool_configuration": "None",
+            "pool_type": "pool",
+            "pool": repr(pool),
+            "allocation": pool.allocation,
+            "utilisation": pool.utilisation,
+            "demand": pool.demand,
+            "supply": pool.supply,
+        }
+    ]
     return results
 
 
 pool_statistics.name = "cobald_status"
-pool_statistics.whitelist = Pool,
+pool_statistics.whitelist = (Pool,)
 pool_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"},
-        resolution=1
-    )
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+    ),
 }

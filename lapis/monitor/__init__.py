@@ -21,6 +21,7 @@ class SimulationTimeFilter(logging.Filter):
     """
     Dummy filter to replace log record timestamp with simulation time.
     """
+
     def filter(self, record) -> bool:
         record.created = time.now
         return True
@@ -36,6 +37,7 @@ class Monitoring(object):
     monitoring object takes care to dispatch the object to registered statistic
     callables taking care to generate relevant monitoring output.
     """
+
     def __init__(self):
         self._statistics = {}
 
@@ -44,9 +46,7 @@ class Monitoring(object):
             for statistic in self._statistics.get(type(log_object), set()):
                 # do the logging
                 for record in statistic(log_object):
-                    logging.getLogger(statistic.name).info(
-                        statistic.name, record
-                    )
+                    logging.getLogger(statistic.name).info(statistic.name, record)
 
     def register_statistic(self, statistic: Callable) -> None:
         """
@@ -83,6 +83,9 @@ class Monitoring(object):
             root_logger = logging.getLogger()
             for handler in root_logger.handlers:
                 new_handler = copy.copy(handler)
-                new_handler.setFormatter(statistic.logging_formatter.get(
-                    type(handler).__name__, JsonFormatter()))
+                new_handler.setFormatter(
+                    statistic.logging_formatter.get(
+                        type(handler).__name__, JsonFormatter()
+                    )
+                )
                 logger.addHandler(new_handler)

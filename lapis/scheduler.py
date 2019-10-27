@@ -58,16 +58,17 @@ class CondorJobScheduler(object):
         if len(self.drone_cluster) > 0:
             for cluster in self.drone_cluster:
                 current_distance = 0
-                for key in {*cluster[0].pool_resources,
-                            *drone.pool_resources}:
+                for key in {*cluster[0].pool_resources, *drone.pool_resources}:
                     if drone_resources:
                         current_distance += abs(
                             cluster[0].theoretical_available_resources.get(key, 0)
-                            - drone_resources.get(key, 0))
+                            - drone_resources.get(key, 0)
+                        )
                     else:
                         current_distance += abs(
                             cluster[0].theoretical_available_resources.get(key, 0)
-                            - drone.theoretical_available_resources.get(key, 0))
+                            - drone.theoretical_available_resources.get(key, 0)
+                        )
                 if current_distance < distance:
                     minimum_distance_cluster = cluster
                     distance = current_distance
@@ -95,8 +96,8 @@ class CondorJobScheduler(object):
                         self.unregister_drone(best_match)
                         left_resources = best_match.theoretical_available_resources
                         left_resources = {
-                            key: value - job.resources.get(key, 0) for
-                            key, value in left_resources.items()
+                            key: value - job.resources.get(key, 0)
+                            for key, value in left_resources.items()
                         }
                         self._add_drone(best_match, left_resources)
                 if not self._collecting and not self.job_queue:
@@ -124,12 +125,14 @@ class CondorJobScheduler(object):
                     break
                 else:
                     try:
-                        cost += 1 / (resources[resource_type]
-                                     // job.resources[resource_type])
+                        cost += 1 / (
+                            resources[resource_type] // job.resources[resource_type]
+                        )
                     except KeyError:
                         pass
-            for additional_resource_type in [key for key in drone.pool_resources
-                                             if key not in job.resources]:
+            for additional_resource_type in [
+                key for key in drone.pool_resources if key not in job.resources
+            ]:
                 cost += resources[additional_resource_type]
             cost /= len((*job.resources, *drone.pool_resources))
             if cost <= 1:
