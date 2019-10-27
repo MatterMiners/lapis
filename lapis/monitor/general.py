@@ -81,7 +81,7 @@ def job_statistics(scheduler: CondorJobScheduler) -> list:
     """
     Log number of jobs running in all drones.
 
-    .. Note:
+    .. Note::
 
         The logging is currently synchronised with the frequency of the
         scheduler. If a finer resolution is required, the update of drones
@@ -115,6 +115,26 @@ job_statistics.logging_formatter = {
 
 
 def job_events(job: Job) -> list:
+    """
+    Log relevant events for jobs. Relevant events are
+
+    * start of a job,
+    * finishing of a job, either successful or not.
+
+    Information about the start of a job are relevant to enable timely analysis
+    of waiting times. For finishing of jobs information about the success itself,
+    but also additional information on exceeded resources or refusal by the
+    drone are added.
+
+    .. Warning::
+
+        The logging format includes the name / identifier of a job. This might
+        result in a huge index of the grafana database. The job is currently
+        included to enable better lookup and analysis of related events.
+
+    :param job: the job to log information for
+    :return: list of records for logging
+    """
     result = {
         "pool_configuration": "None",
         "pool_type": "drone",
