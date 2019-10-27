@@ -1,5 +1,3 @@
-import logging
-
 from cobald import interfaces
 from usim import time, Scope, instant, Capacities, ResourcesUnavailable
 
@@ -55,7 +53,7 @@ class Drone(interfaces.Pool):
         await (time + self.scheduling_duration)
         self._supply = 1
         self.scheduler.register_drone(self)
-        await sampling_required.set(True)
+        await sampling_required.put(self)
 
     @property
     def supply(self) -> float:
@@ -94,9 +92,8 @@ class Drone(interfaces.Pool):
         from lapis.monitor import sampling_required
         self._supply = 0
         self.scheduler.unregister_drone(self)
-        await sampling_required.set(True)
+        await sampling_required.put(self)  # TODO: introduce state of drone
         await (time + 1)
-        # print("[drone %s] has been shut down" % self)
 
     async def start_job(self, job: Job, kill: bool = False):
         """
@@ -109,17 +106,17 @@ class Drone(interfaces.Pool):
                      requested resources
         :return:
         """
+        job.drone = self
         async with Scope() as scope:
             from lapis.monitor import sampling_required
             self._utilisation = self._allocation = None
 
             job_execution = scope.do(job.run())
-            await instant  # waiting just a moment to enable job to set parameters
+            self.jobs += 1
             try:
                 async with self.resources.claim(**job.resources), \
                         self.used_resources.claim(**job.used_resources):
-                    self.jobs += 1
-                    await sampling_required.set(True)
+                    await sampling_required.put(self)
                     if kill:
                         for resource_key in job.resources:
                             try:
@@ -132,30 +129,15 @@ class Drone(interfaces.Pool):
                     self.scheduler.update_drone(self)
                     await job_execution.done
             except ResourcesUnavailable:
+                await instant
                 job_execution.cancel()
             except AssertionError:
+                await instant
                 job_execution.cancel()
-            else:
-                self.jobs -= 1
-
-            if not job.successful:
-                for resource_key in job.resources:
-                    usage = job.used_resources.get(
-                        resource_key,
-                        job.resources.get(resource_key, None),
-                    )
-                    value = usage / job.resources.get(
-                        resource_key, self.pool_resources[resource_key]
-                    )
-                    if value > 1:
-                        logging.info("job_status", {
-                            "job_exceeds_%s" % resource_key: {
-                                repr(job): value
-                            }
-                        })
+            self.jobs -= 1
             self._utilisation = self._allocation = None
             self.scheduler.update_drone(self)
-            await sampling_required.set(True)
+            await sampling_required.put(self)
 
     def __repr__(self):
         return '<%s: %s>' % (self.__class__.__name__, id(self))

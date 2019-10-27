@@ -31,7 +31,7 @@ def htcondor_job_reader(iterable, resource_name_mapping={  # noqa: B006
     for row in htcondor_reader:
         if float(row[used_resource_name_mapping["walltime"]]) <= 0:
             logging.getLogger("implementation").warning(
-                "removed job from htcondor import", row)
+                "removed job from htcondor import (%s)", row)
             continue
         resources = {}
         for key, original_key in resource_name_mapping.items():
