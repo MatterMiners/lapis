@@ -20,10 +20,10 @@ _test_index = 0
 _index_lock = threading.Lock()
 
 
-def make_test_logger(base_name: str = 'test_logger'):
+def make_test_logger(base_name: str = "test_logger"):
     with _index_lock:
         global _test_index
-        log_name = base_name + '.test%d' % _test_index
+        log_name = base_name + ".test%d" % _test_index
         _test_index += 1
     logger = logging.getLogger(log_name)
     logger.propagate = False

@@ -26,29 +26,30 @@ def resource_statistics(drone: Drone) -> list:
     resources = drone.theoretical_available_resources
     used_resources = drone.available_resources
     for resource_type in resources:
-        results.append({
-            "resource_type": resource_type,
-            "pool_configuration": "None",
-            "pool_type": "drone",
-            "pool": repr(drone),
-            "used_ratio":
-                1 - used_resources[resource_type]
-                / drone.pool_resources[resource_type],
-            "requested_ratio":
-                1 - resources[resource_type] / drone.pool_resources[resource_type]
-        })
+        results.append(
+            {
+                "resource_type": resource_type,
+                "pool_configuration": "None",
+                "pool_type": "drone",
+                "pool": repr(drone),
+                "used_ratio": 1
+                - used_resources[resource_type] / drone.pool_resources[resource_type],
+                "requested_ratio": 1
+                - resources[resource_type] / drone.pool_resources[resource_type],
+            }
+        )
     return results
 
 
 resource_statistics.name = "resource_status"
-resource_statistics.whitelist = Drone,
+resource_statistics.whitelist = (Drone,)
 resource_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "resource_type", "pool_configuration", "pool_type", "pool"},
-        resolution=1
-    )
+        resolution=1,
+    ),
 }
 
 
@@ -59,21 +60,18 @@ def user_demand(job_queue: JobQueue) -> list:
     :param scheduler: the scheduler
     :return: list of records for logging
     """
-    result = [{
-        "value": len(job_queue)
-    }]
+    result = [{"value": len(job_queue)}]
     return result
 
 
 user_demand.name = "user_demand"
-user_demand.whitelist = JobQueue,
+user_demand.whitelist = (JobQueue,)
 user_demand.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis"},
-        resolution=1
-    )
+        tags={"tardis"}, resolution=1
+    ),
 }
 
 
@@ -94,23 +92,24 @@ def job_statistics(scheduler: CondorJobScheduler) -> list:
     for cluster in scheduler.drone_cluster.copy():
         for drone in cluster:
             result += drone.jobs
-    return [{
-        "pool_configuration": "None",
-        "pool_type": "obs",
-        "pool": repr(scheduler),
-        "job_count": result
-    }]
+    return [
+        {
+            "pool_configuration": "None",
+            "pool_type": "obs",
+            "pool": repr(scheduler),
+            "job_count": result,
+        }
+    ]
 
 
 job_statistics.name = "cobald_status"
-job_statistics.whitelist = CondorJobScheduler,
+job_statistics.whitelist = (CondorJobScheduler,)
 job_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"},
-        resolution=1
-    )
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+    ),
 }
 
 
@@ -152,7 +151,8 @@ def job_events(job: Job) -> list:
         error_logged = False
         for resource_key in job.resources:
             usage = job.used_resources.get(
-                resource_key, job.resources.get(resource_key, None))
+                resource_key, job.resources.get(resource_key, None)
+            )
             value = usage / job.resources.get(
                 resource_key, job.drone.pool_resources[resource_key]
             )
@@ -165,14 +165,13 @@ def job_events(job: Job) -> list:
 
 
 job_events.name = "job_event"
-job_events.whitelist = Job,
+job_events.whitelist = (Job,)
 job_events.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool", "job"},
-        resolution=1
-    )
+        tags={"tardis", "pool_configuration", "pool_type", "pool", "job"}, resolution=1
+    ),
 }
 
 
@@ -187,14 +186,14 @@ def pool_status(pool: Pool) -> list:
 
 
 pool_status.name = "pool_status"
-pool_status.whitelist = Pool,
+pool_status.whitelist = (Pool,)
 pool_status.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "parent_pool", "pool_configuration", "pool_type", "pool"},
-        resolution=1
-    )
+        resolution=1,
+    ),
 }
 
 
@@ -213,7 +212,6 @@ configuration_information.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "resource_type"},
-        resolution=1
-    )
+        tags={"tardis", "pool_configuration", "resource_type"}, resolution=1
+    ),
 }

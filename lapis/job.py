@@ -11,12 +11,28 @@ if TYPE_CHECKING:
 
 
 class Job(object):
-    __slots__ = ("resources", "used_resources", "walltime", "requested_walltime",
-                 "queue_date", "in_queue_since", "in_queue_until", "_name", "drone",
-                 "_success")
+    __slots__ = (
+        "resources",
+        "used_resources",
+        "walltime",
+        "requested_walltime",
+        "queue_date",
+        "in_queue_since",
+        "in_queue_until",
+        "_name",
+        "drone",
+        "_success",
+    )
 
-    def __init__(self, resources: dict, used_resources: dict, in_queue_since: float = 0,
-                 queue_date: float = 0, name: str = None, drone: "Drone" = None):
+    def __init__(
+        self,
+        resources: dict,
+        used_resources: dict,
+        in_queue_since: float = 0,
+        queue_date: float = 0,
+        name: str = None,
+        drone: "Drone" = None,
+    ):
         """
         Definition of a job that uses a specified amount of resources `used_resources`
         over a given amount of time, `walltime`. A job is described by its user
@@ -37,7 +53,9 @@ class Job(object):
             if key not in resources:
                 logging.getLogger("implementation").info(
                     "job uses different resources than specified, added %s: %s",
-                    key, self.used_resources[key])
+                    key,
+                    self.used_resources[key],
+                )
                 self.resources[key] = self.used_resources[key]
         self.walltime = used_resources.pop("walltime")
         self.requested_walltime = resources.pop("walltime", None)
@@ -85,7 +103,7 @@ class Job(object):
         await sampling_required.put(self)
 
     def __repr__(self):
-        return '<%s: %s>' % (self.__class__.__name__, self._name or id(self))
+        return "<%s: %s>" % (self.__class__.__name__, self._name or id(self))
 
 
 async def job_to_queue_scheduler(job_generator, job_queue):

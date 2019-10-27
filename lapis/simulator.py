@@ -6,8 +6,14 @@ from usim import run, time, until, Scope, Queue
 
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
-from lapis.monitor.general import user_demand, job_statistics, \
-    resource_statistics, pool_status, configuration_information, job_events
+from lapis.monitor.general import (
+    user_demand,
+    job_statistics,
+    resource_statistics,
+    pool_status,
+    configuration_information,
+    job_events,
+)
 from lapis.monitor import Monitoring
 from lapis.monitor.cobald import drone_statistics, pool_statistics
 
@@ -44,8 +50,11 @@ class Simulator(object):
 
     def create_pools(self, pool_input, pool_reader, pool_type, controller=None):
         assert self.job_scheduler, "Scheduler needs to be created before pools"
-        for pool in pool_reader(iterable=pool_input, pool_type=pool_type,
-                                make_drone=partial(Drone, self.job_scheduler)):
+        for pool in pool_reader(
+            iterable=pool_input,
+            pool_type=pool_type,
+            make_drone=partial(Drone, self.job_scheduler),
+        ):
             self.pools.append(pool)
             if controller:
                 self.controllers.append(controller(target=pool, rate=1))
@@ -71,5 +80,6 @@ class Simulator(object):
         print(f"Finished simulation at {time.now}")
 
     async def _queue_jobs(self, job_input, job_reader):
-        await job_to_queue_scheduler(job_generator=job_reader(job_input),
-                                     job_queue=self.job_queue)
+        await job_to_queue_scheduler(
+            job_generator=job_reader(job_input), job_queue=self.job_queue
+        )

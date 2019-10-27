@@ -16,11 +16,15 @@ class Pool(interfaces.Pool):
     :param name: Name of the pool
     :param make_drone: Callable to create a drone with specific properties for this pool
     """
-    def __init__(self, make_drone: Callable,
-                 *,
-                 capacity: int = float('inf'),
-                 init: int = 0,
-                 name: str = None):
+
+    def __init__(
+        self,
+        make_drone: Callable,
+        *,
+        capacity: int = float("inf"),
+        init: int = 0,
+        name: str = None,
+    ):
         super(Pool, self).__init__()
         assert init <= capacity
         self.make_drone = make_drone
@@ -115,8 +119,7 @@ class Pool(interfaces.Pool):
             self._demand = 0
 
     def __repr__(self):
-        return '<%s: %s>' % (
-            self.__class__.__name__, self._name or id(self))
+        return "<%s: %s>" % (self.__class__.__name__, self._name or id(self))
 
 
 class StaticPool(Pool):
@@ -130,10 +133,12 @@ class StaticPool(Pool):
     :param resources: Dictionary of resources available for each pool
                       instantiated within the pool
     """
+
     def __init__(self, make_drone: Callable, capacity: int = 0):
         assert capacity > 0, "Static pool was initialised without any resources..."
-        super(StaticPool, self).__init__(capacity=capacity, init=capacity,
-                                         make_drone=make_drone)
+        super(StaticPool, self).__init__(
+            capacity=capacity, init=capacity, make_drone=make_drone
+        )
         self._demand = capacity
 
     async def run(self):
