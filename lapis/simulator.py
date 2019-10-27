@@ -1,3 +1,4 @@
+import logging
 import random
 from functools import partial
 
@@ -9,6 +10,9 @@ from lapis.monitor.general import user_demand, job_statistics, \
     resource_statistics, pool_status, configuration_information
 from lapis.monitor import Monitoring
 from lapis.monitor.cobald import drone_statistics, pool_statistics
+
+
+logging.getLogger("implementation").propagate = False
 
 
 class Simulator(object):
