@@ -33,8 +33,7 @@ sampling_required = Queue()
 
 
 class Monitoring(object):
-    def __init__(self, simulator: "Simulator"):
-        self.simulator = simulator
+    def __init__(self):
         self._statistics = {}
 
     async def run(self):

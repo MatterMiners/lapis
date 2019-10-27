@@ -63,7 +63,7 @@ def dummy_statistics():
 class TestMonitoring(object):
     def test_registration(self):
         scheduler = DummyScheduler()
-        monitoring = Monitoring(scheduler)
+        monitoring = Monitoring()
         statistics = resource_statistics
         monitoring.register_statistic(statistics)
         for element in statistics.whitelist:
@@ -71,7 +71,7 @@ class TestMonitoring(object):
 
     def test_registration_failure(self):
         scheduler = DummyScheduler()
-        monitoring = Monitoring(scheduler)
+        monitoring = Monitoring()
         statistics = dummy_statistics
         with pytest.raises(AssertionError):
             monitoring.register_statistic(statistics)

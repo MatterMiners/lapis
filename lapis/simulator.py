@@ -29,7 +29,7 @@ class Simulator(object):
         self.enable_monitoring()
 
     def enable_monitoring(self):
-        self.monitoring = Monitoring(self)
+        self.monitoring = Monitoring()
         self.monitoring.register_statistic(user_demand)
         self.monitoring.register_statistic(job_statistics)
         self.monitoring.register_statistic(job_events)
