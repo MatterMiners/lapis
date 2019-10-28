@@ -126,6 +126,7 @@ class Drone(interfaces.Pool):
                 async with self.resources.claim(
                     **job.resources
                 ), self.used_resources.claim(**job.used_resources):
+                    print('awaiting completion of job {} on drone {}'.format(job.__repr__(), self.__repr__()))
                     await sampling_required.put(self)
                     if kill:
                         for resource_key in job.resources:
@@ -140,6 +141,7 @@ class Drone(interfaces.Pool):
                                 pass
                     self.scheduler.update_drone(self)
                     await job_execution.done
+                    print('job {} done'.format(job.__repr__()))
             except ResourcesUnavailable:
                 await instant
                 job_execution.cancel()
