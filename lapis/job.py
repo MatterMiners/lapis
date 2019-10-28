@@ -90,17 +90,24 @@ class Job(object):
     async def run(self):
         self.in_queue_until = time.now
         self._success = None
+        print('starting job {} @ time {}'.format(self.__repr__(), self.in_queue_until))
+
         await sampling_required.put(self)
         try:
+            print('awaiting completion of job {} @ time {}'.format(self.__repr__(), time+self.walltime))
             await (time + self.walltime)
         except CancelTask:
+            print('failed job {}'.format(self.__repr__()))
             self._success = False
         except BaseException:
+            print('failed job {}'.format(self.__repr__()))
             self._success = False
             raise
         else:
             self._success = True
         await sampling_required.put(self)
+
+        print('finish job {} @ time {}, successful {}'.format(self.__repr__(), time.now, self._success))
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self._name or id(self))
