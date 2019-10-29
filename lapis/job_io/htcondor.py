@@ -49,11 +49,10 @@ def htcondor_job_reader(
                 pass
         used_resources = {
             "cores": (
-                float(row["RemoteSysCpu"])
-                + float(row["RemoteUserCpu"])
+                (float(row["RemoteSysCpu"]) + float(row["RemoteUserCpu"]))
                 / float(row[used_resource_name_mapping["walltime"]])
             )
-            * unit_conversion_mapping.get(used_resource_name_mapping[key], 1)
+            * unit_conversion_mapping.get(used_resource_name_mapping["cores"], 1)
         }
         for key in ["memory", "walltime", "disk"]:
             original_key = used_resource_name_mapping[key]
