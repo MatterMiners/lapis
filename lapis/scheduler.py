@@ -100,7 +100,6 @@ class CondorJobScheduler(object):
                             for key, value in left_resources.items()
                         }
                         self._add_drone(best_match, left_resources)
-
                 if not self._collecting and not self.job_queue:
                     break
                 await sampling_required.put(self)
