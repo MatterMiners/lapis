@@ -38,7 +38,8 @@ def htcondor_job_reader(
         htcondor_reader = csv.DictReader(iterable, delimiter=" ", quotechar="'")
     else:
         logging.getLogger("implementation").error(
-            "Invalid input file %s. Job input file can not be read." % iterable.name)
+            "Invalid input file %s. Job input file can not be read." % iterable.name
+        )
 
     for entry in htcondor_reader:
         if float(entry[used_resource_name_mapping["walltime"]]) <= 0:
@@ -49,10 +50,12 @@ def htcondor_job_reader(
         resources = {}
         for key, original_key in resource_name_mapping.items():
             try:
-                resources[key] = float(entry[original_key]) \
-                                 * unit_conversion_mapping.get(original_key, 1)
+                resources[key] = float(
+                    entry[original_key]
+                ) * unit_conversion_mapping.get(original_key, 1)
             except ValueError:
                 pass
+
         used_resources = {
             "cores": (
                 (float(entry["RemoteSysCpu"]) + float(entry["RemoteUserCpu"]))
@@ -60,19 +63,24 @@ def htcondor_job_reader(
             )
             * unit_conversion_mapping.get(used_resource_name_mapping["cores"], 1)
         }
-        try:
-            inputfiles = {file["filename"]: file["usedsize"]
-                          for file in entry["Inputfiles"]}
-        except KeyError:
-            inputfiles = None
         for key in ["memory", "walltime", "disk"]:
             original_key = used_resource_name_mapping[key]
-            used_resources[key] = float(entry[original_key]) \
-                * unit_conversion_mapping.get(original_key, 1)
+            used_resources[key] = float(
+                entry[original_key]
+            ) * unit_conversion_mapping.get(original_key, 1)
 
+        try:
+            resources["inputfiles"] = {
+                file["filename"]: {
+                    "filesize": file["filesize"],
+                    "usedsize": file["usedsize"],
+                }
+                for file in entry["Inputfiles"]
+            }
+        except KeyError:
+            pass
         yield Job(
             resources=resources,
             used_resources=used_resources,
             queue_date=float(entry[used_resource_name_mapping["queuetime"]]),
-            inputfiles=inputfiles
         )

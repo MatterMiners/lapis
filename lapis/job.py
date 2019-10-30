@@ -31,7 +31,6 @@ class Job(object):
         used_resources: dict,
         in_queue_since: float = 0,
         queue_date: float = 0,
-        inputfiles: Optional[dict] = None,
         name: str = None,
         drone: "Drone" = None,
     ):
@@ -61,8 +60,8 @@ class Job(object):
                 self.resources[key] = self.used_resources[key]
         self.walltime = used_resources.pop("walltime")
         self.requested_walltime = resources.pop("walltime", None)
+        self.inputfiles = resources.pop("inputfiles", None)
         self.queue_date = queue_date
-        self.inputfiles = inputfiles
         assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
