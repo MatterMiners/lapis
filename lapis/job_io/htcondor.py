@@ -38,7 +38,8 @@ def htcondor_job_reader(
     elif input_file_type == "csv":
         htcondor_reader = csv.DictReader(iterable, delimiter=" ", quotechar="'")
     else:
-        print("Invalid input file type {}. Job input file can not be read.".format(input_file_type))
+        print("Invalid input file type {}. Job input file can not be read.".format(
+            input_file_type))
 
     for entry in htcondor_reader:
         if float(entry[used_resource_name_mapping["walltime"]]) <= 0:
@@ -49,9 +50,8 @@ def htcondor_job_reader(
         resources = {}
         for key, original_key in resource_name_mapping.items():
             try:
-                resources[key] = float(entry[original_key]) * unit_conversion_mapping.get(
-                    original_key, 1
-                )
+                resources[key] = float(entry[original_key]) \
+                                 * unit_conversion_mapping.get(original_key, 1)
             except ValueError:
                 pass
         used_resources = {
@@ -62,7 +62,8 @@ def htcondor_job_reader(
             * unit_conversion_mapping.get(used_resource_name_mapping["cores"], 1)
         }
         try:
-            inputfiles = {file["filename"]: file["usedsize"] for file in entry["Inputfiles"]}
+            inputfiles = {file["filename"]: file["usedsize"]
+                          for file in entry["Inputfiles"]}
         except KeyError:
             inputfiles = dict()
         for key in ["memory", "walltime", "disk"]:
@@ -70,7 +71,8 @@ def htcondor_job_reader(
             used_resources[key] = float(
                 entry[original_key]
             ) * unit_conversion_mapping.get(original_key, 1)
-        cpu_efficiency = (float(entry["RemoteSysCpu"]) + float(entry["RemoteUserCpu"])) \
+        cpu_efficiency = (float(entry["RemoteSysCpu"]) +
+                          float(entry["RemoteUserCpu"])) \
                          / float(entry[used_resource_name_mapping["walltime"]])
         yield Job(
             resources=resources,
