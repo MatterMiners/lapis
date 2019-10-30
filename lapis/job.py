@@ -16,7 +16,6 @@ class Job(object):
         "used_resources",
         "walltime",
         "requested_walltime",
-        "cpu_efficiency",
         "queue_date",
         "inputfiles",
         "in_queue_since",
@@ -30,10 +29,9 @@ class Job(object):
         self,
         resources: dict,
         used_resources: dict,
-        cpu_efficiency: Optional[float] = None,
         in_queue_since: float = 0,
         queue_date: float = 0,
-        inputfiles: dict = dict(),
+        inputfiles: Optional[dict] = None,
         name: str = None,
         drone: "Drone" = None,
     ):
@@ -47,7 +45,6 @@ class Job(object):
         :param used_resources: Resource usage of the job
         :param in_queue_since: Time when job was inserted into the queue of the
                                simulation scheduler
-
         :param queue_date: Time when job was inserted into queue in real life
         :param name: Name of the job
         :param drone: Drone where the job is running on
@@ -62,7 +59,6 @@ class Job(object):
                     self.used_resources[key],
                 )
                 self.resources[key] = self.used_resources[key]
-        self.cpu_efficiency = cpu_efficiency
         self.walltime = used_resources.pop("walltime")
         self.requested_walltime = resources.pop("walltime", None)
         self.queue_date = queue_date
@@ -93,10 +89,6 @@ class Job(object):
         if self.in_queue_until is not None:
             return self.in_queue_until - self.in_queue_since
         return float("Inf")
-
-    @property
-    def has_inputfiles(self) -> bool:
-        return bool(self.inputfiles)
 
     async def run(self):
         self.in_queue_until = time.now
