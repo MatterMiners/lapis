@@ -50,8 +50,8 @@ def htcondor_job_reader(
         resources = {}
         for key, original_key in resource_name_mapping.items():
             try:
-                resources[key] = float(entry[original_key]) \
-                                 * unit_conversion_mapping.get(original_key, 1)
+                resources[key] = float(entry[original_key]) * \
+                                 unit_conversion_mapping.get(original_key, 1)
             except ValueError:
                 pass
         used_resources = {
@@ -68,12 +68,11 @@ def htcondor_job_reader(
             inputfiles = dict()
         for key in ["memory", "walltime", "disk"]:
             original_key = used_resource_name_mapping[key]
-            used_resources[key] = float(
-                entry[original_key]
-            ) * unit_conversion_mapping.get(original_key, 1)
-        cpu_efficiency = (float(entry["RemoteSysCpu"]) +
-                          float(entry["RemoteUserCpu"])) \
-                         / float(entry[used_resource_name_mapping["walltime"]])
+            used_resources[key] = float(entry[original_key]) \
+                * unit_conversion_mapping.get(original_key, 1)
+        cpu_efficiency = (float(entry["RemoteSysCpu"])
+                          + float(entry["RemoteUserCpu"])) \
+            / float(entry[used_resource_name_mapping["walltime"]])
         yield Job(
             resources=resources,
             used_resources=used_resources,
