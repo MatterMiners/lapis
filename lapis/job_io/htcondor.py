@@ -32,15 +32,15 @@ def htcondor_job_reader(
         "DiskUsage_RAW": 1.024 / 1024 / 1024,
     },
 ):
-    try:
+    input_file_type = iterable.name.split(".")[-1]
+    if input_file_type == "json":
         htcondor_reader = json.load(iterable)
-    except ValueError:
+    elif input_file_type == "csv":
         htcondor_reader = csv.DictReader(iterable, delimiter=" ", quotechar="'")
     else:
         logging.getLogger("implementation").error(
             "Invalid input file %s. Job input file can not be read." % iterable.name
         )
-
     for entry in htcondor_reader:
         if float(entry[used_resource_name_mapping["walltime"]]) <= 0:
             logging.getLogger("implementation").warning(
