@@ -35,7 +35,7 @@ test = [
     "pytest >=4.3.0",
     "flake8",
     "flake8-bugbear",
-    "black; implementation_name=='pypy'",
+    "black; implementation_name=='cpython'",
 ]
 doc = ["sphinx", "sphinx_rtd_theme"]
 dev = ["pre-commit"]
