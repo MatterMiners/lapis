@@ -32,14 +32,13 @@ def htcondor_job_reader(
         "DiskUsage_RAW": 1.024 / 1024 / 1024,
     },
 ):
-    input_file_type = iterable.name.split(".")[-1]
-    if input_file_type == "json":
+    try:
         htcondor_reader = json.load(iterable)
-    elif input_file_type == "csv":
+    except ValueError:
         htcondor_reader = csv.DictReader(iterable, delimiter=" ", quotechar="'")
     else:
-        print("Invalid input file type {}. Job input file can not be read.".format(
-            input_file_type))
+        logging.getLogger("implementation").error(
+            "Invalid input file %s. Job input file can not be read." % iterable.name)
 
     for entry in htcondor_reader:
         if float(entry[used_resource_name_mapping["walltime"]]) <= 0:
@@ -65,18 +64,15 @@ def htcondor_job_reader(
             inputfiles = {file["filename"]: file["usedsize"]
                           for file in entry["Inputfiles"]}
         except KeyError:
-            inputfiles = dict()
+            inputfiles = None
         for key in ["memory", "walltime", "disk"]:
             original_key = used_resource_name_mapping[key]
             used_resources[key] = float(entry[original_key]) \
                 * unit_conversion_mapping.get(original_key, 1)
-        cpu_efficiency = (float(entry["RemoteSysCpu"])
-                          + float(entry["RemoteUserCpu"])) \
-            / float(entry[used_resource_name_mapping["walltime"]])
+
         yield Job(
             resources=resources,
             used_resources=used_resources,
             queue_date=float(entry[used_resource_name_mapping["queuetime"]]),
-            cpu_efficiency=cpu_efficiency,
             inputfiles=inputfiles
         )
