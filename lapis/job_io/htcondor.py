@@ -49,8 +49,8 @@ def htcondor_job_reader(
         resources = {}
         for key, original_key in resource_name_mapping.items():
             try:
-                resources[key] = float(entry[original_key]) * \
-                                 unit_conversion_mapping.get(original_key, 1)
+                resources[key] = float(entry[original_key]) \
+                                 * unit_conversion_mapping.get(original_key, 1)
             except ValueError:
                 pass
         used_resources = {
