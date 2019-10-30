@@ -41,8 +41,6 @@ class CondorJobScheduler(object):
 
     def register_drone(self, drone: Drone):
         self._add_drone(drone)
-        print('registered drone {} with resources {}'.format(drone.__repr__(), drone.available_resources))
-
 
     def unregister_drone(self, drone: Drone):
         for cluster in self.drone_cluster:
@@ -84,20 +82,14 @@ class CondorJobScheduler(object):
     def update_drone(self, drone: Drone):
         self.unregister_drone(drone)
         self._add_drone(drone)
-        print('updated drone {} to resources {}'.format(drone.__repr__(), drone.available_resources))
 
     async def run(self):
         async with Scope() as scope:
             scope.do(self._collect_jobs())
             async for _ in interval(self.interval):
-                print('new interval')
-                print(self.job_queue)
                 for job in self.job_queue:
-                    print('scheduling job {}'.format(job.__repr__()))
                     best_match = self._schedule_job(job)
-                    print('best match for job {}: {}'.format(job.__repr__(), best_match.__repr__()))
                     if best_match:
-                        print('starting job {} in {}'.format(job.__repr__(), best_match.__repr__()))
                         scope.do(best_match.start_job(job))
                         self.job_queue.remove(job)
                         await sampling_required.put(self.job_queue)
