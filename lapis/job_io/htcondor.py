@@ -70,13 +70,7 @@ def htcondor_job_reader(
             ) * unit_conversion_mapping.get(original_key, 1)
 
         try:
-            resources["inputfiles"] = {
-                file["filename"]: {
-                    "filesize": file["filesize"],
-                    "usedsize": file["usedsize"],
-                }
-                for file in entry["Inputfiles"]
-            }
+            resources["inputfiles"] = entry["Inputfiles"]
         except KeyError:
             pass
         yield Job(
