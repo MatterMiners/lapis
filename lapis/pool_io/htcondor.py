@@ -48,5 +48,6 @@ def htcondor_pool_reader(
                     for key, value in resource_name_mapping.items()
                 },
                 ignore_resources=["disk"],
+                sitename=row.get("sitename", None),
             ),
         )

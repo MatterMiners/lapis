@@ -15,6 +15,7 @@ class Drone(interfaces.Pool):
         pool_resources: dict,
         scheduling_duration: float,
         ignore_resources: list = None,
+        sitename: str = None,
     ):
         """
         :param scheduler:
@@ -23,6 +24,7 @@ class Drone(interfaces.Pool):
         """
         super(Drone, self).__init__()
         self.scheduler = scheduler
+        self.sitename = sitename
         self.pool_resources = pool_resources
         self.resources = Capacities(**pool_resources)
         # shadowing requested resources to determine jobs to be killed
@@ -140,6 +142,11 @@ class Drone(interfaces.Pool):
                                 pass
                     self.scheduler.update_drone(self)
                     await job_execution.done
+                    print(
+                        "finished job {} on drone {} @ {}".format(
+                            repr(job), repr(self), time.now
+                        )
+                    )
             except ResourcesUnavailable:
                 await instant
                 job_execution.cancel()
