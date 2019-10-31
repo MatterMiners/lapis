@@ -10,7 +10,7 @@ from lapis.job_io.htcondor import htcondor_job_reader
 from lapis.pool import StaticPool, Pool
 from lapis.pool_io.htcondor import htcondor_pool_reader
 from lapis.job_io.swf import swf_job_reader
-from lapis.storage_io.storage_information import storage_reader
+from lapis.storage_io.storage import storage_reader
 
 from lapis.scheduler import CondorJobScheduler
 from lapis.simulator import Simulator
