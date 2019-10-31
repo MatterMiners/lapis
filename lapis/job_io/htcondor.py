@@ -32,7 +32,7 @@ def htcondor_job_reader(
         "DiskUsage_RAW": 1.024 / 1024 / 1024,
     },
 ):
-    input_file_type = iterable.name.split(".")[-1]
+    input_file_type = iterable.name.split(".")[-1].lower()
     if input_file_type == "json":
         htcondor_reader = json.load(iterable)
     elif input_file_type == "csv":
