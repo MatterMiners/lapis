@@ -6,9 +6,11 @@ from cobald.monitor.format_line import LineProtocolFormatter
 
 from lapis.controller import SimulatedLinearController
 from lapis.job_io.htcondor import htcondor_job_reader
+
 from lapis.pool import StaticPool, Pool
 from lapis.pool_io.htcondor import htcondor_pool_reader
 from lapis.job_io.swf import swf_job_reader
+from lapis.storage_io.storage_information import storage_reader
 
 from lapis.scheduler import CondorJobScheduler
 from lapis.simulator import Simulator
@@ -24,6 +26,8 @@ last_step = 0
 job_import_mapper = {"htcondor": htcondor_job_reader, "swf": swf_job_reader}
 
 pool_import_mapper = {"htcondor": htcondor_pool_reader}
+
+storage_import_mapper = {"standard": storage_reader}
 
 
 @click.group()
@@ -71,8 +75,17 @@ def cli(ctx, seed, until, log_tcp, log_file, log_telegraf):
     type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))),
     multiple=True,
 )
+@click.option(
+    "--storage-files",
+    "storage_files",
+    type=(
+        click.File("r"),
+        click.File("r"),
+        click.Choice(list(storage_import_mapper.keys())),
+    ),
+)
 @click.pass_context
-def static(ctx, job_file, pool_file):
+def static(ctx, job_file, pool_file, storage_files):
     click.echo("starting static environment")
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
@@ -87,6 +100,12 @@ def static(ctx, job_file, pool_file):
             pool_reader=pool_import_mapper[pool_file_type],
             pool_type=StaticPool,
         )
+    storage_file, storage_content_file, storage_type = storage_files
+    simulator.create_storage(
+        storage_input=storage_file,
+        storage_content_input=storage_content_file,
+        storage_reader=storage_import_mapper[storage_type],
+    )
     simulator.run(until=ctx.obj["until"])
 
 
