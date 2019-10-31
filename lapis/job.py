@@ -5,6 +5,7 @@ from usim import time
 from usim import CancelTask
 
 from lapis.monitor import sampling_required
+from lapis.utilities.walltime_models import walltime_models
 
 if TYPE_CHECKING:
     from lapis.drone import Drone
@@ -22,6 +23,7 @@ class Job(object):
         "in_queue_until",
         "_name",
         "drone",
+        "fileprovider",
         "_success",
     )
 
@@ -66,6 +68,7 @@ class Job(object):
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
         self.drone = drone
+        self.fileprovider = None
         self._name = name
         self._success: Optional[bool] = None
 
@@ -89,12 +92,24 @@ class Job(object):
             return self.in_queue_until - self.in_queue_since
         return float("Inf")
 
+    def modified_walltime(self):
+        if self.fileprovider.provides_all_files(self):
+            return walltime_models["maxeff"](self)
+        else:
+            return self.walltime
+
     async def run(self):
         self.in_queue_until = time.now
         self._success = None
         await sampling_required.put(self)
+        print(
+            "running job {} on site {} in drone {}".format(
+                repr(self), self.drone.sitename, repr(self.drone)
+            )
+        )
+        walltime = self.modified_walltime()
         try:
-            await (time + self.walltime)
+            await (time + walltime)
         except CancelTask:
             self._success = False
         except BaseException:
