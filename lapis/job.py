@@ -102,11 +102,12 @@ class Job(object):
         self.in_queue_until = time.now
         self._success = None
         await sampling_required.put(self)
-        print(
-            "running job {} on site {} in drone {}".format(
-                repr(self), self.drone.sitename, repr(self.drone)
+        if self.drone:
+            print(
+                "running job {} on site {} in drone {}".format(
+                    repr(self), self.drone.sitename, repr(self.drone)
+                )
             )
-        )
         walltime = self.modified_walltime()
         try:
             await (time + walltime)
