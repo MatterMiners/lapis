@@ -73,7 +73,8 @@ def htcondor_job_reader(
         try:
             resources["inputfiles"] = deepcopy(entry["Inputfiles"])
             for _filename, filespecs in resources["inputfiles"].items():
-                del filespecs["usedsize"]
+                if "usedsize" in filespecs:
+                    del filespecs["usedsize"]
             used_resources["inputfiles"] = deepcopy(entry["Inputfiles"])
             for _filename, filespecs in used_resources["inputfiles"].items():
                 del filespecs["filesize"]
