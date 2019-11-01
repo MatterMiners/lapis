@@ -72,12 +72,12 @@ def htcondor_job_reader(
 
         try:
             resources["inputfiles"] = deepcopy(entry["Inputfiles"])
-            for _filename, filespecs in resources["inputfiles"].items():
-                if "usedsize" in filespecs:
-                    del filespecs["usedsize"]
             used_resources["inputfiles"] = deepcopy(entry["Inputfiles"])
-            for _filename, filespecs in used_resources["inputfiles"].items():
-                del filespecs["filesize"]
+            for filename, filespecs in entry["Inputfiles"].items():
+                if "usedsize" in filespecs:
+                    del resources["inputfiles"][filename]["usedsize"]
+                if "filesize" in filespecs:
+                    del used_resources["inputfiles"][filename]["filesize"]
         except KeyError:
             pass
         yield Job(
