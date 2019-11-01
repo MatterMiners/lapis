@@ -72,10 +72,10 @@ def htcondor_job_reader(
 
         try:
             resources["inputfiles"] = deepcopy(entry["Inputfiles"])
-            for filename, filespecs in resources["inputfiles"].items():
+            for _filename, filespecs in resources["inputfiles"].items():
                 del filespecs["usedsize"]
             used_resources["inputfiles"] = deepcopy(entry["Inputfiles"])
-            for filename, filespecs in used_resources["inputfiles"].items():
+            for _filename, filespecs in used_resources["inputfiles"].items():
                 del filespecs["filesize"]
         except KeyError:
             pass
