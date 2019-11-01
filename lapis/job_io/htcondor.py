@@ -3,6 +3,7 @@ import json
 import logging
 
 from lapis.job import Job
+from copy import deepcopy
 
 
 def htcondor_job_reader(
@@ -70,7 +71,12 @@ def htcondor_job_reader(
             ) * unit_conversion_mapping.get(original_key, 1)
 
         try:
-            resources["inputfiles"] = entry["Inputfiles"]
+            resources["inputfiles"] = deepcopy(entry["Inputfiles"])
+            for filename, filespecs in resources["inputfiles"].items():
+                del filespecs["usedsize"]
+            used_resources["inputfiles"] = deepcopy(entry["Inputfiles"])
+            for filename, filespecs in used_resources["inputfiles"].items():
+                del filespecs["filesize"]
         except KeyError:
             pass
         yield Job(
