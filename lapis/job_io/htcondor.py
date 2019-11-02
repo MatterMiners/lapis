@@ -77,7 +77,12 @@ def htcondor_job_reader(
                 if "usedsize" in filespecs:
                     del resources["inputfiles"][filename]["usedsize"]
                 if "filesize" in filespecs:
+                    if "usedsize" not in filespecs:
+                        used_resources["inputfiles"][filename]["usedsize"] = filespecs[
+                            "filesize"
+                        ]
                     del used_resources["inputfiles"][filename]["filesize"]
+
         except KeyError:
             pass
         yield Job(
