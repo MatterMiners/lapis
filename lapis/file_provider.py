@@ -24,7 +24,7 @@ class FileProvider(object):
         """
         provided_storages = self.storages.get(job.drone.sitename, None)
         if provided_storages:
-            for inputfilename, inputfilespecs in job.inputfiles.items():
+            for inputfilename, inputfilespecs in job.used_inputfiles.items():
                 provides_inputfile = 0
                 for storage in provided_storages:
                     provides_inputfile += storage.provides_file(
