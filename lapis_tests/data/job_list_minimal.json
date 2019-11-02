@@ -1,0 +1,113 @@
+[
+	{
+		"QDate": 1567169672,
+		"RequestCpus": 1,
+		"RequestWalltime": 60,
+		"RequestMemory": 2000,
+		"RequestDisk": 6000000,
+		"RemoteWallClockTime": 100.0,
+		"'Number of Allocated Processors'": 1,
+		"MemoryUsage": 2867,
+		"DiskUsage_RAW": 41898,
+		"RemoteSysCpu": 10.0,
+		"RemoteUserCpu": 40.0,
+		"CPUEfficiency": 0.7,
+		"Inputfiles": {
+			"a.root": {
+				"filesize": 25000,
+				"usedsize": 20000
+			},
+			"b.root": {
+				"filesize": 25000,
+				"usedsize": 20000
+			},
+			"c.root": {
+					"filesize": 25000,
+					"usedsize": 20000
+			}
+		}
+	},
+	{
+		"QDate": 1567155456,
+		"RequestCpus": 1,
+		"RequestWalltime": 60,
+		"RequestMemory": 2000,
+		"RequestDisk": 6000000,
+		"RemoteWallClockTime": 77.0,
+		"'Number of Allocated Processors'": 1,
+		"MemoryUsage": 1207,
+		"DiskUsage_RAW": 45562,
+		"RemoteSysCpu": 7.0,
+		"RemoteUserCpu": 50.0,
+		"CPUEfficiency": 0.7,
+		"Inputfiles": {
+			"a.root": {
+				"filesize": 25000,
+				"usedsize": 20000
+			},
+			"b.root": {
+				"filesize": 25000,
+				"usedsize": 20000
+			},
+			"c.root": {
+					"filesize": 25000,
+					"usedsize": 20000
+			}
+		}
+	},
+	{
+		"QDate": 1567155456,
+		"RequestCpus": 1,
+		"RequestWalltime": 60,
+		"RequestMemory": 2000,
+		"RequestDisk": 6000000,
+		"RemoteWallClockTime": 63.0,
+		"'Number of Allocated Processors'": 1,
+		"MemoryUsage": 1207,
+		"DiskUsage_RAW": 45562,
+		"RemoteSysCpu": 3.0,
+		"RemoteUserCpu": 40.0,
+		"Inputfiles": {
+			"a.root": {
+				"filesize": 25000,
+				"usedsize": 20000
+			},
+			"b.root": {
+				"filesize": 25000,
+				"usedsize": 20000
+			},
+			"c.root": {
+					"filesize": 25000,
+					"usedsize": 20000
+			}
+		}
+	},
+	{
+		"QDate": 1567155456,
+		"RequestCpus": 1,
+		"RequestWalltime": 60,
+		"RequestMemory": 2000,
+		"RequestDisk": 6000000,
+		"RemoteWallClockTime": -100.0,
+		"'Number of Allocated Processors'": 1,
+		"MemoryUsage": 1207,
+		"DiskUsage_RAW": 45562,
+		"RemoteSysCpu": 7.0,
+		"RemoteUserCpu": 40.3,
+		"CPUEfficiency": 4.7,
+		"Inputfiles": {
+			"a.root": {
+				"filesize": 25000,
+				"usedsize": 20000
+			},
+			"b.root": {
+				"filesize": 25000,
+				"usedsize": 20000
+			},
+			"c.root": {
+					"filesize": 25000,
+					"usedsize": 20000
+			}
+		}
+	}
+]

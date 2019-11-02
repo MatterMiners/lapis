@@ -18,7 +18,8 @@ class Job(object):
         "_walltime",
         "requested_walltime",
         "queue_date",
-        "inputfiles",
+        "requested_inputfiles",
+        "used_inputfiles",
         "in_queue_since",
         "in_queue_until",
         "_name",
@@ -62,7 +63,8 @@ class Job(object):
                 self.resources[key] = self.used_resources[key]
         self._walltime = used_resources.pop("walltime")
         self.requested_walltime = resources.pop("walltime", None)
-        self.inputfiles = resources.pop("inputfiles", None)
+        self.requested_inputfiles = resources.pop("inputfiles", None)
+        self.used_inputfiles = used_resources.pop("inputfiles", None)
         self.queue_date = queue_date
         assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since
