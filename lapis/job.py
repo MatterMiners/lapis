@@ -93,7 +93,7 @@ class Job(object):
         return float("Inf")
 
     def modified_walltime(self):
-        if self.fileprovider.provides_all_files(self):
+        if self.fileprovider and self.fileprovider.provides_all_files(self):
             return walltime_models["maxeff"](self)
         else:
             return self.walltime
