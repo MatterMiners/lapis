@@ -15,7 +15,7 @@ class Job(object):
     __slots__ = (
         "resources",
         "used_resources",
-        "walltime",
+        "_walltime",
         "requested_walltime",
         "queue_date",
         "inputfiles",
@@ -60,7 +60,7 @@ class Job(object):
                     self.used_resources[key],
                 )
                 self.resources[key] = self.used_resources[key]
-        self.walltime = used_resources.pop("walltime")
+        self._walltime = used_resources.pop("walltime")
         self.requested_walltime = resources.pop("walltime", None)
         self.inputfiles = resources.pop("inputfiles", None)
         self.queue_date = queue_date
@@ -92,11 +92,12 @@ class Job(object):
             return self.in_queue_until - self.in_queue_since
         return float("Inf")
 
-    def modified_walltime(self):
+    @property
+    def walltime(self):
         if self.fileprovider and self.fileprovider.provides_all_files(self):
-            return walltime_models["maxeff"](self)
+            return walltime_models["maxeff"](self, self._walltime)
         else:
-            return self.walltime
+            return self._walltime
 
     async def run(self):
         self.in_queue_until = time.now
@@ -108,9 +109,8 @@ class Job(object):
                     repr(self), self.drone.sitename, repr(self.drone)
                 )
             )
-        walltime = self.modified_walltime()
         try:
-            await (time + walltime)
+            await (time + self.walltime)
         except CancelTask:
             self._success = False
         except BaseException:
