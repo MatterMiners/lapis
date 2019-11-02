@@ -88,7 +88,7 @@
 		"RequestWalltime": 60,
 		"RequestMemory": 2000,
 		"RequestDisk": 6000000,
-		"RemoteWallClockTime": 100.0,
+		"RemoteWallClockTime": -100.0,
 		"'Number of Allocated Processors'": 1,
 		"MemoryUsage": 1207,
 		"DiskUsage_RAW": 45562,
