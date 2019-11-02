@@ -28,7 +28,6 @@ class TestHtcondorJobReader(object):
         ) as input_file:
             jobs = 0
             for job in htcondor_job_reader(input_file):
-                print(job.walltime)
                 assert job is not None
                 jobs += 1
                 if "inputfiles" in job.resources.keys():
