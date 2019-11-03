@@ -8,9 +8,9 @@ from lapis_tests import via_usim, DummyScheduler
 
 class TestJob(object):
     def test_init(self):
-        with pytest.raises(AssertionError):
+        with pytest.raises(KeyError):
             Job(resources={}, used_resources={})
-        with pytest.raises(AssertionError):
+        with pytest.raises(KeyError):
             Job(resources={"walltime": 100}, used_resources={})
         assert Job(resources={}, used_resources={"walltime": 100})
         with pytest.raises(AssertionError):
@@ -40,11 +40,13 @@ class TestJob(object):
         scheduler = DummyScheduler()
         job = Job(
             resources={"walltime": 50, "cores": 1, "memory": 1},
-            used_resources={"walltime": 10, "cores": 1, "memory": 1})
+            used_resources={"walltime": 10, "cores": 1, "memory": 1},
+        )
         drone = Drone(
             scheduler=scheduler,
             pool_resources={"cores": 1, "memory": 1},
-            scheduling_duration=0)
+            scheduling_duration=0,
+        )
         async with Scope() as scope:
             scope.do(drone.start_job(job=job))
         assert 10 == time
@@ -56,11 +58,13 @@ class TestJob(object):
         scheduler = DummyScheduler()
         job = Job(
             resources={"walltime": 50, "cores": 2, "memory": 1},
-            used_resources={"walltime": 10, "cores": 1, "memory": 1})
+            used_resources={"walltime": 10, "cores": 1, "memory": 1},
+        )
         drone = Drone(
             scheduler=scheduler,
             pool_resources={"cores": 1, "memory": 1},
-            scheduling_duration=0)
+            scheduling_duration=0,
+        )
         async with Scope() as scope:
             scope.do(drone.start_job(job=job))
         assert 0 == time
@@ -72,14 +76,17 @@ class TestJob(object):
         scheduler = DummyScheduler()
         job_one = Job(
             resources={"walltime": 50, "cores": 1, "memory": 1},
-            used_resources={"walltime": 10, "cores": 1, "memory": 1})
+            used_resources={"walltime": 10, "cores": 1, "memory": 1},
+        )
         job_two = Job(
             resources={"walltime": 50, "cores": 1, "memory": 1},
-            used_resources={"walltime": 10, "cores": 1, "memory": 1})
+            used_resources={"walltime": 10, "cores": 1, "memory": 1},
+        )
         drone = Drone(
             scheduler=scheduler,
             pool_resources={"cores": 1, "memory": 1},
-            scheduling_duration=0)
+            scheduling_duration=0,
+        )
         async with Scope() as scope:
             scope.do(drone.start_job(job=job_one))
             scope.do(drone.start_job(job=job_two))
@@ -94,14 +101,17 @@ class TestJob(object):
         scheduler = DummyScheduler()
         job_one = Job(
             resources={"walltime": 50, "cores": 1, "memory": 1},
-            used_resources={"walltime": 10, "cores": 1, "memory": 1})
+            used_resources={"walltime": 10, "cores": 1, "memory": 1},
+        )
         job_two = Job(
             resources={"walltime": 50, "cores": 1, "memory": 1},
-            used_resources={"walltime": 10, "cores": 1, "memory": 1})
+            used_resources={"walltime": 10, "cores": 1, "memory": 1},
+        )
         drone = Drone(
             scheduler=scheduler,
             pool_resources={"cores": 2, "memory": 2},
-            scheduling_duration=0)
+            scheduling_duration=0,
+        )
         async with Scope() as scope:
             scope.do(drone.start_job(job=job_one))
             scope.do(drone.start_job(job=job_two))

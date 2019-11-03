@@ -1,6 +1,8 @@
 from typing import Generator, Callable
 from cobald import interfaces
-from usim import time, eternity, Scope
+from usim import eternity, Scope, interval
+
+from .drone import Drone
 
 
 class Pool(interfaces.Pool):
@@ -14,29 +16,26 @@ class Pool(interfaces.Pool):
     :param name: Name of the pool
     :param make_drone: Callable to create a drone with specific properties for this pool
     """
-    def __init__(self, capacity: float = float('inf'), init: float = 0,
-                 name: str = None, make_drone: Callable = None):
+
+    def __init__(
+        self,
+        make_drone: Callable,
+        *,
+        capacity: int = float("inf"),
+        init: int = 0,
+        name: str = None,
+    ):
         super(Pool, self).__init__()
-        assert make_drone
+        assert init <= capacity
         self.make_drone = make_drone
         self._drones = []
         self.init_pool(init=init)
         self._demand = 1
-        self.level = init
+        self._level = init
         self._capacity = capacity
         self._name = name
 
-    def put(self, amount: float):
-        if self.level + amount > self._capacity:
-            raise ValueError
-        self.level += amount
-
-    def get(self, amount: float):
-        if self.level - amount < 0:
-            raise ValueError
-        self.level -= amount
-
-    def init_pool(self, init: float = 0):
+    def init_pool(self, init: int = 0):
         """
         Initialisation of existing drones at creation time of pool.
 
@@ -53,30 +52,27 @@ class Pool(interfaces.Pool):
         initialising new drones. Otherwise drones get removed.
         """
         async with Scope() as scope:
-            while True:
-                drones_required = self._demand - self.level
+            async for _ in interval(1):
+                drones_required = min(self._demand, self._capacity) - self._level
                 while drones_required > 0:
                     drones_required -= 1
                     # start a new drone
                     drone = self.make_drone(10)
                     scope.do(drone.run())
                     self._drones.append(drone)
-                    self.put(1)
-                if self.level > self._demand and self.level > 1:
-                    empty_drone_found = False
+                    self._level += 1
+                if drones_required < 0:
                     for drone in self.drones:
                         if drone.jobs == 0:
-                            empty_drone_found = True
-                            break
-                    if empty_drone_found:
-                        self.get(1)
-                        self._drones.remove(drone)
-                        scope.do(drone.shutdown())
-                        del drone
-                await (time + 1)
+                            drones_required += 1
+                            self._level -= 1
+                            self._drones.remove(drone)
+                            scope.do(drone.shutdown())
+                            if drones_required == 0:
+                                break
 
     @property
-    def drones(self) -> Generator[int, None, None]:
+    def drones(self) -> Generator[Drone, None, None]:
         for drone in self._drones:
             if drone.supply > 0:
                 yield drone
@@ -123,8 +119,7 @@ class Pool(interfaces.Pool):
             self._demand = 0
 
     def __repr__(self):
-        return '<%s: %s>' % (
-            self.__class__.__name__, self._name or id(self))
+        return "<%s: %s>" % (self.__class__.__name__, self._name or id(self))
 
 
 class StaticPool(Pool):
@@ -138,10 +133,12 @@ class StaticPool(Pool):
     :param resources: Dictionary of resources available for each pool
                       instantiated within the pool
     """
-    def __init__(self, capacity: float = 0, make_drone: Callable = None):
+
+    def __init__(self, make_drone: Callable, capacity: int = 0):
         assert capacity > 0, "Static pool was initialised without any resources..."
-        super(StaticPool, self).__init__(capacity=capacity, init=capacity,
-                                         make_drone=make_drone)
+        super(StaticPool, self).__init__(
+            capacity=capacity, init=capacity, make_drone=make_drone
+        )
         self._demand = capacity
 
     async def run(self):

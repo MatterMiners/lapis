@@ -2,24 +2,21 @@ import logging
 
 from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
-from typing import TYPE_CHECKING
 
+from lapis.drone import Drone
 from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler
-
-if TYPE_CHECKING:
-    from lapis.simulator import Simulator
+from lapis.pool import Pool
 
 
-def drone_statistics(simulator: "Simulator") -> list:
+def drone_statistics(drone: Drone) -> list:
     """
     Collect allocation, utilisation, demand and supply of drones.
 
-    :param simulator: the simulator
+    :param drone: the drone
     :return: list of records for logging
     """
-    results = []
-    for drone in simulator.job_scheduler.drone_list:
-        results.append({
+    results = [
+        {
             "pool_configuration": "None",
             "pool_type": "drone",
             "pool": repr(drone),
@@ -27,32 +24,32 @@ def drone_statistics(simulator: "Simulator") -> list:
             "utilisation": drone.utilisation,
             "demand": drone.demand,
             "supply": drone.supply,
-            "job_count": drone.jobs
-        })
+            "job_count": drone.jobs,
+        }
+    ]
     return results
 
 
 drone_statistics.name = "cobald_status"
+drone_statistics.whitelist = (Drone,)
 drone_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"},
-        resolution=1
-    )
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+    ),
 }
 
 
-def pool_statistics(simulator: "Simulator") -> list:
+def pool_statistics(pool: Pool) -> list:
     """
     Collect allocation, utilisation, demand and supply of pools.
 
-    :param simulator: the simulator
+    :param pool: the pool
     :return: list of records to log
     """
-    results = []
-    for pool in simulator.pools:
-        results.append({
+    results = [
+        {
             "pool_configuration": "None",
             "pool_type": "pool",
             "pool": repr(pool),
@@ -60,16 +57,17 @@ def pool_statistics(simulator: "Simulator") -> list:
             "utilisation": pool.utilisation,
             "demand": pool.demand,
             "supply": pool.supply,
-        })
+        }
+    ]
     return results
 
 
 pool_statistics.name = "cobald_status"
+pool_statistics.whitelist = (Pool,)
 pool_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"},
-        resolution=1
-    )
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+    ),
 }
