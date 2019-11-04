@@ -17,10 +17,10 @@ class Storage(object):
         self.sitename = sitename
         self.storagesize = storagesize
         self.content = content
-        self.usedstorage = self.get_used_storage()
+        self.usedstorage = self._calculate_used_storage()
         self.describe_state()
 
-    def get_used_storage(self):
+    def _calculate_used_storage(self):
         return sum(subdict["usedsize"] for subdict in self.content.values())
 
     def free_space(self):
@@ -34,7 +34,7 @@ class Storage(object):
         self.content[filename].update(
             cachedsince=time.now, lastaccessed=time.now, numberofaccesses=0
         )
-        self.usedstorage = self.get_used_storage()
+        self.usedstorage = self._calculate_used_storage()
 
     def update_file(self, filerequest: tuple):
         filename, filespecs = filerequest
@@ -47,7 +47,7 @@ class Storage(object):
             self.content[requested_file]["usedsize"] += filesize_difference
         self.content[requested_file]["lastaccessed"] = time.now
         self.content[requested_file]["numberofaccesses"] += 1
-        self.usedstorage = self.get_used_storage()
+        self.usedstorage = self._calculate_used_storage()
 
     def make_room(self, filesize_difference: int):
         if self.free_space() - filesize_difference < 0:
