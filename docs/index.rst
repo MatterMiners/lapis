@@ -14,9 +14,10 @@ LAPIS -- Simulations for Opportunistic Resources
    source/glossary
 
 The LAPIS simulator enables the simulation of job execution and scheduling with
-a focus on opportunistic resources. The scheduling internally builds on concepts
-from `HTCondor`_. The opportunistic resources are managed building on the projects
-`TARDIS`_ and `COBalD`_.
+a focus on :term:`opportunistic resources <Opportunistic Resource>`. The
+scheduling internally builds on concepts from `HTCondor`_. The
+:term:`opportunistic resources <Opportunistic Resource>` are managed building on
+the projects `TARDIS`_ and `COBalD`_.
 The simulation builds on importing well-established input formats to generate
 the jobs and set up the infrastructure either in an opportunistic or
 classical fashion.

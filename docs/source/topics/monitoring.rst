@@ -2,8 +2,8 @@ Monitoring Simulation Data
 ==========================
 
 Lapis provides some predefined functions that provide monitoring of relevant
-information about your pools, resources, and jobs. Further, information
-relevant to COBalD are provided.
+information about your :term:`pools <pool>`, resources, and jobs. Further,
+information relevant to COBalD are provided.
 
 In the following you find tables summarising the available information.
 
