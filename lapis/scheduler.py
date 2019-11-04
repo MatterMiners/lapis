@@ -26,10 +26,9 @@ class CondorJobScheduler(object):
     :return:
     """
 
-    def __init__(self, job_queue, fileprovider):
+    def __init__(self, job_queue):
         self._stream_queue = job_queue
         self.drone_cluster = []
-        self.fileprovider = fileprovider
         self.interval = 60
         self.job_queue = JobQueue()
         self._collecting = True
@@ -91,7 +90,6 @@ class CondorJobScheduler(object):
                 for job in self.job_queue:
                     best_match = self._schedule_job(job)
                     if best_match:
-                        job.fileprovider = self.fileprovider
                         print(
                             "start job {} on drone {} @ {}".format(
                                 repr(job), repr(best_match), time.now

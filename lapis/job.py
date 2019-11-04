@@ -24,7 +24,6 @@ class Job(object):
         "in_queue_until",
         "_name",
         "drone",
-        "fileprovider",
         "_success",
     )
 
@@ -70,7 +69,6 @@ class Job(object):
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
         self.drone = drone
-        self.fileprovider = None
         self._name = name
         self._success: Optional[bool] = None
 
@@ -96,7 +94,9 @@ class Job(object):
 
     @property
     def walltime(self):
-        if self.fileprovider and self.fileprovider.provides_all_files(self):
+        if self.drone.fileprovider and self.drone.fileprovider.input_file_coverage(
+            self.drone.sitename, self.used_inputfiles
+        ):
             return walltime_models["maxeff"](self, self._walltime)
         else:
             return self._walltime

@@ -12,6 +12,7 @@ class Drone(interfaces.Pool):
     def __init__(
         self,
         scheduler,
+        fileprovider,
         pool_resources: dict,
         scheduling_duration: float,
         ignore_resources: list = None,
@@ -24,6 +25,7 @@ class Drone(interfaces.Pool):
         """
         super(Drone, self).__init__()
         self.scheduler = scheduler
+        self.fileprovider = fileprovider
         self.sitename = sitename
         self.pool_resources = pool_resources
         self.resources = Capacities(**pool_resources)

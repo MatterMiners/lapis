@@ -27,7 +27,6 @@ class Simulator(object):
         random.seed(seed)
         self.job_queue = Queue()
         self.pools = []
-        self.storage_list = []
         self.fileprovider = FileProvider()
         self.controllers = []
         self.job_scheduler = None
@@ -56,7 +55,7 @@ class Simulator(object):
         for pool in pool_reader(
             iterable=pool_input,
             pool_type=pool_type,
-            make_drone=partial(Drone, self.job_scheduler),
+            make_drone=partial(Drone, self.job_scheduler, self.fileprovider),
         ):
             self.pools.append(pool)
             if controller:
@@ -66,13 +65,10 @@ class Simulator(object):
         for storage in storage_reader(
             storage=storage_input, storage_content=storage_content_input
         ):
-            self.storage_list.append(storage)
             self.fileprovider.add_storage_element(storage)
 
     def create_scheduler(self, scheduler_type):
-        self.job_scheduler = scheduler_type(
-            job_queue=self.job_queue, fileprovider=self.fileprovider
-        )
+        self.job_scheduler = scheduler_type(job_queue=self.job_queue)
 
     def run(self, until=None):
         print(f"running until {until}")
