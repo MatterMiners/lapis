@@ -6,7 +6,6 @@ from cobald.monitor.format_line import LineProtocolFormatter
 
 from lapis.controller import SimulatedLinearController
 from lapis.job_io.htcondor import htcondor_job_reader
-
 from lapis.pool import StaticPool, Pool
 from lapis.pool_io.htcondor import htcondor_pool_reader
 from lapis.job_io.swf import swf_job_reader
