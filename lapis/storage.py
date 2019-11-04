@@ -18,7 +18,8 @@ class Storage(object):
         self.storagesize = storagesize
         self.content = content
         self.usedstorage = self._calculate_used_storage()
-        self.describe_state()
+        self.__repr__()
+        print(self.sitename)
 
     def _calculate_used_storage(self):
         return sum(subdict["usedsize"] for subdict in self.content.values())
@@ -26,19 +27,18 @@ class Storage(object):
     def free_space(self):
         return self.storagesize - self.usedstorage
 
-    def place_new_file(self, filerequest: tuple):
-        filename, filespecs = filerequest
+    def add_file(self, filename: str, filespecs: tuple):
+        assert filename not in self.content.keys()
         if self.free_space() - filespecs["usedsize"] < 0:
             self.make_room(self.free_space() - filespecs["usedsize"])
-        self.content.update({filename: filespecs})
+        self.content[filename] = filespecs
         self.content[filename].update(
             cachedsince=time.now, lastaccessed=time.now, numberofaccesses=0
         )
         self.usedstorage = self._calculate_used_storage()
 
     def update_file(self, filerequest: tuple):
-        filename, filespecs = filerequest
-        requested_file = filename
+        requested_file, filespecs = filerequest
         filesize_difference = (
             filespecs["usedsize"] - self.content[requested_file]["usedsize"]
         )
@@ -60,15 +60,15 @@ class Storage(object):
             return True
         else:
             if self.cache_file():
-                self.place_new_file(filerequest)
+                self.add_file(filename, filespecs)
             return False
 
     def cache_file(self):
         # cache everything, test different implementations
         return cache_algorithm["standard"]()
 
-    def describe_state(self):
-        print(
+    def __repr__(self):
+        return (
             "{name} on site {site}: {used}MB of {tot}MB used ({div} %), contains "
             "files {filelist}".format(
                 name=self.name,
