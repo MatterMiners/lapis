@@ -1,4 +1,5 @@
 from lapis.storage import Storage
+from typing import Optional
 
 
 class FileProvider(object):
@@ -14,24 +15,25 @@ class FileProvider(object):
         except KeyError:
             self.storages[storage_element.sitename] = [storage_element]
 
-    def provides_all_files(self, job):
+    def input_file_coverage(
+        self, dronesite: str, requested_files: Optional[dict] = None
+    ) -> float:
         """
-        Dummy implementation, to be replaced: if a part of every inputfile of the job is
-        provided by a storage element located on the same site as the drone the job
-        is running on this function returns True
-        :param job:
+        Dummy implementation, to be replaced
+
+        :param requested_files:
+        :param dronesite:
         :return:
         """
-        provided_storages = self.storages.get(job.drone.sitename, None)
+        provided_storages = self.storages.get(dronesite, None)
         if provided_storages:
-            for inputfilename, inputfilespecs in job.used_inputfiles.items():
-                provides_inputfile = 0
+            provides_inputfile = []
+            for inputfilename, inputfilespecs in requested_files.items():
+                provides_inputfile.append(0)
                 for storage in provided_storages:
-                    provides_inputfile += storage.provides_file(
+                    provides_inputfile[-1] += storage.provides_file(
                         (inputfilename, inputfilespecs)
                     )
-                if not provides_inputfile:
-                    return False
-            return True
+            return 1 - provided_storages.count(0) / len(provided_storages)
         else:
-            return False
+            return 0
