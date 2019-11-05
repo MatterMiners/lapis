@@ -37,7 +37,7 @@ test = [
     "flake8-bugbear",
     "black; implementation_name=='cpython'",
 ]
-doc = ["sphinx", "sphinx_rtd_theme"]
+doc = ["sphinx", "sphinx_rtd_theme", "sphinxcontrib-contentui"]
 dev = ["pre-commit"]
 
 [tool.flit.metadata.urls]
