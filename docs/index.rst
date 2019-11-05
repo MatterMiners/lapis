@@ -32,10 +32,46 @@ started quickly.
 You have the options to start in 1) static, 2) dynamic as well as 3) hybrid
 mode enabling you to compare the various simulation outputs.
 
-.. code-block:: bash
+.. content-tabs::
 
-   python cli/simulate.py --log-file - static --job-file <path-to-workload> swf \
-      --pool-file <path-to-pool-definition> htcondor
+   .. tab-container:: static
+      :title: Static
+
+      The *static* environment provides a classical setup where all resources
+      are available exclusively for processing the jobs for the whole runtime
+      of the simulation.
+
+      .. code-block:: bash
+
+         python cli/simulate.py --log-file - static --job-file <path-to-workload> swf \
+            --pool-file <path-to-pool-definition> htcondor
+
+   .. tab-container:: dynamic
+      :title: Dynamic
+
+      The *dynamic* environment builds on volatile, opportunistic resources
+      exclusively. Based on the amount of jobs being processed within the
+      simulation COBalD controllers decide about the integration and
+      disintegration of resources.
+
+      .. code-block:: bash
+
+         python cli/simulate.py --log-file - dynamic --job-file <path-to-workload> swf \
+            --pool-file <path-to-pool-definition> htcondor
+
+   .. tab-container:: hybrid
+      :title: Hybrid
+
+      The *hybrid* simulation environment provides a baseline of static resources
+      that are available for the whole runtime of the simulation. These static
+      resources are dynamically complemented with volatile, opportunistic
+      resources based on current job pressure.
+
+      .. code-block:: bash
+
+         python cli/simulate.py --log-file - hybrid --job-file <path-to-workload> swf \
+            --static-pool-file <path-to-pool-definition> htcondor \
+            --dynamic-pool-file <path-to-pool-definition> htcondor
 
 As you can see from the example, you can even mix and match different input
 formats to create your required simulation environment. An extensive documentation
