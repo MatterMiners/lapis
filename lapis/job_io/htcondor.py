@@ -23,12 +23,12 @@ def htcondor_job_reader(
     unit_conversion_mapping={  # noqa: B006
         "RequestCpus": 1,
         "RequestWalltime": 1,
-        "RequestMemory": 1.024 / 1024,
-        "RequestDisk": 1.024 / 1024 / 1024,
+        "RequestMemory": 1024 * 1024,
+        "RequestDisk": 1024,
         "queuetime": 1,
         "RemoteWallClockTime": 1,
-        "MemoryUsage": 1 / 1024,
-        "DiskUsage_RAW": 1.024 / 1024 / 1024,
+        "MemoryUsage": 1 / 1.048576 * 1024 * 1024,
+        "DiskUsage_RAW": 1024,
     },
 ):
     input_file_type = iterable.name.split(".")[-1].lower()
@@ -49,9 +49,10 @@ def htcondor_job_reader(
         resources = {}
         for key, original_key in resource_name_mapping.items():
             try:
-                resources[key] = float(
-                    entry[original_key]
-                ) * unit_conversion_mapping.get(original_key, 1)
+                resources[key] = int(
+                    float(entry[original_key])
+                    * unit_conversion_mapping.get(original_key, 1)
+                )
             except ValueError:
                 pass
 
@@ -60,13 +61,14 @@ def htcondor_job_reader(
                 (float(entry["RemoteSysCpu"]) + float(entry["RemoteUserCpu"]))
                 / float(entry[used_resource_name_mapping["walltime"]])
             )
-            * unit_conversion_mapping.get(used_resource_name_mapping["cores"], 1)
+            * unit_conversion_mapping.get(resource_name_mapping["cores"], 1)
         }
         for key in ["memory", "walltime", "disk"]:
             original_key = used_resource_name_mapping[key]
-            used_resources[key] = float(
-                entry[original_key]
-            ) * unit_conversion_mapping.get(original_key, 1)
+            used_resources[key] = int(
+                float(entry[original_key])
+                * unit_conversion_mapping.get(original_key, 1)
+            )
 
         try:
             resources["inputfiles"] = deepcopy(entry["Inputfiles"])
