@@ -17,7 +17,6 @@ def htcondor_job_reader(
     used_resource_name_mapping={  # noqa: B006
         "queuetime": "QDate",
         "walltime": "RemoteWallClockTime",  # s
-        "cores": "Number of Allocated Processors",
         "memory": "MemoryUsage",  # MB
         "disk": "DiskUsage_RAW",  # KiB
     },
@@ -28,7 +27,6 @@ def htcondor_job_reader(
         "RequestDisk": 1.024 / 1024 / 1024,
         "queuetime": 1,
         "RemoteWallClockTime": 1,
-        "Number of Allocated Processors": 1,
         "MemoryUsage": 1 / 1024,
         "DiskUsage_RAW": 1.024 / 1024 / 1024,
     },
