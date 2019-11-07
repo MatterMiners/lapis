@@ -11,6 +11,10 @@ def machines_pool_reader(
         "cores": "CPUs_per_node",
         "memory": "RAM_per_node_in_KB",
     },
+    unit_conversion_mapping={  # noqa: B006
+        "CPUs_per_node": 1,
+        "RAM_per_node_in_KB": 1000,
+    },
     pool_type: Callable = Pool,
     make_drone: Callable = None,
 ):
@@ -33,7 +37,7 @@ def machines_pool_reader(
             make_drone=partial(
                 make_drone,
                 {
-                    key: float(row[value])
+                    key: int(float(row[value]) * unit_conversion_mapping.get(value, 1))
                     for key, value in resource_name_mapping.items()
                 },
             ),
