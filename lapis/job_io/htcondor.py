@@ -27,7 +27,7 @@ def htcondor_job_reader(
         "RequestDisk": 1024,
         "queuetime": 1,
         "RemoteWallClockTime": 1,
-        "MemoryUsage": 1 / 1.048576 * 1024 * 1024,
+        "MemoryUsage": 1000 * 1000,
         "DiskUsage_RAW": 1024,
     },
 ):
