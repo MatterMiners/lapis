@@ -33,6 +33,14 @@ Information about the object types being processed by your callable is given as 
 :py:attr:`name` for your callable as well as :py:class:`logging.Formatter` for
 specific logging options.
 
+Registering your logging callable is very easy then, you just need to call
+
+.. code-block:: python3
+
+    simulator.monitoring.register_statistic(log_object)
+
+That's it!
+
 LAPIS currently supports logging to
 
 * TCP,
