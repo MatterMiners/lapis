@@ -39,11 +39,9 @@ class StoredFile(object):
 
 
 class RequestedFile(object):
-    def __init__(self, filename, filespecs):
+    def __init__(self, filename: str, filespecs: dict):
         self.filename: str = filename
         self._filesize: Optional[int] = filespecs.get("filesize", None)
-        # self._requestedsize: Optional[int] = filespecs.get("requestedsize", None)
-        # self._added: Optional[int] = filespecs.get("requestedsize", None)
 
     @property
     def filesize(self):
