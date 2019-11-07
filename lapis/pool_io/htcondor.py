@@ -14,8 +14,8 @@ def htcondor_pool_reader(
     },
     unit_conversion_mapping: dict = {  # noqa: B006
         "TotalSlotCPUs": 1,
-        "TotalSlotDisk": 1.024 / 1024,
-        "TotalSlotMemory": 1.024 / 1024,
+        "TotalSlotDisk": 1024 * 1024,
+        "TotalSlotMemory": 1024 * 1024,
     },
     pool_type: Callable = Pool,
     make_drone: Callable = None,
@@ -44,7 +44,7 @@ def htcondor_pool_reader(
             make_drone=partial(
                 make_drone,
                 {
-                    key: float(row[value]) * unit_conversion_mapping.get(value, 1)
+                    key: int(float(row[value]) * unit_conversion_mapping.get(value, 1))
                     for key, value in resource_name_mapping.items()
                 },
                 ignore_resources=["disk"],
