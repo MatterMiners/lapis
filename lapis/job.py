@@ -93,9 +93,14 @@ class Job(object):
         return float("Inf")
 
     @property
-    def walltime(self):
-        if self.drone.fileprovider and self.drone.fileprovider.input_file_coverage(
-            self.drone.sitename, self.used_inputfiles
+    async def walltime(self):
+        print("DEBUG JOB hit walltime")
+        # TODO: reimplement that usedsize != filesize and change back to used_inputfiles
+        if (
+            self.drone.fileprovider
+            and await self.drone.fileprovider.input_file_coverage(
+                self.drone.sitename, self.requested_inputfiles, repr(self)
+            )
         ):
             return walltime_models["maxeff"](self, self._walltime)
         else:
@@ -112,7 +117,7 @@ class Job(object):
                 )
             )
         try:
-            await (time + self.walltime)
+            await (time + await self.walltime)
         except CancelTask:
             self._success = False
         except BaseException:
@@ -123,7 +128,7 @@ class Job(object):
         await sampling_required.put(self)
 
     def __repr__(self):
-        return "<%s: %s>" % (self.__class__.__name__, self._name or id(self))
+        return "<%s: %s>" % (self.__class__.__name__, self._name or id(self) % 100)
 
 
 async def job_to_queue_scheduler(job_generator, job_queue):

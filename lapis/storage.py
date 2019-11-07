@@ -1,71 +1,117 @@
-from usim import time
+from usim import time, Resources
 
 from typing import Optional
 
-from lapis.utilities.cache_algorithm_implementations import cache_algorithm
-from lapis.utilities.cache_cleanup_implementations import cache_cleanup
+from lapis.files import StoredFile, RequestedFile
+from lapis.cachealgorithm import CacheAlgorithm
 
 
 class Storage(object):
 
-    __slots__ = ("name", "sitename", "storagesize", "usedstorage", "content")
+    __slots__ = (
+        "name",
+        "sitename",
+        "storagesize",
+        "placement_duration",
+        "deletion_duration",
+        "_usedstorage",
+        "files",
+        "filenames",
+        "cachealgorithm",
+    )
 
     def __init__(
-        self, name: str, sitename: str, storagesize: int, content: Optional[dict] = None
+        self, name: str, sitename: str, storagesize: int, files: Optional[dict] = None
     ):
         self.name = name
         self.sitename = sitename
+        self.placement_duration = 10
+        self.deletion_duration = 5
         self.storagesize = storagesize
-        self.content = content
-        self.usedstorage = self._calculate_used_storage()
+        self.files = self._dict_to_file_object(files)
+        self.filenames = set(file.filename for file in self.files)
+        self._usedstorage = Resources(**dict(usedsize=self._initial_used_storage()))
+        self.cachealgorithm = CacheAlgorithm(self)
         self.__repr__()
-        print(self.sitename)
 
-    def _calculate_used_storage(self):
-        return sum(subdict["usedsize"] for subdict in self.content.values())
+    def _initial_used_storage(self):
+        initial_value = sum(file.filesize for file in self.files)
+        print("{} set initial value {}".format(self.name, initial_value))
+        return initial_value
+
+    def _dict_to_file_object(self, files):
+        files_set = set()
+        for filename, filespecs in files.items():
+            files_set.add(StoredFile(filename, filespecs))
+        return files_set
+
+    @property
+    def usedstorage(self):
+        return dict(self._usedstorage.levels)["usedsize"]
 
     def free_space(self):
         return self.storagesize - self.usedstorage
 
-    def add_file(self, filename: str, filespecs: tuple):
-        assert filename not in self.content.keys()
-        if self.free_space() - filespecs["usedsize"] < 0:
-            self.make_room(self.free_space() - filespecs["usedsize"])
-        self.content[filename] = filespecs
-        self.content[filename].update(
-            cachedsince=time.now, lastaccessed=time.now, numberofaccesses=0
+    def find_file(self, filename):
+        for file in self.files:
+            if file.filename == filename:
+                return file
+
+    async def remove_from_storage(self, file: StoredFile, job_repr):
+        print(
+            "REMOVE FROM STORAGE: Job {}, File {} @ {}".format(
+                job_repr, file.filename, time.now
+            )
         )
-        self.usedstorage = self._calculate_used_storage()
+        await (time + self.deletion_duration)
+        await self._usedstorage.decrease(**{"usedsize": file.filesize})
+        self.filenames.remove(file.filename)
+        self.files.remove(file)
 
-    def update_file(self, filerequest: tuple):
-        requested_file, filespecs = filerequest
-        filesize_difference = (
-            filespecs["usedsize"] - self.content[requested_file]["usedsize"]
+    async def add_to_storage(self, file: RequestedFile, job_repr):
+        print(
+            "ADD TO STORAGE: Job {}, File {} @ {}".format(
+                job_repr, file.filename, time.now
+            )
         )
-        if filesize_difference > 0:
-            self.make_room(filesize_difference)
-            self.content[requested_file]["usedsize"] += filesize_difference
-        self.content[requested_file]["lastaccessed"] = time.now
-        self.content[requested_file]["numberofaccesses"] += 1
-        self.usedstorage = self._calculate_used_storage()
+        file = file.convert_to_stored_file(time.now)
+        await (time + self.placement_duration)
+        await self._usedstorage.increase(**{"usedsize": file.filesize})
+        self.filenames.add(file.filename)
+        self.files.add(file)
 
-    def make_room(self, filesize_difference: int):
-        if self.free_space() - filesize_difference < 0:
-            cache_cleanup["fifo"](filesize_difference, self)
+    def update_file(self, stored_file: StoredFile, job_repr):
+        print("UPDATE: Job {}, File {}".format(job_repr, stored_file.filename))
+        stored_file.lastaccessed = time.now
+        stored_file.increment_accesses()
 
-    def provides_file(self, filerequest: dict):
-        filename, filespecs = filerequest
-        if filename in self.content.keys():
-            self.update_file(filerequest)
+    async def apply_caching_decision(self, requested_file: RequestedFile, job_repr):
+        print(
+            "APPLY CACHING DECISION: Job {}, File {} @ {}".format(
+                job_repr, requested_file.filename, time.now
+            )
+        )
+        to_be_removed = self.cachealgorithm.consider(requested_file)
+        if not to_be_removed:
+            await self.add_to_storage(requested_file, job_repr)
+        elif to_be_removed == {requested_file}:
+            # file will not be cached because it either does not match
+            # conditions or because there is no space in the cache
+            print(
+                "APPLY CACHING DECISION: Job {}, File {}: File wasnt "
+                "cached @ {}".format(job_repr, requested_file.filename, time.now)
+            )
+        else:
+            for file in to_be_removed:
+                await self.remove_from_storage(file, job_repr)
+
+    async def providing_file(self, requested_file: RequestedFile, job_repr):
+        if requested_file.filename in self.filenames:
+            self.update_file(self.find_file(requested_file.filename), job_repr)
             return True
         else:
-            if self.cache_file():
-                self.add_file(filename, filespecs)
+            await self.apply_caching_decision(requested_file, job_repr)
             return False
-
-    def cache_file(self):
-        # cache everything, test different implementations
-        return cache_algorithm["standard"]()
 
     def __repr__(self):
         return (
@@ -76,6 +122,6 @@ class Storage(object):
                 used=self.usedstorage,
                 tot=self.storagesize,
                 div=100.0 * self.usedstorage / self.storagesize,
-                filelist=", ".join(self.content.keys()),
+                filelist=", ".join(self.filenames),
             )
         )
