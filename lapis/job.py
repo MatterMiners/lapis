@@ -99,9 +99,11 @@ class Job(object):
         """
         return self._walltime
 
-    def recalculate_walltime(self):
-        if self.drone.fileprovider and self.drone.fileprovider.input_file_coverage(
-            self.drone.sitename, self.used_inputfiles
+    async def recalculate_walltime(self):
+        print("WALLTIME: Job {}".format(repr(self)))
+
+        if self.drone.fileprovider and await self.drone.fileprovider.input_file_coverage(
+            self.drone.sitename, self.used_inputfiles, repr(self)
         ):
             self._walltime = walltime_models["maxeff"](self, self._walltime)
 
@@ -116,7 +118,7 @@ class Job(object):
                 )
             )
         try:
-            self.recalculate_walltime()
+            await self.recalculate_walltime()
             await (time + self._walltime)
         except CancelTask:
             self._success = False
@@ -128,7 +130,7 @@ class Job(object):
         await sampling_required.put(self)
 
     def __repr__(self):
-        return "<%s: %s>" % (self.__class__.__name__, self._name or id(self))
+        return "<%s: %s>" % (self.__class__.__name__, self._name or id(self) % 100)
 
 
 async def job_to_queue_scheduler(job_generator, job_queue):

@@ -1,4 +1,4 @@
-def cache_all():
+def cache_all(*args, **kwargs):
     return True
 
 
