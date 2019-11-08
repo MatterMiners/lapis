@@ -102,8 +102,11 @@ class Job(object):
     async def recalculate_walltime(self):
         print("WALLTIME: Job {}".format(repr(self)))
 
-        if self.drone.fileprovider and await self.drone.fileprovider.input_file_coverage(
-            self.drone.sitename, self.used_inputfiles, repr(self)
+        if (
+            self.drone.fileprovider
+            and await self.drone.fileprovider.input_file_coverage(
+                self.drone.sitename, self.requested_inputfiles, repr(self)
+            )
         ):
             self._walltime = walltime_models["maxeff"](self, self._walltime)
 
