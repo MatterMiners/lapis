@@ -80,10 +80,15 @@ class Storage(object):
         self.filenames.add(file.filename)
         self.files.add(file)
 
-    def update_file(self, stored_file: StoredFile, job_repr):
-        print("UPDATE: Job {}, File {}".format(job_repr, stored_file.filename))
+    async def update_file(self, stored_file: StoredFile, job_repr):
+        await (time + 1)
         stored_file.lastaccessed = time.now
         stored_file.increment_accesses()
+        print(
+            "UPDATE: Job {}, File {} @ {}".format(
+                job_repr, stored_file.filename, time.now
+            )
+        )
 
     async def apply_caching_decision(self, requested_file: RequestedFile, job_repr):
         print(
@@ -107,7 +112,7 @@ class Storage(object):
 
     async def providing_file(self, requested_file: RequestedFile, job_repr):
         if requested_file.filename in self.filenames:
-            self.update_file(self.find_file(requested_file.filename), job_repr)
+            await self.update_file(self.find_file(requested_file.filename), job_repr)
             return True
         else:
             await self.apply_caching_decision(requested_file, job_repr)

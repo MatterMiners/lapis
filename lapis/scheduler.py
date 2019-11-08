@@ -87,6 +87,7 @@ class CondorJobScheduler(object):
         async with Scope() as scope:
             scope.do(self._collect_jobs())
             async for _ in interval(self.interval):
+                print("NEW SCHEDULING INTERVAL @ {}".format(time.now))
                 for job in self.job_queue:
                     best_match = self._schedule_job(job)
                     if best_match:

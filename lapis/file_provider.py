@@ -1,7 +1,7 @@
 from lapis.storage import Storage
 from lapis.files import RequestedFile
 from typing import Optional
-from usim import Queue, Scope
+from usim import Queue, Scope, time
 
 
 class FileProvider(object):
@@ -48,8 +48,16 @@ class FileProvider(object):
                         )
                     )
             await score_queue.close()
-            total_score = await self.calculate_score(score_queue)
-            return total_score / len(provided_storages)
+            cached_size = await self.calculate_score(score_queue)
+            total_size = float(
+                sum(
+                    [
+                        inputfilespecs["filesize"]
+                        for _, inputfilespecs in requested_files.items()
+                    ]
+                )
+            )
+            return cached_size / total_size
         else:
             return 0
 
@@ -65,13 +73,18 @@ class FileProvider(object):
         :param q:
         :return:
         """
-        file_score = sum(
+        print(
+            "LOOK UP: Job {}, File {} @ {}".format(
+                job_repr, requested_file.filename, time.now
+            )
+        )
+        file_score = sorted(
             [
-                await storage.providing_file(requested_file, job_repr)
+                int(await storage.providing_file(requested_file, job_repr))
                 for storage in available_storages
             ]
-        )
-        await q.put({requested_file.filename: file_score})
+        )[0]
+        await q.put({requested_file: file_score})
 
     async def calculate_score(self, queue: Queue):
         """
@@ -80,4 +93,10 @@ class FileProvider(object):
         :param queue:
         :return:
         """
-        return sum([1 async for element in queue if list(element.values())[0] > 0])
+        return sum(
+            [
+                list(element.keys())[0].filesize
+                async for element in queue
+                if list(element.values())[0] > 0
+            ]
+        )

@@ -54,5 +54,4 @@ class RequestedFile(object):
             lastaccessed=currenttime,
             numberofaccesses=1,
         )
-        print("convert file: ", filespecs)
         return StoredFile(self.filename, filespecs)
