@@ -10,7 +10,7 @@ def storage_reader(storage, storage_content):
             name=row["name"],
             sitename=row["sitename"],
             storagesize=int(row["cachesizeMB"]),
-            content=storage_content[row["name"]],
+            files=storage_content[row["name"]],
         )
 
 
