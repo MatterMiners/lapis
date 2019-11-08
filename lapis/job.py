@@ -133,7 +133,7 @@ class Job(object):
         await sampling_required.put(self)
 
     def __repr__(self):
-        return "<%s: %s>" % (self.__class__.__name__, self._name or id(self) % 100)
+        return "<%s: %s>" % (self.__class__.__name__, self._name or id(self))
 
 
 async def job_to_queue_scheduler(job_generator, job_queue):
