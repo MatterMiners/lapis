@@ -1,7 +1,9 @@
 from cobald import interfaces
 from usim import time, Scope, instant, Capacities, ResourcesUnavailable
+from typing import Optional
 
 from lapis.job import Job
+from lapis.file_provider import FileProvider
 
 
 class ResourcesExceeded(Exception):
@@ -12,9 +14,9 @@ class Drone(interfaces.Pool):
     def __init__(
         self,
         scheduler,
-        fileprovider,
-        pool_resources: dict,
-        scheduling_duration: float,
+        fileprovider: FileProvider = FileProvider(),
+        pool_resources: Optional[dict] = None,
+        scheduling_duration: Optional[float] = None,
         ignore_resources: list = None,
         sitename: str = None,
     ):
