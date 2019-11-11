@@ -47,7 +47,7 @@ class RequestedFile(object):
     def filesize(self):
         return self._filesize
 
-    def convert_to_stored_file(self, currenttime):
+    def convert_to_stored_file_object(self, currenttime):
         filespecs = dict(
             filesize=self._filesize,
             cachedsince=currenttime,
