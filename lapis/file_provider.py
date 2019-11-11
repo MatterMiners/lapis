@@ -1,15 +1,16 @@
 from lapis.storage import Storage
 from lapis.files import RequestedFile
-from typing import Optional
-from usim import Queue, Scope, time
+from usim import Queue, Scope, time, Pipe
+import random
 
 
 class FileProvider(object):
 
-    __slots__ = ("storages",)
+    __slots__ = ("storages", "remote_connection")
 
-    def __init__(self):
+    def __init__(self, throughput=20):
         self.storages = dict()
+        self.remote_connection = Pipe(throughput=throughput)
 
     def add_storage_element(self, storage_element: Storage):
         """
@@ -22,81 +23,87 @@ class FileProvider(object):
         except KeyError:
             self.storages[storage_element.sitename] = [storage_element]
 
-    async def input_file_coverage(
-        self, dronesite: str, requested_files: Optional[dict] = None, job_repr=None
-    ) -> float:
-        """
-        Dummy implementation, to be replaced
-
-        :param requested_files:
-        :param dronesite:
-        :return:
-        """
-        print("FILEPROVIDER hit input file coverage")
-
-        provided_storages = self.storages.get(dronesite, None)
-        if provided_storages:
-            score_queue = Queue()
-            async with Scope() as scope:
-                for inputfilename, inputfilespecs in requested_files.items():
-                    scope.do(
-                        self.look_file_up_in_storage(
-                            RequestedFile(inputfilename, inputfilespecs),
-                            provided_storages,
-                            job_repr,
-                            score_queue,
-                        )
-                    )
-            await score_queue.close()
-            cached_size = await self.calculate_score(score_queue)
-            total_size = float(
-                sum(
-                    [
-                        inputfilespecs["filesize"]
-                        for _, inputfilespecs in requested_files.items()
-                    ]
-                )
-            )
-            return cached_size / total_size
-        else:
-            return 0
-
-    async def look_file_up_in_storage(
-        self, requested_file: RequestedFile, available_storages: list, job_repr, q
+    async def determine_inputfile_source(
+        self, requested_file: RequestedFile, dronesite: str, job_repr: str
     ):
         """
-        Calculates how many storages provide the requested file, puts result in queue
-        for readout.
+        Collects NamedTuples containing the amount of data of the requested file
+        cached in a storage element and the storage element for all reachable storage
+        objects on the drone's site. The tuples are sorted by amount of cached data
+        and the storage object where the biggest part of the file is cached is
+        returned. If the file is not cached in any storage object the fileproviders
+        remote connection is returned.
         :param requested_file:
-        :param available_storages:
+        :param dronesite:
         :param job_repr:
-        :param q:
         :return:
         """
-        print(
-            "LOOK UP: Job {}, File {} @ {}".format(
-                job_repr, requested_file.filename, time.now
+        provided_storages = self.storages.get(dronesite, None)
+        if provided_storages:
+            look_up_queue = Queue()
+            async with Scope() as scope:
+                for storage in provided_storages:
+                    scope.do(
+                        storage.look_up_file(requested_file, look_up_queue, job_repr)
+                    )
+            await look_up_queue.close()
+            storage_list = sorted(
+                [entry async for entry in look_up_queue],
+                key=lambda x: x[0],
+                reverse=True,
             )
-        )
-        file_score = sorted(
-            [
-                int(await storage.providing_file(requested_file, job_repr))
-                for storage in available_storages
-            ]
-        )[0]
-        await q.put({requested_file: file_score})
+            if storage_list[0].cached_filesize > 0:
+                return storage_list[0].storage
+            else:
+                return self.remote_connection
+        else:
+            return self.remote_connection
 
-    async def calculate_score(self, queue: Queue):
+    async def stream_file(self, requested_file: RequestedFile, dronesite, job_repr):
         """
-        Reads each input files individual score from queue and returns number of input
-        files that are provided by a storage element.
-        :param queue:
+        Determines which storage object is used to provide the requested file and
+        startes the files transfer. For files transfered via remote connection a
+        potential cache decides whether to cache the file and handles the caching
+        process.
+        :param requested_file:
+        :param dronesite:
+        :param job_repr:
         :return:
         """
-        return sum(
-            [
-                list(element.keys())[0].filesize
-                async for element in queue
-                if list(element.values())[0] > 0
-            ]
+        used_connection = await self.determine_inputfile_source(
+            requested_file, dronesite, job_repr
         )
+        print(used_connection)
+        if used_connection == self.remote_connection:
+            potential_cache = random.choice(self.storages.get(dronesite, None))
+            await used_connection.transfer(requested_file.filesize)
+            await potential_cache.apply_caching_decision(requested_file, job_repr)
+
+        else:
+            print("now transfering", requested_file.filesize)
+            await used_connection.transfer(requested_file, job_repr)
+            print(
+                "Job {}: finished transfering of file {}: {}GB @ {}".format(
+                    job_repr, requested_file.filename, requested_file.filesize, time.now
+                )
+            )
+
+    async def transfer_inputfiles(self, drone, requested_files: dict, job_repr):
+        """
+        Converts dict information about requested files to RequestedFile object and
+        parallely launches streaming for all files
+        :param drone:
+        :param requested_files:
+        :param job_repr:
+        :return:
+        """
+        start_time = time.now
+        async with Scope() as scope:
+            for inputfilename, inputfilespecs in requested_files.items():
+                requested_file = RequestedFile(inputfilename, inputfilespecs)
+                scope.do(self.stream_file(requested_file, drone.sitename, job_repr))
+        stream_time = time.now - start_time
+        print(
+            "STREAMED files {} in {}".format(list(requested_files.keys()), stream_time)
+        )
+        return stream_time
