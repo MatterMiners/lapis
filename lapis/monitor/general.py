@@ -10,6 +10,7 @@ from lapis.job import Job
 from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler
 from lapis.pool import Pool
 from lapis.scheduler import CondorJobScheduler, JobQueue
+from lapis.storage import Storage
 
 if TYPE_CHECKING:
     from lapis.simulator import Simulator
@@ -213,5 +214,32 @@ configuration_information.logging_formatter = {
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "pool_configuration", "resource_type"}, resolution=1
+    ),
+}
+
+
+def storage_status(storage: Storage):
+    """
+    Log information about current storage object state
+    :param storage:
+    :return: list of records for logging
+    """
+    results = [
+        {
+            "usedstorage": storage.usedstorage,
+            "storagesize": storage.storagesize,
+            "numberoffiles": len(storage.filenames),
+        }
+    ]
+    return results
+
+
+storage_status.name = "storage_status"
+storage_status.whitelist = (Storage,)
+storage_status.logging_formatter = {
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis"}, resolution=1
     ),
 }

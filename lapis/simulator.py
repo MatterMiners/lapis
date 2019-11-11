@@ -14,6 +14,7 @@ from lapis.monitor.general import (
     pool_status,
     configuration_information,
     job_events,
+    storage_status,
 )
 from lapis.monitor import Monitoring
 from lapis.monitor.cobald import drone_statistics, pool_statistics
@@ -46,6 +47,7 @@ class Simulator(object):
         self.monitoring.register_statistic(resource_statistics)
         self.monitoring.register_statistic(pool_status)
         self.monitoring.register_statistic(configuration_information)
+        self.monitoring.register_statistic(storage_status)
 
     def create_job_generator(self, job_input, job_reader):
         self._job_generators.append((job_input, job_reader))
