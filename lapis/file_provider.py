@@ -1,5 +1,7 @@
 from lapis.storage import Storage
 from lapis.files import RequestedFile
+from lapis.monitor import sampling_required
+
 from usim import Queue, Scope, time, Pipe
 import random
 
@@ -73,13 +75,16 @@ class FileProvider(object):
         used_connection = await self.determine_inputfile_source(
             requested_file, dronesite, job_repr
         )
-        print(used_connection)
+
         if used_connection == self.remote_connection:
+            await sampling_required.put(used_connection)
             potential_cache = random.choice(self.storages.get(dronesite, None))
             await used_connection.transfer(requested_file.filesize)
+
             await potential_cache.apply_caching_decision(requested_file, job_repr)
 
         else:
+            await sampling_required.put(used_connection)
             print("now transfering", requested_file.filesize)
             await used_connection.transfer(requested_file, job_repr)
             print(

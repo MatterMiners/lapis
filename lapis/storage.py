@@ -212,10 +212,12 @@ class Storage(object):
             )
 
     def __repr__(self):
-        return "{name} on site {site}: {used}MB of {tot}MB used ({div} %)".format(
-            name=self.name,
-            site=self.sitename,
-            used=self.usedstorage,
-            tot=self.storagesize,
-            div=100.0 * self.usedstorage / self.storagesize,
-        )
+        return "<%s: %s>" % (self.__class__.__name__, self.name or id(self))
+
+        # return "{name} on site {site}: {used}MB of {tot}MB used ({div} %)".format(
+        #     name=self.name,
+        #     site=self.sitename,
+        #     used=self.usedstorage,
+        #     tot=self.storagesize,
+        #     div=100.0 * self.usedstorage / self.storagesize,
+        # )
