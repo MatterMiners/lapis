@@ -29,20 +29,21 @@ class Pool(interfaces.Pool):
         assert init <= capacity
         self.make_drone = make_drone
         self._drones = []
-        self.init_pool(init=init)
         self._demand = 1
         self._level = init
         self._capacity = capacity
         self._name = name
 
-    def init_pool(self, init: int = 0):
+    async def init_pool(self, scope: Scope, init: int = 0):
         """
         Initialisation of existing drones at creation time of pool.
 
         :param init: Number of drones to create.
         """
         for _ in range(init):
-            self._drones.append(self.make_drone(0))
+            drone = self.make_drone(0)
+            scope.do(drone.run())
+            self._drones.append(drone)
 
     # TODO: the run method currently needs to be called manually
     async def run(self):
@@ -52,6 +53,7 @@ class Pool(interfaces.Pool):
         initialising new drones. Otherwise drones get removed.
         """
         async with Scope() as scope:
+            await self.init_pool(scope=scope, init=self._level)
             async for _ in interval(1):
                 drones_required = min(self._demand, self._capacity) - self._level
                 while drones_required > 0:
@@ -145,5 +147,6 @@ class StaticPool(Pool):
         """
         Pool runs forever and does not check if number of drones needs to be adapted.
         """
-        while True:
+        async with Scope() as scope:
+            await self.init_pool(scope=scope, init=self._level)
             await eternity

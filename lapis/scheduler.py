@@ -90,7 +90,7 @@ class CondorJobScheduler(object):
                 for job in self.job_queue:
                     best_match = self._schedule_job(job)
                     if best_match:
-                        scope.do(best_match.start_job(job))
+                        await best_match.schedule_job(job)
                         self.job_queue.remove(job)
                         await sampling_required.put(self.job_queue)
                         self.unregister_drone(best_match)
