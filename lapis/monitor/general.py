@@ -285,8 +285,7 @@ def remote_connection(remote: Pipe) -> list:
     results = [
         {
             "throughput": remote.throughput,
-            # "requested_throughput": sum(remote._subscriptions.values()),
-            "requested_throughput": str(remote._subscriptions.values()),
+            "requested_throughput": sum(remote._subscriptions.values()),
             "throughput_scale": remote._throughput_scale,
         }
     ]
