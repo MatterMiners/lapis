@@ -111,6 +111,9 @@ class CondorJobScheduler(object):
             await sampling_required.put(self.job_queue)
         self._collecting = False
 
+    async def retry_job(self, job):
+        await self._stream_queue.put(job)
+
     def _schedule_job(self, job) -> Drone:
         priorities = {}
         for cluster in self.drone_cluster:
