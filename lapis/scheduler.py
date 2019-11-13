@@ -96,7 +96,7 @@ class CondorJobScheduler(object):
                                 repr(job), repr(best_match), time.now
                             )
                         )
-                        scope.do(best_match.start_job(job))
+                        await best_match.schedule_job(job)
                         self.job_queue.remove(job)
                         await sampling_required.put(self.job_queue)
                         self.unregister_drone(best_match)
@@ -116,6 +116,9 @@ class CondorJobScheduler(object):
             # TODO: logging happens with each job
             await sampling_required.put(self.job_queue)
         self._collecting = False
+
+    async def retry_job(self, job):
+        await self._stream_queue.put(job)
 
     def _schedule_job(self, job) -> Drone:
         priorities = {}
