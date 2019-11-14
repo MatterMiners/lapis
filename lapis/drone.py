@@ -165,9 +165,8 @@ class Drone(interfaces.Pool):
                 await instant
                 job_execution.cancel()
             self.jobs -= 1
-            if not job.successful:
-                job.drone = None
-                await self.scheduler.retry_job(job)
+            job.drone = None
+            await self.scheduler.job_finished(job)
             self._utilisation = self._allocation = None
             self.scheduler.update_drone(self)
             await sampling_required.put(self)

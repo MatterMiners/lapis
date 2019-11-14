@@ -1,5 +1,5 @@
 from typing import Dict
-from usim import Scope, interval, time
+from usim import Scope, interval, Resources, time
 
 from lapis.drone import Drone
 from lapis.monitor import sampling_required
@@ -32,6 +32,7 @@ class CondorJobScheduler(object):
         self.interval = 60
         self.job_queue = JobQueue()
         self._collecting = True
+        self._processing = Resources(jobs=0)
 
     @property
     def drone_list(self):
@@ -106,19 +107,27 @@ class CondorJobScheduler(object):
                             for key, value in left_resources.items()
                         }
                         self._add_drone(best_match, left_resources)
-                if not self._collecting and not self.job_queue:
+                if (
+                    not self._collecting
+                    and not self.job_queue
+                    and self._processing.levels.jobs == 0
+                ):
                     break
                 await sampling_required.put(self)
 
     async def _collect_jobs(self):
         async for job in self._stream_queue:
             self.job_queue.append(job)
+            await self._processing.increase(jobs=1)
             # TODO: logging happens with each job
             await sampling_required.put(self.job_queue)
         self._collecting = False
 
-    async def retry_job(self, job):
-        await self._stream_queue.put(job)
+    async def job_finished(self, job):
+        if job.successful:
+            await self._processing.decrease(jobs=1)
+        else:
+            await self._stream_queue.put(job)
 
     def _schedule_job(self, job) -> Drone:
         priorities = {}

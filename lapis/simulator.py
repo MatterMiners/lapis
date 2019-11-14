@@ -37,6 +37,7 @@ class Simulator(object):
         self.cost = 0
         self._job_generators = []
         self.monitoring = None
+        self.duration = None
         self.enable_monitoring()
 
     def enable_monitoring(self):
@@ -91,7 +92,8 @@ class Simulator(object):
             for controller in self.controllers:
                 while_running.do(controller.run(), volatile=True)
             while_running.do(self.monitoring.run(), volatile=True)
-        print(f"Finished simulation at {time.now}")
+        self.duration = time.now
+        print(f"Finished simulation at {self.duration}")
 
     async def _queue_jobs(self, job_input, job_reader):
         await job_to_queue_scheduler(
