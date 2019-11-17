@@ -107,7 +107,7 @@ class Storage(object):
         file = file.convert_to_stored_file_object(time.now)
         print(file.filesize)
         await self.connection.transfer(file.filesize)
-        await self._usedstorage.increase(**{"usedsize": file.filesize})
+        await self._usedstorage.increase(usedsize=file.filesize)
         self.filenames.add(file.filename)
         self.files.add(file)
 
