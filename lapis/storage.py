@@ -60,7 +60,7 @@ class Storage(object):
     def free_space(self):
         return self.storagesize - self.usedstorage
 
-    def find_file(self, filename):
+    def find_file(self, filename: str) -> bool:
         """
         Searches storage object for file with passed filename
         :param filename:
