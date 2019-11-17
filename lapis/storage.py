@@ -36,7 +36,9 @@ class Storage(object):
         self.storagesize = storagesize
         self.files = self._dict_to_file_object(files)
         self.filenames = set(file.filename for file in self.files)
-        self._usedstorage = Resources(usedsize=sum(file.filesize for file in self.files))
+        self._usedstorage = Resources(
+            usedsize=sum(file.filesize for file in self.files)
+        )
         self.cachealgorithm = CacheAlgorithm(self)
         self.connection = Pipe(throughput_limit)
         self.__repr__()
@@ -67,8 +69,6 @@ class Storage(object):
         :return:
         """
         return filename in self.files
-            if file.filename == filename:
-                return file
 
     async def remove_from_storage(self, file: StoredFile, job_repr):
         """
