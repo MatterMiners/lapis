@@ -30,7 +30,7 @@ class Simulator(object):
         random.seed(seed)
         self.job_queue = Queue()
         self.pools = []
-        self.fileprovider = FileProvider()
+        self.fileprovider = FileProvider(cache_hitrate_approach=True)
         self.controllers = []
         self.job_scheduler = None
         self.job_generator = None

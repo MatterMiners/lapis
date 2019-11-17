@@ -1,3 +1,5 @@
+import logging
+
 from lapis.storage import Storage
 from lapis.files import RequestedFile
 from lapis.monitor import sampling_required
@@ -8,11 +10,18 @@ import random
 
 class FileProvider(object):
 
-    __slots__ = ("storages", "remote_connection")
+    __slots__ = (
+        "storages",
+        "remote_connection",
+        "cache_hitrate_approach",
+        "cachehitrate",
+    )
 
-    def __init__(self, throughput=20):
+    def __init__(self, throughput=100, cache_hitrate_approach=False):
         self.storages = dict()
         self.remote_connection = Pipe(throughput=throughput)
+        self.cache_hitrate_approach = cache_hitrate_approach
+        self.cachehitrate = 0.6
 
     def add_storage_element(self, storage_element: Storage):
         """
@@ -80,8 +89,8 @@ class FileProvider(object):
             await sampling_required.put(used_connection)
             potential_cache = random.choice(self.storages.get(dronesite, None))
             await used_connection.transfer(requested_file.filesize)
-
-            await potential_cache.apply_caching_decision(requested_file, job_repr)
+            if potential_cache:
+                await potential_cache.apply_caching_decision(requested_file, job_repr)
 
         else:
             await sampling_required.put(used_connection)
@@ -106,9 +115,59 @@ class FileProvider(object):
         async with Scope() as scope:
             for inputfilename, inputfilespecs in requested_files.items():
                 requested_file = RequestedFile(inputfilename, inputfilespecs)
-                scope.do(self.stream_file(requested_file, drone.sitename, job_repr))
+                if self.cache_hitrate_approach:
+
+                    scope.do(
+                        self.transfer_by_cache_hitrate(
+                            self.storages.get(drone.sitename, None), requested_file
+                        )
+                    )
+                else:
+                    scope.do(self.stream_file(requested_file, drone.sitename, job_repr))
         stream_time = time.now - start_time
         print(
             "STREAMED files {} in {}".format(list(requested_files.keys()), stream_time)
         )
         return stream_time
+
+    async def transfer_by_cache_hitrate(
+        self, available_storages: Storage, requested_file: RequestedFile
+    ):
+        if not available_storages and self.cachehitrate:
+            logging.getLogger("implementation").error(
+                "no available caches for drone "
+                " requested cachehitrate was "
+                "{}".format(self.cachehitrate)
+            )
+        else:
+            if 0 < self.cachehitrate < 1:
+                async with Scope() as scope:
+                    scope.do(
+                        self.transfer_wrapper(
+                            self.remote_connection,
+                            (1.0 - self.cachehitrate) * requested_file.filesize,
+                        )
+                    )
+                    scope.do(
+                        self.transfer_wrapper(
+                            available_storages[0].connection,
+                            self.cachehitrate * requested_file.filesize,
+                        )
+                    )
+            elif self.cachehitrate == 1:
+                await available_storages[0].connection.transfer(requested_file.filesize)
+            elif self.cachehitrate == 0:
+                await self.remote_connection.transfer(requested_file.filesize)
+
+    async def transfer_wrapper(self, connection, total):
+        print(
+            "transfering {} with {}, start @ {}".format(
+                total, connection.throughput, time.now
+            )
+        )
+        await connection.transfer(total=total)
+        print(
+            "transfering {} with {}, stop @ {}".format(
+                total, connection.throughput, time.now
+            )
+        )
