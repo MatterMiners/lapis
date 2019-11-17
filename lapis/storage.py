@@ -36,7 +36,7 @@ class Storage(object):
         self.storagesize = storagesize
         self.files = self._dict_to_file_object(files)
         self.filenames = set(file.filename for file in self.files)
-        self._usedstorage = Resources(**dict(usedsize=self._initial_used_storage()))
+        self._usedstorage = Resources(usedsize=sum(file.filesize for file in self.files))
         self.cachealgorithm = CacheAlgorithm(self)
         self.connection = Pipe(throughput_limit)
         self.__repr__()
