@@ -23,10 +23,10 @@ class Storage(object):
 
     def __init__(
         self,
-        name: str,
-        sitename: str,
-        storagesize: int,
-        throughput_limit: int = 1,
+        name: str = None,
+        sitename: str = None,
+        storagesize: int = 1000,
+        throughput_limit: int = 10,
         files: Optional[dict] = None,
     ):
         self.name = name
@@ -48,8 +48,9 @@ class Storage(object):
 
     def _dict_to_file_object(self, files):
         files_set = set()
-        for filename, filespecs in files.items():
-            files_set.add(StoredFile(filename, filespecs))
+        if files:
+            for filename, filespecs in files.items():
+                files_set.add(StoredFile(filename, filespecs))
         return files_set
 
     @property
