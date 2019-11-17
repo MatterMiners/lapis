@@ -66,7 +66,7 @@ class Storage(object):
         :param filename:
         :return:
         """
-        for file in self.files:
+        return filename in self.files
             if file.filename == filename:
                 return file
 
