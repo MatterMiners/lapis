@@ -16,6 +16,7 @@ class Job(object):
         "resources",
         "used_resources",
         "_walltime",
+        "_streamtime",
         "requested_walltime",
         "queue_date",
         "requested_inputfiles",
@@ -61,6 +62,7 @@ class Job(object):
                 )
                 self.resources[key] = self.used_resources[key]
         self._walltime = used_resources.pop("walltime")
+        self._streamtime = 0
         self.requested_walltime = resources.pop("walltime", None)
         self.requested_inputfiles = resources.pop("inputfiles", None)
         self.used_inputfiles = used_resources.pop("inputfiles", None)
@@ -97,7 +99,7 @@ class Job(object):
         """
         :return: Time that passes while job is running
         """
-        return self._walltime
+        return self._streamtime + self.calculation_time()
 
     def calculation_time(self):
         print("WALLTIME: Job {} @ {}".format(repr(self), time.now))
@@ -106,12 +108,13 @@ class Job(object):
     async def transfer_inputfiles(self):
         print("TRANSFERING INPUTFILES: Job {} @ {}".format(repr(self), time.now))
         if self.drone.fileprovider and self.used_inputfiles:
-            stream_time = await self.drone.fileprovider.transfer_inputfiles(
+            self._streamtime = await self.drone.fileprovider.transfer_inputfiles(
                 self.drone, self.requested_inputfiles, repr(self)
             )
+
         print(
             "streamed inputfiles {} for job {} in {} timeunits, finished @ {}".format(
-                self.requested_inputfiles.keys(), repr(self), stream_time, time.now
+                self.requested_inputfiles.keys(), repr(self), self._streamtime, time.now
             )
         )
 
