@@ -47,6 +47,6 @@ class CacheAlgorithm(object):
             if self._storage.free_space() < candidate.filesize:
                 return self._context_based_consideration(candidate)
             else:
-                return {}
+                return set()
         else:
             return {candidate}
