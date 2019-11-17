@@ -84,7 +84,7 @@ class Storage(object):
             )
         )
         await (time + self.deletion_duration)
-        await self._usedstorage.decrease(**{"usedsize": file.filesize})
+        await self._usedstorage.decrease(usedsize=file.filesize)
         self.filenames.remove(file.filename)
         self.files.remove(file)
 
