@@ -55,7 +55,7 @@ class Storage(object):
 
     @property
     def usedstorage(self):
-        return dict(self._usedstorage.levels)["usedsize"]
+        return self._usedstorage.levels.usedsize
 
     def free_space(self):
         return self.storagesize - self.usedstorage
