@@ -1,7 +1,9 @@
 from cobald import interfaces
-from usim import time, Scope, instant, Capacities, ResourcesUnavailable
+from typing import Optional
+from usim import time, Scope, instant, Capacities, ResourcesUnavailable, Queue
 
 from lapis.job import Job
+from lapis.file_provider import FileProvider
 
 
 class ResourcesExceeded(Exception):
@@ -12,9 +14,11 @@ class Drone(interfaces.Pool):
     def __init__(
         self,
         scheduler,
-        pool_resources: dict,
-        scheduling_duration: float,
+        fileprovider: FileProvider = FileProvider(),
+        pool_resources: Optional[dict] = None,
+        scheduling_duration: Optional[float] = None,
         ignore_resources: list = None,
+        sitename: str = None,
     ):
         """
         :param scheduler:
@@ -23,6 +27,8 @@ class Drone(interfaces.Pool):
         """
         super(Drone, self).__init__()
         self.scheduler = scheduler
+        self.fileprovider = fileprovider
+        self.sitename = sitename
         self.pool_resources = pool_resources
         self.resources = Capacities(**pool_resources)
         # shadowing requested resources to determine jobs to be killed
@@ -44,6 +50,7 @@ class Drone(interfaces.Pool):
         self.jobs = 0
         self._allocation = None
         self._utilisation = None
+        self._job_queue = Queue()
 
     @property
     def theoretical_available_resources(self):
@@ -60,6 +67,9 @@ class Drone(interfaces.Pool):
         self._supply = 1
         self.scheduler.register_drone(self)
         await sampling_required.put(self)
+        async with Scope() as scope:
+            async for job, kill in self._job_queue:
+                scope.do(self._run_job(job=job, kill=kill))
 
     @property
     def supply(self) -> float:
@@ -103,7 +113,10 @@ class Drone(interfaces.Pool):
         await sampling_required.put(self)  # TODO: introduce state of drone
         await (time + 1)
 
-    async def start_job(self, job: Job, kill: bool = False):
+    async def schedule_job(self, job: Job, kill: bool = False):
+        await self._job_queue.put((job, kill))
+
+    async def _run_job(self, job: Job, kill: bool):
         """
         Method manages to start a job in the context of the given drone.
         The job is started independent of available resources. If resources of
@@ -140,6 +153,11 @@ class Drone(interfaces.Pool):
                                 pass
                     self.scheduler.update_drone(self)
                     await job_execution.done
+                    print(
+                        "finished job {} on drone {} @ {}".format(
+                            repr(job), repr(self), time.now
+                        )
+                    )
             except ResourcesUnavailable:
                 await instant
                 job_execution.cancel()
@@ -147,6 +165,8 @@ class Drone(interfaces.Pool):
                 await instant
                 job_execution.cancel()
             self.jobs -= 1
+            job.drone = None
+            await self.scheduler.job_finished(job)
             self._utilisation = self._allocation = None
             self.scheduler.update_drone(self)
             await sampling_required.put(self)

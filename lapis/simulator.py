@@ -6,6 +6,7 @@ from usim import run, time, until, Scope, Queue
 
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
+from lapis.file_provider import FileProvider
 from lapis.monitor.general import (
     user_demand,
     job_statistics,
@@ -13,6 +14,9 @@ from lapis.monitor.general import (
     pool_status,
     configuration_information,
     job_events,
+    storage_status,
+    storage_connection,
+    remote_connection,
 )
 from lapis.monitor import Monitoring
 from lapis.monitor.cobald import drone_statistics, pool_statistics
@@ -26,12 +30,14 @@ class Simulator(object):
         random.seed(seed)
         self.job_queue = Queue()
         self.pools = []
+        self.fileprovider = FileProvider(cache_hitrate_approach=True)
         self.controllers = []
         self.job_scheduler = None
         self.job_generator = None
         self.cost = 0
         self._job_generators = []
         self.monitoring = None
+        self.duration = None
         self.enable_monitoring()
 
     def enable_monitoring(self):
@@ -44,6 +50,9 @@ class Simulator(object):
         self.monitoring.register_statistic(resource_statistics)
         self.monitoring.register_statistic(pool_status)
         self.monitoring.register_statistic(configuration_information)
+        self.monitoring.register_statistic(storage_status)
+        self.monitoring.register_statistic(storage_connection)
+        self.monitoring.register_statistic(remote_connection)
 
     def create_job_generator(self, job_input, job_reader):
         self._job_generators.append((job_input, job_reader))
@@ -53,11 +62,17 @@ class Simulator(object):
         for pool in pool_reader(
             iterable=pool_input,
             pool_type=pool_type,
-            make_drone=partial(Drone, self.job_scheduler),
+            make_drone=partial(Drone, self.job_scheduler, self.fileprovider),
         ):
             self.pools.append(pool)
             if controller:
                 self.controllers.append(controller(target=pool, rate=1))
+
+    def create_storage(self, storage_input, storage_content_input, storage_reader):
+        for storage in storage_reader(
+            storage=storage_input, storage_content=storage_content_input
+        ):
+            self.fileprovider.add_storage_element(storage)
 
     def create_scheduler(self, scheduler_type):
         self.job_scheduler = scheduler_type(job_queue=self.job_queue)
@@ -77,7 +92,8 @@ class Simulator(object):
             for controller in self.controllers:
                 while_running.do(controller.run(), volatile=True)
             while_running.do(self.monitoring.run(), volatile=True)
-        print(f"Finished simulation at {time.now}")
+        self.duration = time.now
+        print(f"Finished simulation at {self.duration}")
 
     async def _queue_jobs(self, job_input, job_reader):
         await job_to_queue_scheduler(
