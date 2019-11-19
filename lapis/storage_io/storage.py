@@ -9,7 +9,7 @@ def storage_reader(storage, storage_content):
         yield Storage(
             name=row["name"],
             sitename=row["sitename"],
-            storagesize=int(row["cachesizeMB"]),
+            storagesize=int(row["cachesizeGB"]),
             files=storage_content[row["name"]],
         )
 

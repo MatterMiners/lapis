@@ -112,11 +112,11 @@ class Job(object):
                 self.drone, self.requested_inputfiles, repr(self)
             )
 
-        print(
-            "streamed inputfiles {} for job {} in {} timeunits, finished @ {}".format(
-                self.requested_inputfiles.keys(), repr(self), self._streamtime, time.now
+            print(
+                "streamed inputfiles {} for job {} in {} timeunits, finished @ {}".format(
+                    self.requested_inputfiles.keys(), repr(self), self._streamtime, time.now
+                )
             )
-        )
 
     async def run(self):
         self.in_queue_until = time.now
