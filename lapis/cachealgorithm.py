@@ -6,6 +6,13 @@ from lapis.utilities.cache_cleanup_implementations import sort_files_by_cachedsi
 
 class CacheAlgorithm(object):
     def __init__(self, storage, additional_information: Optional[str] = None):
+        """
+        Cache Algorithm class defining the handling of uncached files.
+        It's functionality is called via the consider() function.
+        :param storage: storage object that this algorithm is
+        :param additional_information: placeholder for additional external
+        information that might be passed to the cache algoritm. 
+        """
         self._storage = storage
         self._additional_information = additional_information
 
@@ -43,6 +50,14 @@ class CacheAlgorithm(object):
             return {candidate}
 
     def consider(self, candidate: RequestedFile) -> Optional[Set[RequestedFile]]:
+        """
+        Decides whether the requested file should be cached.
+        The decision is split into a decision that is based on the
+        requested file only and a decision that takes the overall context (current
+        cache state, other cached files) into account.
+        :param candidate:
+        :return:
+        """
         if self._file_based_consideration(candidate):
             if self._storage.free_space() < candidate.filesize:
                 return self._context_based_consideration(candidate)
