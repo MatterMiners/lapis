@@ -11,7 +11,7 @@ class CacheAlgorithm(object):
         It's functionality is called via the consider() function.
         :param storage: storage object that this algorithm is
         :param additional_information: placeholder for additional external
-        information that might be passed to the cache algoritm. 
+        information that might be passed to the cache algoritm.
         """
         self._storage = storage
         self._additional_information = additional_information

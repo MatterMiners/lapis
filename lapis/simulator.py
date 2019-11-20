@@ -6,7 +6,7 @@ from usim import run, time, until, Scope, Queue
 
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
-from lapis.file_provider import FileProvider
+from lapis.connection import Connection
 from lapis.monitor.general import (
     user_demand,
     job_statistics,
@@ -30,7 +30,7 @@ class Simulator(object):
         random.seed(seed)
         self.job_queue = Queue()
         self.pools = []
-        self.fileprovider: FileProvider
+        self.connection: Connection
         self.controllers = []
         self.job_scheduler = None
         self.job_generator = None
@@ -59,32 +59,32 @@ class Simulator(object):
 
     def create_pools(self, pool_input, pool_reader, pool_type, controller=None):
         assert self.job_scheduler, "Scheduler needs to be created before pools"
-        assert self.fileprovider, (
+        assert self.connection, (
             "Connection module needs to be created before " "storages"
         )
         for pool in pool_reader(
             iterable=pool_input,
             pool_type=pool_type,
-            make_drone=partial(Drone, self.job_scheduler, self.fileprovider),
+            make_drone=partial(Drone, self.job_scheduler, self.connection),
         ):
             self.pools.append(pool)
             if controller:
                 self.controllers.append(controller(target=pool, rate=1))
 
     def create_storage(self, storage_input, storage_content_input, storage_reader):
-        assert self.fileprovider, (
+        assert self.connection, (
             "Connection module needs to be created before " "storages"
         )
         for storage in storage_reader(
             storage=storage_input, storage_content=storage_content_input
         ):
-            self.fileprovider.add_storage_element(storage)
+            self.connection.add_storage_element(storage)
 
     def create_scheduler(self, scheduler_type):
         self.job_scheduler = scheduler_type(job_queue=self.job_queue)
 
     def create_connection_module(self, remote_throughput, cache_hitrate=None):
-        self.fileprovider = FileProvider(remote_throughput, cache_hitrate)
+        self.connection = Connection(remote_throughput, cache_hitrate)
 
     def run(self, until=None):
         print(f"running until {until}")

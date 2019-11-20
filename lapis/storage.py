@@ -6,6 +6,15 @@ from lapis.files import StoredFile, RequestedFile
 from lapis.cachealgorithm import CacheAlgorithm
 
 
+class Storage:
+    pass
+
+
+class LookUpInformation(NamedTuple):
+    cached_filesize: int
+    storage: Storage
+
+
 class Storage(object):
 
     __slots__ = (
@@ -78,14 +87,13 @@ class Storage(object):
         )
         await (time + self.deletion_duration)
         await self._usedstorage.decrease(usedsize=file.filesize)
-        # self.filenames.remove(file.filename)
         self.files.pop(file.filename)
 
     async def add_to_storage(self, file: RequestedFile, job_repr):
         """
         Adds file to storage object transfering it through the storage objects
         connection. This should be sufficient for now because files are only added
-        to the storage when they are also transfered through the FileProviders remote
+        to the storage when they are also transfered through the Connections remote
         connection. If this simulator is extended to include any kind of
         direct file placement this has to be adapted.
         :param file:
@@ -98,10 +106,9 @@ class Storage(object):
             )
         )
         file = file.convert_to_stored_file_object(time.now)
-        await self.connection.transfer(file.filesize)
         await self._usedstorage.increase(usedsize=file.filesize)
-        # self.filenames.add(file.filename)
         self.files[file.filename] = file
+        await self.connection.transfer(file.filesize)
 
     async def update_file(self, stored_file: StoredFile, job_repr):
         """
@@ -165,10 +172,7 @@ class Storage(object):
     async def look_up_file(self, requested_file: RequestedFile, queue: Queue, job_repr):
         """
         Searches storage object for the requested_file and sends result (amount of
-        cached data, storage object) to queue if queue was passed as parameter.
-        If no queue was passed the result is returned normally. This might be needed
-        when looking up files during coordination and is to be removed if it's not
-        necessary.
+        cached data, storage object) to the queue.
         :param requested_file:
         :param queue:
         :param job_repr: Needed for debug output, will be replaced
@@ -179,10 +183,6 @@ class Storage(object):
                 job_repr, requested_file.filename, repr(self), time.now
             )
         )
-
-        class LookUpInformation(NamedTuple):
-            cached_filesize: int
-            storage: Storage
 
         try:
             await queue.put(

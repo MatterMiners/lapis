@@ -3,7 +3,7 @@ from typing import Optional
 from usim import time, Scope, instant, Capacities, ResourcesUnavailable, Queue
 
 from lapis.job import Job
-from lapis.file_provider import FileProvider
+from lapis.connection import Connection
 
 
 class ResourcesExceeded(Exception):
@@ -14,7 +14,7 @@ class Drone(interfaces.Pool):
     def __init__(
         self,
         scheduler,
-        fileprovider: FileProvider = FileProvider(),
+        connection: Connection = Connection(),
         pool_resources: Optional[dict] = None,
         scheduling_duration: Optional[float] = None,
         ignore_resources: list = None,
@@ -27,7 +27,7 @@ class Drone(interfaces.Pool):
         """
         super(Drone, self).__init__()
         self.scheduler = scheduler
-        self.fileprovider = fileprovider
+        self.connection = connection
         self.sitename = sitename
         self.pool_resources = pool_resources
         self.resources = Capacities(**pool_resources)

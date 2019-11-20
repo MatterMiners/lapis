@@ -16,6 +16,7 @@ class Job(object):
         "resources",
         "used_resources",
         "_walltime",
+        "_calculationtime",
         "_streamtime",
         "requested_walltime",
         "queue_date",
@@ -62,6 +63,7 @@ class Job(object):
                 )
                 self.resources[key] = self.used_resources[key]
         self._walltime = used_resources.pop("walltime")
+        self._calculationtime = walltime_models["maxeff"](self, self._walltime)
         self._streamtime = 0
         self.requested_walltime = resources.pop("walltime", None)
         self.requested_inputfiles = resources.pop("inputfiles", None)
@@ -99,22 +101,26 @@ class Job(object):
         """
         :return: Time that passes while job is running
         """
-        return self._streamtime + self.calculation_time()
+        return self._streamtime + self.calculation_time
 
+    @property
     def calculation_time(self):
         print("WALLTIME: Job {} @ {}".format(repr(self), time.now))
-        return walltime_models["maxeff"](self, self._walltime)
+        return self._calculationtime
 
     async def transfer_inputfiles(self):
         print("TRANSFERING INPUTFILES: Job {} @ {}".format(repr(self), time.now))
-        if self.drone.fileprovider and self.used_inputfiles:
-            self._streamtime = await self.drone.fileprovider.transfer_inputfiles(
+        if self.drone.connection and self.used_inputfiles:
+            self._streamtime = await self.drone.connection.transfer_inputfiles(
                 self.drone, self.requested_inputfiles, repr(self)
             )
 
             print(
                 "streamed inputfiles {} for job {} in {} timeunits, finished @ {}".format(
-                    self.requested_inputfiles.keys(), repr(self), self._streamtime, time.now
+                    self.requested_inputfiles.keys(),
+                    repr(self),
+                    self._streamtime,
+                    time.now,
                 )
             )
 
@@ -130,7 +136,7 @@ class Job(object):
             )
         try:
             await self.transfer_inputfiles()
-            await (time + self.calculation_time())
+            await (time + self.calculation_time)
         except CancelTask:
             self._success = False
         except BaseException:

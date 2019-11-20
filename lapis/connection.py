@@ -8,7 +8,7 @@ from usim import Queue, Scope, time, Pipe
 import random
 
 
-class FileProvider(object):
+class Connection(object):
 
     __slots__ = ("storages", "remote_connection", "cachehitrate")
 
@@ -19,7 +19,8 @@ class FileProvider(object):
 
     def add_storage_element(self, storage_element: Storage):
         """
-        Register storage element in FileProvider clustering storage elements by sitename
+        Register storage element in Connetion module clustering storage elements by
+        sitename
         :param storage_element:
         :return:
         """
@@ -36,7 +37,7 @@ class FileProvider(object):
         cached in a storage element and the storage element for all reachable storage
         objects on the drone's site. The tuples are sorted by amount of cached data
         and the storage object where the biggest part of the file is cached is
-        returned. If the file is not cached in any storage object the fileproviders
+        returned. If the file is not cached in any storage object the connection module
         remote connection is returned.
         :param requested_file:
         :param dronesite:
@@ -79,9 +80,11 @@ class FileProvider(object):
             requested_file, dronesite, job_repr
         )
 
-        if used_connection == self.remote_connection:
+        if used_connection == self.remote_connection and self.storages.get(
+            dronesite, None
+        ):
             await sampling_required.put(used_connection)
-            potential_cache = random.choice(self.storages.get(dronesite, None))
+            potential_cache = random.choice(self.storages[dronesite])
             await used_connection.transfer(requested_file.filesize)
             if potential_cache:
                 await potential_cache.apply_caching_decision(requested_file, job_repr)
@@ -109,7 +112,9 @@ class FileProvider(object):
         start_time = time.now
         async with Scope() as scope:
             for inputfilename, inputfilespecs in requested_files.items():
-                requested_file = RequestedFile(inputfilename, inputfilespecs)
+                requested_file = RequestedFile(
+                    inputfilename, inputfilespecs["filesize"]
+                )
                 if self.cachehitrate is not None:
 
                     scope.do(
