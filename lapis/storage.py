@@ -34,26 +34,16 @@ class Storage(object):
         self.deletion_duration = 5
         self.update_duration = 1
         self.storagesize = storagesize
-        self.files = self._dict_to_file_object(files)
-        self.filenames = set(file.filename for file in self.files)
+        self.files = {
+            filename: StoredFile(filename, filespecs)
+            for filename, filespecs in files.items()
+        }
         self._usedstorage = Resources(
-            usedsize=sum(file.filesize for file in self.files)
+            usedsize=sum(file.filesize for file in list(self.files.values()))
         )
         self.cachealgorithm = CacheAlgorithm(self)
         self.connection = Pipe(throughput_limit)
         self.__repr__()
-
-    def _initial_used_storage(self):
-        initial_value = sum(file.filesize for file in self.files)
-        print("{} set initial value {}".format(self.name, initial_value))
-        return initial_value
-
-    def _dict_to_file_object(self, files):
-        files_set = set()
-        if files:
-            for filename, filespecs in files.items():
-                files_set.add(StoredFile(filename, filespecs))
-        return files_set
 
     @property
     def usedstorage(self):
@@ -62,13 +52,16 @@ class Storage(object):
     def free_space(self):
         return self.storagesize - self.usedstorage
 
-    def find_file(self, filename: str) -> bool:
+    def find_file(self, filename: str) -> StoredFile:
         """
         Searches storage object for file with passed filename
         :param filename:
-        :return:
+        :return: corresponding file object
         """
-        return filename in self.files
+        try:
+            return self.files[filename]
+        except KeyError:
+            raise KeyError
 
     async def remove_from_storage(self, file: StoredFile, job_repr):
         """
@@ -85,8 +78,8 @@ class Storage(object):
         )
         await (time + self.deletion_duration)
         await self._usedstorage.decrease(usedsize=file.filesize)
-        self.filenames.remove(file.filename)
-        self.files.remove(file)
+        # self.filenames.remove(file.filename)
+        self.files.pop(file.filename)
 
     async def add_to_storage(self, file: RequestedFile, job_repr):
         """
@@ -105,11 +98,10 @@ class Storage(object):
             )
         )
         file = file.convert_to_stored_file_object(time.now)
-        print(file.filesize)
         await self.connection.transfer(file.filesize)
         await self._usedstorage.increase(usedsize=file.filesize)
-        self.filenames.add(file.filename)
-        self.files.add(file)
+        # self.filenames.add(file.filename)
+        self.files[file.filename] = file
 
     async def update_file(self, stored_file: StoredFile, job_repr):
         """
@@ -192,25 +184,19 @@ class Storage(object):
             cached_filesize: int
             storage: Storage
 
-        if queue:
-            try:
-                print(self.find_file(requested_file.filename).filesize)
-                await queue.put(
-                    LookUpInformation(
-                        self.find_file(requested_file.filename).filesize, self
-                    )
+        try:
+            await queue.put(
+                LookUpInformation(
+                    self.find_file(requested_file.filename).filesize, self
                 )
-            except AttributeError:
-                print(
-                    "File {} not cached on any reachable storage".format(
-                        requested_file.filename
-                    )
-                )
-                await queue.put(LookUpInformation(0, self))
-        else:
-            return LookUpInformation(
-                self.find_file(requested_file.filename).filesize, self
             )
+        except KeyError:
+            print(
+                "File {} not cached on any reachable storage".format(
+                    requested_file.filename
+                )
+            )
+            await queue.put(LookUpInformation(0, self))
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self.name or id(self))

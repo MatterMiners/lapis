@@ -30,7 +30,7 @@ class Simulator(object):
         random.seed(seed)
         self.job_queue = Queue()
         self.pools = []
-        self.fileprovider = FileProvider(cache_hitrate_approach=True)
+        self.fileprovider: FileProvider
         self.controllers = []
         self.job_scheduler = None
         self.job_generator = None
@@ -59,6 +59,9 @@ class Simulator(object):
 
     def create_pools(self, pool_input, pool_reader, pool_type, controller=None):
         assert self.job_scheduler, "Scheduler needs to be created before pools"
+        assert self.fileprovider, (
+            "Connection module needs to be created before " "storages"
+        )
         for pool in pool_reader(
             iterable=pool_input,
             pool_type=pool_type,
@@ -69,6 +72,9 @@ class Simulator(object):
                 self.controllers.append(controller(target=pool, rate=1))
 
     def create_storage(self, storage_input, storage_content_input, storage_reader):
+        assert self.fileprovider, (
+            "Connection module needs to be created before " "storages"
+        )
         for storage in storage_reader(
             storage=storage_input, storage_content=storage_content_input
         ):
@@ -76,6 +82,9 @@ class Simulator(object):
 
     def create_scheduler(self, scheduler_type):
         self.job_scheduler = scheduler_type(job_queue=self.job_queue)
+
+    def create_connection_module(self, remote_throughput, cache_hitrate=None):
+        self.fileprovider = FileProvider(remote_throughput, cache_hitrate)
 
     def run(self, until=None):
         print(f"running until {until}")

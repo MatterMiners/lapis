@@ -10,6 +10,7 @@ def storage_reader(storage, storage_content):
             name=row["name"],
             sitename=row["sitename"],
             storagesize=int(row["cachesizeGB"]),
+            throughput_limit=int(row["throughput_limit"]),
             files=storage_content[row["name"]],
         )
 

@@ -83,8 +83,10 @@ def cli(ctx, seed, until, log_tcp, log_file, log_telegraf):
         click.Choice(list(storage_import_mapper.keys())),
     ),
 )
+@click.option("--remote-throughput", "remote_throughput", type=float, default=10)
+@click.option("--cache-hitrate", "cache_hitrate", type=float, default=None)
 @click.pass_context
-def static(ctx, job_file, pool_file, storage_files):
+def static(ctx, job_file, pool_file, storage_files, remote_throughput, cache_hitrate):
     click.echo("starting static environment")
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
@@ -92,6 +94,8 @@ def static(ctx, job_file, pool_file, storage_files):
         job_input=file, job_reader=job_import_mapper[file_type]
     )
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
+    simulator.create_connection_module(remote_throughput, cache_hitrate)
+
     for current_pool in pool_file:
         pool_file, pool_file_type = current_pool
         simulator.create_pools(

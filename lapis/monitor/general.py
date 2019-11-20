@@ -231,7 +231,7 @@ def storage_status(storage: Storage) -> list:
             "storage": repr(storage),
             "usedstorage": storage.usedstorage,
             "storagesize": storage.storagesize,
-            "numberoffiles": len(storage.filenames),
+            "numberoffiles": len(storage.files),
         }
     ]
     return results

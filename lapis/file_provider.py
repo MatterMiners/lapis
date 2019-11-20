@@ -10,18 +10,12 @@ import random
 
 class FileProvider(object):
 
-    __slots__ = (
-        "storages",
-        "remote_connection",
-        "cache_hitrate_approach",
-        "cachehitrate",
-    )
+    __slots__ = ("storages", "remote_connection", "cachehitrate")
 
-    def __init__(self, throughput=100, cache_hitrate_approach=False):
+    def __init__(self, throughput=100, cache_hitrate=None):
         self.storages = dict()
         self.remote_connection = Pipe(throughput=throughput)
-        self.cache_hitrate_approach = cache_hitrate_approach
-        self.cachehitrate = 0.6
+        self.cachehitrate = cache_hitrate
 
     def add_storage_element(self, storage_element: Storage):
         """
@@ -111,11 +105,12 @@ class FileProvider(object):
         :param job_repr:
         :return:
         """
+        print("registered caches", self.storages)
         start_time = time.now
         async with Scope() as scope:
             for inputfilename, inputfilespecs in requested_files.items():
                 requested_file = RequestedFile(inputfilename, inputfilespecs)
-                if self.cache_hitrate_approach:
+                if self.cachehitrate is not None:
 
                     scope.do(
                         self.transfer_by_cache_hitrate(
