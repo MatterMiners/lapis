@@ -6,13 +6,9 @@ from lapis.files import StoredFile, RequestedFile
 from lapis.cachealgorithm import CacheAlgorithm
 
 
-class Storage:
-    pass
-
-
 class LookUpInformation(NamedTuple):
     cached_filesize: int
-    storage: Storage
+    storage: "Storage"
 
 
 class Storage(object):
