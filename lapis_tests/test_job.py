@@ -3,7 +3,7 @@ from usim import Scope, time
 
 from lapis.drone import Drone
 from lapis.job import Job
-from lapis_tests import via_usim, DummyScheduler
+from lapis_tests import via_usim, DummyScheduler, DummyDrone
 
 
 class TestJob(object):
@@ -27,10 +27,11 @@ class TestJob(object):
 
     @via_usim
     async def test_run_job(self):
+        drone = DummyDrone()
         job = Job(resources={"walltime": 50}, used_resources={"walltime": 10})
         assert float("inf") == job.waiting_time
         async with Scope() as scope:
-            scope.do(job.run())
+            scope.do(job.run(drone))
         assert 10 == time
         assert 0 == job.waiting_time
         assert job.successful

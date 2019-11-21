@@ -127,7 +127,7 @@ class Drone(interfaces.Pool):
 
             self._utilisation = self._allocation = None
 
-            job_execution = scope.do(job.run())
+            job_execution = scope.do(job.run(self))
             self.jobs += 1
             try:
                 async with self.resources.claim(
@@ -154,7 +154,6 @@ class Drone(interfaces.Pool):
                 await instant
                 job_execution.cancel()
             self.jobs -= 1
-            job.drone = None
             await self.scheduler.job_finished(job)
             self._utilisation = self._allocation = None
             self.scheduler.update_drone(self)
