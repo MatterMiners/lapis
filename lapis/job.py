@@ -92,6 +92,7 @@ class Job(object):
         return float("Inf")
 
     async def run(self, drone: "Drone"):
+        assert drone, "Jobs cannot run without a drone being assigned"
         self.drone = drone
         self.in_queue_until = time.now
         self._success = None
