@@ -91,18 +91,22 @@ class Job(object):
             return self.in_queue_until - self.in_queue_since
         return float("Inf")
 
-    async def run(self):
+    async def run(self, drone: "Drone"):
+        self.drone = drone
         self.in_queue_until = time.now
         self._success = None
         await sampling_required.put(self)
         try:
             await (time + self.walltime)
         except CancelTask:
+            self.drone = None
             self._success = False
         except BaseException:
+            self.drone = None
             self._success = False
             raise
         else:
+            self.drone = None
             self._success = True
         await sampling_required.put(self)
 
