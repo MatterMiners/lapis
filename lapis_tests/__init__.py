@@ -43,3 +43,7 @@ class DummyScheduler:
     @staticmethod
     def update_drone(drone: Drone):
         pass
+
+
+class DummyDrone:
+    pass

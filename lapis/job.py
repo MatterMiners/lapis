@@ -124,7 +124,10 @@ class Job(object):
                 )
             )
 
-    async def run(self):
+
+    async def run(self, drone: "Drone"):
+        assert drone, "Jobs cannot run without a drone being assigned"
+        self.drone = drone
         self.in_queue_until = time.now
         self._success = None
         await sampling_required.put(self)
@@ -138,11 +141,14 @@ class Job(object):
             await self.transfer_inputfiles()
             await (time + self.calculation_time)
         except CancelTask:
+            self.drone = None
             self._success = False
         except BaseException:
+            self.drone = None
             self._success = False
             raise
         else:
+            self.drone = None
             self._success = True
         await sampling_required.put(self)
 
