@@ -74,6 +74,13 @@ COBalD-specific Monitoring
 .. autofunction:: lapis.monitor.cobald.drone_statistics
 .. autofunction:: lapis.monitor.cobald.pool_statistics
 
+Caching-specific Monitoring
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. TODO::
+
+    Will be added as soon as the caching branch is merged.
+
 Telegraf
 --------
 
