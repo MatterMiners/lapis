@@ -77,6 +77,11 @@ COBalD-specific Monitoring
 Telegraf
 --------
 
+LAPIS supports sending monitoring information to telegraf via the CLI option
+``--log-telegraf``. The monitoring information for telegraf are sent to the
+default UDP logging port ``logging.handlers.DEFAULT_UDP_LOGGING_PORT`` that is
+port ``9021``.
+
 Resource Status
 ~~~~~~~~~~~~~~~
 
