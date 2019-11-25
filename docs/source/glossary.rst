@@ -18,15 +18,28 @@ Glossary of Terms
          disintegrate.
 
    Drone
-      Partitionable placeholder for jobs. In the current state of LAPIS a drone
-      represents a single worker node provided by a specific :term:`pool`.
+      Partitionable placeholder for :term:`jobs <Job>`. In the current state of
+      LAPIS a drone represents a single worker node provided by a specific
+      :term:`pool`.
 
       .. note::
 
          The concept of drones is introduced by TARDIS. Drones integrate
          themselves into an HTCondor overlay batch system and thereby provision
-         the resources for jobs. They act nearly autonomously to e.g. manage
-         shutdown and error handling if required.
+         the resources for :term:`jobs <Job>`. They act nearly autonomously to
+         e.g. manage shutdown and error handling if required.
+
+   Job
+      A task that requires a defined collection of resources to be successfully
+      processed. Processing of jobs is done by :term:`drones <Drone>`.
+
+   Job Generator
+      The Job Generator takes care to continuously create :term:`jobs <Job>`
+      that are appended to a central :term:`Job Queue` based on job information
+      provided by one or several job input files.
+
+   Job Queue
+      Wait queue that contains the :term:`jobs <Job>` in order of creation time.
 
    Opportunistic Resource
       Any resources not permanently dedicated to but temporarily available for
@@ -37,6 +50,11 @@ Glossary of Terms
       defines the number of worker nodes having a specific combination of
       available resources e.g. number of cores, memory, or disk. A resource
       provider can provide a number of pools.
+
+   Scheduler
+      An autonomous process that assigns :term:`jobs <Job>` for execution from
+      the :term:`Job Queue` to any appropriate :term:`drone`. The process
+      of job-to-drone-assignments builds on a specified matchmaking logic.
 
    Utilisation
       Information about the effectiveness of use of resources acquired by a
