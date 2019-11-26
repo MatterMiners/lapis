@@ -63,7 +63,7 @@ intialised with a fixed amount of :term:`drones <Drone>`, the number of
 Controllers
 ~~~~~~~~~~~
 
-Each :term:`pool` is started with an appropriate controller. Each controller runs
+Each :term:`pool` is managed by a controller. Each controller runs
 periodically to check :term:`allocation` and :term:`utilisation` of assigned
 :term:`pool(s) <Pool>` to regulate the demand of :term:`drones <Drone>` for the
 given :term:`pool`.
