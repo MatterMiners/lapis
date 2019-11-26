@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Dict
 
 import logging.handlers
 
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from lapis.simulator import Simulator
 
 
-def resource_statistics(drone: Drone) -> list:
+def resource_statistics(drone: Drone) -> List[Dict]:
     """
     Log ratio of used and requested resources for drones.
 
@@ -53,7 +53,7 @@ resource_statistics.logging_formatter = {
 }
 
 
-def user_demand(job_queue: JobQueue) -> list:
+def user_demand(job_queue: JobQueue) -> List[Dict]:
     """
     Log global user demand.
 
@@ -75,7 +75,7 @@ user_demand.logging_formatter = {
 }
 
 
-def job_statistics(scheduler: CondorJobScheduler) -> list:
+def job_statistics(scheduler: CondorJobScheduler) -> List[Dict]:
     """
     Log number of jobs running in all drones.
 
@@ -113,7 +113,7 @@ job_statistics.logging_formatter = {
 }
 
 
-def job_events(job: Job) -> list:
+def job_events(job: Job) -> List[Dict]:
     """
     Log relevant events for jobs. Relevant events are
 
@@ -175,7 +175,7 @@ job_events.logging_formatter = {
 }
 
 
-def pool_status(pool: Pool) -> list:
+def pool_status(pool: Pool) -> List[Dict]:
     """
     Log state changes of pools and drones.
 
@@ -197,7 +197,7 @@ pool_status.logging_formatter = {
 }
 
 
-def configuration_information(simulator: "Simulator") -> list:
+def configuration_information(simulator: "Simulator") -> List[Dict]:
     """
     Log information how pools and drones are configured, e.g. provided resources.
 

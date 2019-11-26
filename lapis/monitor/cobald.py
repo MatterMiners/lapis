@@ -2,13 +2,14 @@ import logging
 
 from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
+from typing import List, Dict
 
 from lapis.drone import Drone
 from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler
 from lapis.pool import Pool
 
 
-def drone_statistics(drone: Drone) -> list:
+def drone_statistics(drone: Drone) -> List[Dict]:
     """
     Collect allocation, utilisation, demand and supply of drones.
 
@@ -41,7 +42,7 @@ drone_statistics.logging_formatter = {
 }
 
 
-def pool_statistics(pool: Pool) -> list:
+def pool_statistics(pool: Pool) -> List[Dict]:
     """
     Collect allocation, utilisation, demand and supply of pools.
 
