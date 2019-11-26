@@ -7,6 +7,6 @@ This is a collection of separate topics on LAPIS.
     :maxdepth: 1
 
     concept
+    monitoring
     cli
     support
-    monitoring
