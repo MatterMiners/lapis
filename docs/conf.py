@@ -198,6 +198,7 @@ epub_exclude_files = ["search.html"]
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "usim": ("https://usim.readthedocs.io/en/stable", None),
+    "cobald": ("https://cobald.readthedocs.io/en/stable", None),
 }
 
 # -- Options for todo extension ----------------------------------------------
