@@ -13,14 +13,14 @@ LAPIS -- Simulations for Opportunistic Resources
    source/topics/overview
    source/glossary
 
-The LAPIS simulator enables the simulation of job execution and scheduling with
-a focus on :term:`opportunistic resources <Opportunistic Resource>`. The
+The LAPIS simulator enables the simulation of :term:`job` execution and scheduling
+with a focus on :term:`opportunistic resources <Opportunistic Resource>`. The
 scheduling internally builds on concepts from `HTCondor`_. The
 :term:`opportunistic resources <Opportunistic Resource>` are managed building on
 the projects `TARDIS`_ and `COBalD`_.
 The simulation builds on importing well-established input formats to generate
-the jobs and set up the infrastructure either in an opportunistic or
-classical fashion.
+the :term:`jobs <Job>` and set up the infrastructure either in an opportunistic
+or classical fashion.
 
 Simple Command Line Interface
 -----------------------------
@@ -38,8 +38,8 @@ mode enabling you to compare the various simulation outputs.
       :title: Static
 
       The *static* environment provides a classical setup where all resources
-      are available exclusively for processing the jobs for the whole runtime
-      of the simulation.
+      are available exclusively for processing the :term:`jobs <Job>` for the
+      whole runtime of the simulation.
 
       .. code-block:: bash
 
@@ -50,8 +50,8 @@ mode enabling you to compare the various simulation outputs.
       :title: Dynamic
 
       The *dynamic* environment builds on volatile, opportunistic resources
-      exclusively. Based on the amount of jobs being processed within the
-      simulation COBalD controllers decide about the integration and
+      exclusively. Based on the amount of :term:`jobs <Job>` being processed
+      within the simulation COBalD controllers decide about the integration and
       disintegration of resources.
 
       .. code-block:: bash
@@ -65,7 +65,7 @@ mode enabling you to compare the various simulation outputs.
       The *hybrid* simulation environment provides a baseline of static resources
       that are available for the whole runtime of the simulation. These static
       resources are dynamically complemented with volatile, opportunistic
-      resources based on current job pressure.
+      resources based on current :term:`job` pressure.
 
       .. code-block:: bash
 
@@ -73,14 +73,14 @@ mode enabling you to compare the various simulation outputs.
             --static-pool-file <path-to-pool-definition> htcondor \
             --dynamic-pool-file <path-to-pool-definition> htcondor
 
-As you can see from the example, you can even mix and match different input
+As you can see from the example above, you can even mix and match different input
 formats to create your required simulation environment. An extensive documentation
 about the CLI can be found in the :doc:`source/topics/cli` chapter.
 
 Simple Framework for Advanced Use Cases
 ---------------------------------------
 
-The implementation of the simulation itself builds on the lightweight simulation
+The simulation is event-driven and builds on the lightweight simulation
 framework `μSim`_. Due to the human-centric API of μSim, it is a charm to actually
 read and extend the simulation for adaptation to various use cases.
 

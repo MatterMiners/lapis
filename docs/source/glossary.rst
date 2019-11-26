@@ -17,6 +17,19 @@ Glossary of Terms
          by COBalD to internally decide about which resources to integrate or
          disintegrate.
 
+   Controller
+      Manages the demand of :term:`drones <Drone>` for a given :term:`pool`.
+      The controller continuously evaluates the :term:`allocation` and
+      :term:`utilisation` of resources for available :term:`drones <Drone>`
+      for a given :term:`pool` and regulates the current demand to ensure that
+      best used :term:`drones <Drone>` are available via the overlay batch system.
+
+      .. note::
+
+         Controllers are also initiated for :term:`static pools <Pool>`.
+         Their functionality is different from those of opportunistic resources
+         by initialising the :term:`drones <Drone>` only once.
+
    Drone
       Partitionable placeholder for :term:`jobs <Job>`. In the current state of
       LAPIS a drone represents a single worker node provided by a specific
@@ -30,7 +43,7 @@ Glossary of Terms
          e.g. manage shutdown and error handling if required.
 
    Job
-      A task that requires a defined collection of resources to be successfully
+      A task that requires a defined set of resources to be successfully
       processed. Processing of jobs is done by :term:`drones <Drone>`.
 
    Job Generator
@@ -51,10 +64,15 @@ Glossary of Terms
       available resources e.g. number of cores, memory, or disk. A resource
       provider can provide a number of pools.
 
+      The simulation differentiates between static and dynamic pools. While
+      the specified number of :term:`drones <Drone>` is initialised once for
+      static pools, the demand for :term:`drones <Drone>` is continually updated
+      by a given :term:`controller` for dynamic pools.
+
    Scheduler
       An autonomous process that assigns :term:`jobs <Job>` for execution from
       the :term:`Job Queue` to any appropriate :term:`drone`. The process
-      of job-to-drone-assignments builds on a specified matchmaking logic.
+      of job-to-drone-assignment builds on a specified matchmaking logic.
 
    Utilisation
       Information about the effectiveness of use of resources acquired by a

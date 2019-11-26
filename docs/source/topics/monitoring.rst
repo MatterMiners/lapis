@@ -16,7 +16,7 @@ object. The monitoring itself runs asynchronously: Whenever elements become
 available in the monitoring queue, the logging process starts.
 
 If you want to define your own logging callable that for example logs information
-about changes to a drone it should follow the following format:
+about changes to a :term:`drone` it should follow the following format:
 
 .. code-block:: python3
 
