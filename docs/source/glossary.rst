@@ -14,7 +14,7 @@ Glossary of Terms
       .. note::
 
          The general concept of allocation and :term:`utilisation` is introduced
-         by COBalD to internally decide about which resources to integrate or
+         by COBalD to internally decide which resources to integrate or
          disintegrate.
 
    Controller

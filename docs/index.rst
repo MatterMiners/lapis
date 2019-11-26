@@ -29,8 +29,8 @@ Although LAPIS is written to provide an extensive framework for setting up
 advanced simulation, it also provides a simple command line interface to get you
 started quickly.
 
-You have the options to start in 1) static, 2) dynamic as well as 3) hybrid
-mode enabling you to compare the various simulation outputs.
+You have the options to start in 1) static, 2) dynamic, or 3) hybrid
+mode enabling you to compare the various simulation scenarios.
 
 .. content-tabs::
 

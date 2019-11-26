@@ -25,7 +25,7 @@ consider the different components to determine what and where to extend function
 Job Generator
 ~~~~~~~~~~~~~
 
-The Job Generator works on the job input files. It takes care to
+The Job Generator processes any job input files. It takes care to
 translate time-based characteristics of the :term:`jobs <Job>` into simulation
 time. For this the timestamp of the first :term:`job` of each job input file is
 taken as the ``base`` timestamp, resulting in a time value of ``0`` for the
