@@ -1,0 +1,13 @@
+category: fixed
+summary: "Proper termination of simulation"
+description: |
+  usim defines non-volatile and volatile running of async tasks within scopes.
+  Volatile tasks can be finished by the outer scope when the outer scope
+  terminates while non-volatile tasks must be finished before leaving the scope.
+  So far, all tasks were run as non-volatile in lapis resulting in simulations
+  that never finished as ``pools``, and ``controllers`` for example were running
+  forever. This is fixed now by starting those tasks as volatile when running
+  a simulation.
+pull requests:
+  - 44
+version: 0.3.0

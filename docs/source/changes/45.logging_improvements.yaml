@@ -1,0 +1,14 @@
+category: changed
+summary: "Object-based logging and logging for job events"
+description: |
+  So far the logging during simulation was flag-based. A soon as the logging flag
+  was set to ``True``, the logging process started. This created a lot of overhead.
+  The logging now is object-based, meaning that only objects with relevant changes
+  for logging are added to a logging queue. Each of those objects in the logging
+  queue are processed by registered logging functions.
+
+  Further, now also the logging of job events is supported through this global
+  logging process.
+pull requests:
+  - 45
+version: 0.3.0
