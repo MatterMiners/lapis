@@ -62,7 +62,7 @@ class Storage(object):
         """
         return self.files[filename]
 
-    async def remove_from_storage(self, file: StoredFile, job_repr):
+    async def remove(self, file: StoredFile, job_repr):
         """
         Deletes file from storage object. The time this operation takes is defined
         by the storages deletion_duration attribute.
@@ -79,7 +79,7 @@ class Storage(object):
         await self._usedstorage.decrease(usedsize=file.filesize)
         self.files.pop(file.filename)
 
-    async def add_to_storage(self, file: RequestedFile, job_repr):
+    async def add(self, file: RequestedFile, job_repr):
         """
         Adds file to storage object transfering it through the storage objects
         connection. This should be sufficient for now because files are only added
@@ -147,7 +147,7 @@ class Storage(object):
         )
         to_be_removed = self.cachealgorithm.consider(requested_file)
         if not to_be_removed:
-            await self.add_to_storage(requested_file, job_repr)
+            await self.add(requested_file, job_repr)
         elif to_be_removed == {requested_file}:
             # file will not be cached because it either does not match
             # conditions or because there is no space in the cache
@@ -157,7 +157,7 @@ class Storage(object):
             )
         else:
             for file in to_be_removed:
-                await self.remove_from_storage(file, job_repr)
+                await self.remove(file, job_repr)
 
     async def look_up_file(self, requested_file: RequestedFile, queue: Queue, job_repr):
         """
