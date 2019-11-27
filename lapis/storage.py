@@ -1,4 +1,4 @@
-from usim import time, Resources, Pipe, Queue
+from usim import time, Resources, Pipe
 
 from typing import Optional, NamedTuple
 
@@ -153,12 +153,11 @@ class Storage(object):
             for file in to_be_removed:
                 await self.remove(file, job_repr)
 
-    async def look_up_file(self, requested_file: RequestedFile, queue: Queue, job_repr):
+    def look_up_file(self, requested_file: RequestedFile, job_repr):
         """
         Searches storage object for the requested_file and sends result (amount of
         cached data, storage object) to the queue.
         :param requested_file:
-        :param queue:
         :param job_repr: Needed for debug output, will be replaced
         :return: (amount of cached data, storage object)
         """
@@ -167,10 +166,9 @@ class Storage(object):
                 job_repr, requested_file.filename, repr(self), time.now
             )
         )
-
         try:
-            await queue.put(
-                LookUpInformation(self.files[requested_file.filename].filesize, self)
+            result = LookUpInformation(
+                self.files[requested_file.filename].filesize, self
             )
         except KeyError:
             print(
@@ -178,7 +176,8 @@ class Storage(object):
                     requested_file.filename
                 )
             )
-            await queue.put(LookUpInformation(0, self))
+            result = LookUpInformation(0, self)
+        return result
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self.name or id(self))

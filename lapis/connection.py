@@ -4,7 +4,7 @@ from lapis.storage import Storage
 from lapis.files import RequestedFile
 from lapis.monitor import sampling_required
 
-from usim import Queue, Scope, time, Pipe
+from usim import Scope, time, Pipe
 import random
 
 
@@ -45,25 +45,20 @@ class Connection(object):
         :return:
         """
         provided_storages = self.storages.get(dronesite, None)
-        if provided_storages:
-            look_up_queue = Queue()
-            async with Scope() as scope:
-                for storage in provided_storages:
-                    scope.do(
-                        storage.look_up_file(requested_file, look_up_queue, job_repr)
-                    )
-            await look_up_queue.close()
+        if provided_storages is not None:
+            look_up_list = []
+            for storage in provided_storages:
+                look_up_list.append(storage.look_up_file(requested_file, job_repr))
             storage_list = sorted(
-                [entry async for entry in look_up_queue],
+                [entry async for entry in look_up_list],
                 key=lambda x: x[0],
                 reverse=True,
             )
-            if storage_list[0].cached_filesize > 0:
-                return storage_list[0].storage
-            else:
-                return self.remote_connection
-        else:
-            return self.remote_connection
+            for entry in storage_list:
+                # TODO: check should better check that size is bigger than requested
+                if entry.cached_filesize > 0:
+                    return entry.storage
+        return self.remote_connection
 
     async def stream_file(self, requested_file: RequestedFile, dronesite, job_repr):
         """
