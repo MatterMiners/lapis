@@ -120,6 +120,7 @@ class Storage(object):
         """
         await self.connection.transfer(file.filesize)
         try:
+            # TODO: needs handling of KeyError
             await self.update_file(self.files[file.filename], job_repr)
         except AttributeError:
             pass
