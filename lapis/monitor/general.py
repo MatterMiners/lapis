@@ -243,7 +243,7 @@ storage_status.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "storage_status"}, resolution=1
+        tags={"tardis", "storage"}, resolution=1
     ),
 }
 
@@ -271,7 +271,7 @@ storage_connection.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "storage_connection"}, resolution=1
+        tags={"tardis", "storage"}, resolution=1
     ),
 }
 
@@ -298,6 +298,6 @@ remote_connection.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "storage_connection"}, resolution=1
+        tags={"tardis"}, resolution=1
     ),
 }

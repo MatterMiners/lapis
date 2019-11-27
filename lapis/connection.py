@@ -165,6 +165,7 @@ class Connection(object):
                 total, connection.throughput, time.now
             )
         )
+        await sampling_required.put(connection)
         await connection.transfer(total=total)
         print(
             "transfering {} with {}, stop @ {}".format(
