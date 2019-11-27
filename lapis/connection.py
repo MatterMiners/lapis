@@ -92,7 +92,7 @@ class Connection(object):
         else:
             await sampling_required.put(used_connection)
             print("now transfering", requested_file.filesize)
-            await used_connection.transfer(requested_file, job_repr)
+            await used_connection.transfer(requested_file.filesize, job_repr)
             print(
                 "Job {}: finished transfering of file {}: {}GB @ {}".format(
                     job_repr, requested_file.filename, requested_file.filesize, time.now
