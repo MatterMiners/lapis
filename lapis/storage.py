@@ -55,14 +55,6 @@ class Storage(object):
     def free_space(self):
         return self.storagesize - self.usedstorage
 
-    def find_file(self, filename: str) -> StoredFile:
-        """
-        Searches storage object for file with passed filename
-        :param filename:
-        :return: corresponding file object
-        """
-        return self.files[filename]
-
     async def remove(self, file: StoredFile, job_repr):
         """
         Deletes file from storage object. The time this operation takes is defined
@@ -128,7 +120,7 @@ class Storage(object):
         """
         await self.connection.transfer(file.filesize)
         try:
-            await self.update_file(self.find_file(file.filename), job_repr)
+            await self.update_file(self.files[file.filename], job_repr)
         except AttributeError:
             pass
 
@@ -177,9 +169,7 @@ class Storage(object):
 
         try:
             await queue.put(
-                LookUpInformation(
-                    self.find_file(requested_file.filename).filesize, self
-                )
+                LookUpInformation(self.files[requested_file.filename].filesize, self)
             )
         except KeyError:
             print(
