@@ -109,6 +109,7 @@ def static(ctx, job_file, pool_file, storage_files, remote_throughput, cache_hit
         storage_content_input=storage_content_file,
         storage_reader=storage_import_mapper[storage_type],
     )
+    simulator.enable_monitoring()
     simulator.run(until=ctx.obj["until"])
 
 
@@ -141,6 +142,7 @@ def dynamic(ctx, job_file, pool_file):
             pool_type=Pool,
             controller=SimulatedLinearController,
         )
+    simulator.enable_monitoring()
     simulator.run(until=ctx.obj["until"])
 
 
@@ -186,6 +188,7 @@ def hybrid(ctx, job_file, static_pool_file, dynamic_pool_file):
             pool_type=Pool,
             controller=SimulatedLinearController,
         )
+    simulator.enable_monitoring()
     simulator.run(until=ctx.obj["until"])
 
 

@@ -36,12 +36,10 @@ class Simulator(object):
         self.job_generator = None
         self.cost = 0
         self._job_generators = []
-        self.monitoring = None
+        self.monitoring = Monitoring()
         self.duration = None
-        self.enable_monitoring()
 
     def enable_monitoring(self):
-        self.monitoring = Monitoring()
         self.monitoring.register_statistic(user_demand)
         self.monitoring.register_statistic(job_statistics)
         self.monitoring.register_statistic(job_events)
