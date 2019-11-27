@@ -37,7 +37,7 @@ class CacheAlgorithm(object):
         """
         to_be_removed = set()
         sorted_stored_files = sort_files_by_cachedsince(self._storage.files)
-        current_free_storage = self._storage.free_space()
+        current_free_storage = self._storage.free_space
         for stored_file in sorted_stored_files:
             if stored_file.numberofaccesses < 3:
                 to_be_removed.add(stored_file)
@@ -59,7 +59,7 @@ class CacheAlgorithm(object):
         :return:
         """
         if self._file_based_consideration(candidate):
-            if self._storage.free_space() < candidate.filesize:
+            if self._storage.free_space < candidate.filesize:
                 return self._context_based_consideration(candidate)
             else:
                 return set()
