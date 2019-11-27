@@ -1,4 +1,4 @@
-from usim import time, Resources, Pipe
+from usim import time, Resources, Pipe, Scope
 
 from typing import Optional, NamedTuple
 
@@ -24,6 +24,7 @@ class Storage(object):
         "filenames",
         "cachealgorithm",
         "connection",
+        "remote_connection",
     )
 
     def __init__(
@@ -45,7 +46,7 @@ class Storage(object):
         )
         self.cachealgorithm = CacheAlgorithm(self)
         self.connection = Pipe(throughput_limit)
-        self.__repr__()
+        self.remote_connection = None
 
     @property
     def usedstorage(self):
@@ -181,3 +182,33 @@ class Storage(object):
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self.name or id(self))
+
+
+class HitrateStorage(Storage):
+    def __init__(
+        self,
+        hitrate,
+        name: Optional[str] = None,
+        sitename: Optional[str] = None,
+        storagesize: int = 1000,
+        throughput_limit: int = 10,
+        files: Optional[dict] = None,
+    ):
+        super(HitrateStorage, self).__init__(
+            name=name,
+            sitename=sitename,
+            storagesize=storagesize,
+            throughput_limit=throughput_limit,
+            files=files,
+        )
+        self._hitrate = hitrate
+
+    async def transfer(self, file, job_repr):
+        async with Scope() as scope:
+            scope.do(self.connection.transfer(total=self._hitrate * file.filesize))
+            scope.do(
+                self.remote_connection.transfer(total=1 - self._hitrate * file.filesize)
+            )
+
+    def look_up_file(self, requested_file: RequestedFile, job_repr):
+        return LookUpInformation(requested_file.filesize)
