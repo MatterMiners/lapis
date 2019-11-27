@@ -6,6 +6,16 @@ from usim import run
 from lapis.drone import Drone
 
 
+class UnfinishedTest(RuntimeError):
+    """A test did never finish"""
+
+    def __init__(self, test_case):
+        self.test_case = test_case
+        super().__init__(
+            "Test case %r did not finish" % getattr(test_case, "__name__", test_case)
+        )
+
+
 def via_usim(test_case: Callable[..., Coroutine]):
     """
     Mark an ``async def`` test case to be run via ``usim.run``
@@ -22,11 +32,16 @@ def via_usim(test_case: Callable[..., Coroutine]):
 
     @wraps(test_case)
     def run_test(*args, **kwargs):
-        # pytest currently ignores __tracebackhide__ if we re-raise
-        # https://github.com/pytest-dev/pytest/issues/1904
-        __tracebackhide__ = True
-        # >>> This is not the frame you are looking for. Do read on. <<<
-        return run(test_case(*args, **kwargs))
+        test_completed = False
+
+        async def complete_test_case():
+            nonlocal test_completed
+            await test_case(*args, **kwargs)
+            test_completed = True
+
+        run(complete_test_case())
+        if not test_completed:
+            raise UnfinishedTest(test_case)
 
     return run_test
 
