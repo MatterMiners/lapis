@@ -130,7 +130,8 @@ class Job(object):
             )
 
             print(
-                "streamed inputfiles {} for job {} in {} timeunits, finished @ {}".format(
+                "streamed inputfiles {} for job {} in {} timeunits, finished @ {}"
+                "".format(
                     self.requested_inputfiles.keys(),
                     repr(self),
                     self._streamtime,
