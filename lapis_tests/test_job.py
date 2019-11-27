@@ -50,9 +50,13 @@ class TestJob(object):
             scheduling_duration=0,
             connection=Connection(),
         )
-        await drone.run()
         async with Scope() as scope:
+            scope.do(drone.run(), volatile=True)
             scope.do(drone.schedule_job(job=job))
+            await (
+                scheduler.statistics._available
+                == scheduler.statistics.resource_type(job_succeeded=1)
+            )
         assert 10 == time.now
         assert 0 == job.waiting_time
         assert job.successful
@@ -69,9 +73,13 @@ class TestJob(object):
             pool_resources={"cores": 1, "memory": 1},
             scheduling_duration=0,
         )
-        await drone.run()
         async with Scope() as scope:
+            scope.do(drone.run(), volatile=True)
             scope.do(drone.schedule_job(job=job))
+            await (
+                scheduler.statistics._available
+                == scheduler.statistics.resource_type(job_failed=1)
+            )
         assert 0 == time
         assert not job.successful
         assert 0 == job.waiting_time
@@ -92,10 +100,14 @@ class TestJob(object):
             pool_resources={"cores": 1, "memory": 1},
             scheduling_duration=0,
         )
-        await drone.run()
         async with Scope() as scope:
+            scope.do(drone.run(), volatile=True)
             scope.do(drone.schedule_job(job=job_one))
             scope.do(drone.schedule_job(job=job_two))
+            await (
+                scheduler.statistics._available
+                == scheduler.statistics.resource_type(job_succeeded=1, job_failed=1)
+            )
         assert 10 == time
         assert job_one.successful
         assert not job_two.successful
@@ -118,10 +130,14 @@ class TestJob(object):
             pool_resources={"cores": 2, "memory": 2},
             scheduling_duration=0,
         )
-        await drone.run()
         async with Scope() as scope:
+            scope.do(drone.run(), volatile=True)
             scope.do(drone.schedule_job(job=job_one))
             scope.do(drone.schedule_job(job=job_two))
+            await (
+                scheduler.statistics._available
+                == scheduler.statistics.resource_type(job_succeeded=2)
+            )
         assert 10 == time
         assert job_one.successful
         assert job_two.successful
