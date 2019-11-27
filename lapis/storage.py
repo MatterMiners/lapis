@@ -28,8 +28,8 @@ class Storage(object):
 
     def __init__(
         self,
-        name: str = None,
-        sitename: str = None,
+        name: Optional[str] = None,
+        sitename: Optional[str] = None,
         storagesize: int = 1000,
         throughput_limit: int = 10,
         files: Optional[dict] = None,
@@ -41,7 +41,7 @@ class Storage(object):
         self.storagesize = storagesize
         self.files = files
         self._usedstorage = Resources(
-            usedsize=sum(file.filesize for file in list(self.files.values()))
+            size=sum(file.filesize for file in files.values())
         )
         self.cachealgorithm = CacheAlgorithm(self)
         self.connection = Pipe(throughput_limit)
@@ -49,7 +49,7 @@ class Storage(object):
 
     @property
     def usedstorage(self):
-        return self._usedstorage.levels.usedsize
+        return self._usedstorage.levels.size
 
     def free_space(self):
         return self.storagesize - self.usedstorage
@@ -60,10 +60,7 @@ class Storage(object):
         :param filename:
         :return: corresponding file object
         """
-        try:
-            return self.files[filename]
-        except KeyError:
-            raise KeyError
+        return self.files[filename]
 
     async def remove_from_storage(self, file: StoredFile, job_repr):
         """
