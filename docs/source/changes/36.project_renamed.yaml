@@ -1,0 +1,8 @@
+category: changed
+summary: "Rename from lapis to lapis-sim for pypi and rtd"
+description: |
+  The name *lapis* in pypi was already taken so we had to change the distribution
+  name and decided to go for *lapis-sim*.
+pull requests:
+  - 36
+version: 0.2.0

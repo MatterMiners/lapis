@@ -1,0 +1,7 @@
+category: fixed
+summary: "Importing of HTCondor jobs"
+description: |
+  The unit conversion for some of the values from HTCondor jobs did not work
+  properly as values were overwritten. This is fixed now.
+pull requests:
+  - 49

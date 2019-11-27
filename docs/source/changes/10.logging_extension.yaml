@@ -1,0 +1,12 @@
+category: changed
+summary: "Extension of logging"
+description: |
+  The logging of predefined logging functions now follows a specified database
+  structure. The structure is documented in the documentation of the package.
+  Further, the logging was extended to additionally support logging to telegraf
+  using the python default UDP logging port and the LineProtocolFormat of telegraf.
+  The timestamps of the log messages follow the simulation time.
+pull requests:
+  - 10
+  - 14
+version: 0.1.1

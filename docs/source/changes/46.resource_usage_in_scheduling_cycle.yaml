@@ -1,0 +1,12 @@
+category: fixed
+summary: "Update of available resources during scheduling cycle"
+description: |
+  Until now jobs took care on updating available resources after a job was
+  started resulting in an adaption of the auto clustering in the scheduler.
+  As the starting of jobs took longer than the scheduling within one scheduling
+  cycle another job could be assigned although the resources were gone already.
+  This is fixed now by temporarily assuming resource allocation after a job was
+  sent to a drone within the scheduler itself.
+pull requests:
+  - 46
+version: 0.3.0

@@ -1,0 +1,8 @@
+category: added
+summary: "Requirement for flake8"
+description: |
+  Flake8 was added as a requirement for continuous integration. Further, all
+  issues with flake8 were fixed.
+pull requests:
+  - 3
+version: 0.1.1

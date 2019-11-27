@@ -1,0 +1,8 @@
+category: changed
+summary: "Support of current API of usim"
+description: |
+  In preparation to support upcomming features of usim, the current usage had to
+  be adapted to meet the current requireements of usim v0.4.
+pull requests:
+  - 37
+version: 0.2.0
