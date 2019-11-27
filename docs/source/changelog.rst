@@ -11,8 +11,8 @@ Upcoming
 Version [Unreleased] - 2019-11-27
 +++++++++++++++++++++++++++++++++
 
-* **[Added]** Changelog
 * **[Added]** Basic documentation
+* **[Added]** Changelog
 * **[Added]** Information about input files for jobs
 * **[Added]** Drone as a requirement to run a job
 
