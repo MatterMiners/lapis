@@ -11,7 +11,7 @@ class StoredFile(object):
         self.numberofaccesses: int = filespecs.get("numberofaccesses", 0)
 
     def increment_accesses(self):
-        self._numberofaccesses += 1
+        self.numberofaccesses += 1
 
 
 class RequestedFile(NamedTuple):
