@@ -29,7 +29,7 @@ class Connection(object):
         except KeyError:
             self.storages[storage_element.sitename] = [storage_element]
 
-    async def determine_inputfile_source(
+    async def _determine_inputfile_source(
         self, requested_file: RequestedFile, dronesite: str, job_repr: str
     ):
         """
@@ -76,7 +76,7 @@ class Connection(object):
         :param job_repr:
         :return:
         """
-        used_connection = await self.determine_inputfile_source(
+        used_connection = await self._determine_inputfile_source(
             requested_file, dronesite, job_repr
         )
 
