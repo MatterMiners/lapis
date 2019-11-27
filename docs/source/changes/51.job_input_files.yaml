@@ -1,0 +1,7 @@
+category: added
+summary: "Information about input files for jobs"
+description: |
+  In preparation for enabling caching and its effects within the simulation the
+  support of input files for jobs has been added.
+pull requests:
+  - 51

@@ -1,0 +1,8 @@
+category: added
+summary: "Basic documentation"
+description: |
+  LAPIS now includes a basic documentation about the different components and
+  concepts, importing jobs and pools, the logging process and database structure
+  as well as the command line interface.
+pull requests:
+  - 27
