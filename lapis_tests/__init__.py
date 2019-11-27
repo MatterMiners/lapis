@@ -46,4 +46,4 @@ class DummyScheduler:
 
 
 class DummyDrone:
-    pass
+    connection = None
