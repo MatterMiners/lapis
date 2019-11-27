@@ -39,10 +39,7 @@ class Storage(object):
         self.deletion_duration = 5
         self.update_duration = 1
         self.storagesize = storagesize
-        self.files = {
-            filename: StoredFile(filename, filespecs)
-            for filename, filespecs in files.items()
-        }
+        self.files = files
         self._usedstorage = Resources(
             usedsize=sum(file.filesize for file in list(self.files.values()))
         )

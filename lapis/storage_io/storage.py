@@ -1,4 +1,6 @@
 import csv
+
+from lapis.files import StoredFile
 from lapis.storage import Storage
 
 
@@ -34,19 +36,11 @@ def storage_content_reader(
     reader = csv.DictReader(file_name, delimiter=" ", quotechar="'")
     cache_information = dict()
     for row in reader:
-        if row["cachename"] not in cache_information.keys():
-            cache_information[row["cachename"]] = dict()
-        cache_information[row["cachename"]][row["filename"]] = dict()
-        for key in [
-            "filesize",
-            "usedsize",
-            "cachedsince",
-            "lastaccessed",
-            "numberofaccesses",
-        ]:
-            cache_information[row["cachename"]][row["filename"]][key] = int(
-                row[key] * unit_conversion_mapping.get(key, 1)
-            )
+        for key in row:
+            row[key] = row[key] * unit_conversion_mapping.get(key, 1)
+        cache_information.setdefault(row["cachename"], {})[
+            row["filename"]
+        ] = StoredFile(row["filename"], **row)
     if not cache_information:
-        cache_information = None
+        return None
     return cache_information

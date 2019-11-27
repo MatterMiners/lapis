@@ -2,13 +2,32 @@ from typing import Optional, NamedTuple
 
 
 class StoredFile(object):
-    def __init__(self, filename, filespecs):
+
+    __slots__ = (
+        "filename",
+        "filesize",
+        "storedsize",
+        "cachedsince",
+        "lastaccessed",
+        "numberofaccesses",
+    )
+
+    def __init__(
+        self,
+        filename: str,
+        filesize: Optional[int] = None,
+        storedsize: Optional[int] = None,
+        cachedsince: Optional[int] = None,
+        lastaccessed: Optional[int] = None,
+        numberofaccesses: Optional[int] = None,
+        **filespecs,
+    ):
         self.filename = filename
-        self.filesize: Optional[int] = filespecs.get("filesize", None)
-        self.storedsize: Optional[int] = filespecs.get("storedsize", self.filesize)
-        self.cachedsince: Optional[int] = filespecs.get("cachedsince", None)
-        self.lastaccessed: Optional[int] = filespecs.get("lastaccessed", None)
-        self.numberofaccesses: int = filespecs.get("numberofaccesses", 0)
+        self.filesize = filesize
+        self.storedsize = storedsize or self.filesize
+        self.cachedsince = cachedsince
+        self.lastaccessed = lastaccessed
+        self.numberofaccesses = numberofaccesses
 
     def increment_accesses(self):
         self.numberofaccesses += 1
@@ -20,10 +39,10 @@ class RequestedFile(NamedTuple):
 
     def convert_to_stored_file_object(self, currenttime):
         print(self.filesize)
-        filespecs = dict(
+        return StoredFile(
+            self.filename,
             filesize=self.filesize,
             cachedsince=currenttime,
             lastaccessed=currenttime,
             numberofaccesses=1,
         )
-        return StoredFile(self.filename, filespecs)
