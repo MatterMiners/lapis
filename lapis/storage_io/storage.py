@@ -31,7 +31,7 @@ def storage_content_reader(
     unit_conversion_mapping: dict = {
         "filesize": 1024 * 1024 * 1024,
         "usedsize": 1024 * 1024 * 1024,
-    },
+    },  # noqa: B006
 ):
     reader = csv.DictReader(file_name, delimiter=" ", quotechar="'")
     cache_information = dict()
