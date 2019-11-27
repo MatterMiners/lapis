@@ -1,5 +1,4 @@
 import random
-import logging
 
 from usim import Scope, time, Pipe
 
@@ -108,60 +107,9 @@ class Connection(object):
                 requested_file = RequestedFile(
                     inputfilename, inputfilespecs["filesize"]
                 )
-                if self.cachehitrate is not None:
-
-                    scope.do(
-                        self.transfer_by_cache_hitrate(
-                            self.storages.get(drone.sitename, None), requested_file
-                        )
-                    )
-                else:
-                    scope.do(self.stream_file(requested_file, drone.sitename, job_repr))
+                scope.do(self.stream_file(requested_file, drone.sitename, job_repr))
         stream_time = time.now - start_time
         print(
             "STREAMED files {} in {}".format(list(requested_files.keys()), stream_time)
         )
         return stream_time
-
-    async def transfer_by_cache_hitrate(
-        self, available_storages: Storage, requested_file: RequestedFile
-    ):
-        if not available_storages and self.cachehitrate:
-            logging.getLogger("implementation").error(
-                "no available caches for drone "
-                " requested cachehitrate was "
-                "{}".format(self.cachehitrate)
-            )
-        else:
-            if 0 < self.cachehitrate < 1:
-                async with Scope() as scope:
-                    scope.do(
-                        self.transfer_wrapper(
-                            self.remote_connection,
-                            (1.0 - self.cachehitrate) * requested_file.filesize,
-                        )
-                    )
-                    scope.do(
-                        self.transfer_wrapper(
-                            available_storages[0].connection,
-                            self.cachehitrate * requested_file.filesize,
-                        )
-                    )
-            elif self.cachehitrate == 1:
-                await available_storages[0].connection.transfer(requested_file.filesize)
-            elif self.cachehitrate == 0:
-                await self.remote_connection.transfer(requested_file.filesize)
-
-    async def transfer_wrapper(self, connection, total):
-        print(
-            "transfering {} with {}, start @ {}".format(
-                total, connection.throughput, time.now
-            )
-        )
-        await sampling_required.put(connection)
-        await connection.transfer(total=total)
-        print(
-            "transfering {} with {}, stop @ {}".format(
-                total, connection.throughput, time.now
-            )
-        )

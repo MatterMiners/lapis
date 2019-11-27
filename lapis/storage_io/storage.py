@@ -1,12 +1,13 @@
 import csv
+from functools import partial
 
 from lapis.files import StoredFile
-from lapis.storage import Storage
 
 
 def storage_reader(
     storage,
     storage_content,
+    storage_type,
     unit_conversion_mapping: dict = {  # noqa: B006
         "cachesizeGB": 1024 * 1024 * 1024,
         "throughput_limit": 1024 * 1024 * 1024,
@@ -15,7 +16,8 @@ def storage_reader(
     storage_content = storage_content_reader(storage_content)
     reader = csv.DictReader(storage, delimiter=" ", quotechar="'")
     for row in reader:
-        yield Storage(
+        yield partial(
+            storage_type,
             name=row["name"],
             sitename=row["sitename"],
             storagesize=int(
@@ -23,7 +25,7 @@ def storage_reader(
             ),
             throughput_limit=int(row["throughput_limit"]),
             files=storage_content[row["name"]],
-        )
+        )()
 
 
 def storage_content_reader(

@@ -67,10 +67,14 @@ class Simulator(object):
             if controller:
                 self.controllers.append(controller(target=pool, rate=1))
 
-    def create_storage(self, storage_input, storage_content_input, storage_reader):
+    def create_storage(
+        self, storage_input, storage_content_input, storage_reader, storage_type
+    ):
         assert self.connection, "Connection module needs to be created before storages"
         for storage in storage_reader(
-            storage=storage_input, storage_content=storage_content_input
+            storage=storage_input,
+            storage_content=storage_content_input,
+            storage_type=storage_type,
         ):
             self.connection.add_storage_element(storage)
 

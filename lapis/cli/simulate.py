@@ -1,3 +1,5 @@
+from functools import partial
+
 import click
 import logging.handlers
 
@@ -9,6 +11,7 @@ from lapis.job_io.htcondor import htcondor_job_reader
 from lapis.pool import StaticPool, Pool
 from lapis.pool_io.htcondor import htcondor_pool_reader
 from lapis.job_io.swf import swf_job_reader
+from lapis.storage import Storage, HitrateStorage
 from lapis.storage_io.storage import storage_reader
 
 from lapis.scheduler import CondorJobScheduler
@@ -103,6 +106,9 @@ def static(ctx, job_file, pool_file, storage_files, remote_throughput, cache_hit
             storage_input=storage_file,
             storage_content_input=storage_content_file,
             storage_reader=storage_import_mapper[storage_type],
+            storage_type=partial(HitrateStorage, cache_hitrate)
+            if cache_hitrate is not None
+            else Storage,
         )
     for current_pool in pool_file:
         pool_file, pool_file_type = current_pool
