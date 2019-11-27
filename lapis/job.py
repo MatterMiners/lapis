@@ -5,7 +5,6 @@ from usim import time
 from usim import CancelTask
 
 from lapis.monitor import sampling_required
-from lapis.utilities.walltime_models import walltime_models
 
 if TYPE_CHECKING:
     from lapis.drone import Drone
@@ -63,7 +62,7 @@ class Job(object):
                 )
                 self.resources[key] = self.used_resources[key]
         self._walltime = used_resources.pop("walltime")
-        self._calculationtime = walltime_models["maxeff"](self, self._walltime)
+        self._calculationtime = self.get_calculation_time()
         self._streamtime = 0
         self.requested_walltime = resources.pop("walltime", None)
         self.requested_inputfiles = resources.pop("inputfiles", None)
@@ -108,6 +107,21 @@ class Job(object):
         print("WALLTIME: Job {} @ {}".format(repr(self), time.now))
         return self._calculationtime
 
+    def get_calculation_time(self, calculation_efficiency=0.9):
+        """
+        Determines a jobs calculation time based on the jobs CPU time and a
+        calculation efficiency representing inefficient programming.
+        :param calculation_efficiency:
+        :return:
+        """
+        try:
+            return (
+                self.used_resources["cores"] / calculation_efficiency
+            ) * self._walltime
+        except KeyError:
+            # logging.getLogger("implementation").info()
+            return self._walltime
+
     async def transfer_inputfiles(self):
         print("TRANSFERING INPUTFILES: Job {} @ {}".format(repr(self), time.now))
         if self.drone.connection and self.used_inputfiles:
@@ -124,22 +138,22 @@ class Job(object):
                 )
             )
 
-
     async def run(self, drone: "Drone"):
         assert drone, "Jobs cannot run without a drone being assigned"
         self.drone = drone
         self.in_queue_until = time.now
         self._success = None
         await sampling_required.put(self)
-        if self.drone:
-            print(
-                "running job {} on site {} in drone {}".format(
-                    repr(self), self.drone.sitename, repr(self.drone)
-                )
-            )
+        print("running job {}  in drone {}".format(repr(self), repr(self.drone)))
         try:
-            await self.transfer_inputfiles()
-            await (time + self.calculation_time)
+            if self.requested_inputfiles:
+                await self.transfer_inputfiles()
+                await (time + self.calculation_time)
+            else:
+                # ToDo: improve handling of jobs without inputfiles (correct value in
+                # self.walltime and therefore in monitoring etc)
+                await (time + self._walltime)
+            print(self.calculation_time, self._streamtime, self.walltime)
         except CancelTask:
             self.drone = None
             self._success = False
