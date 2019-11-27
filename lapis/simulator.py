@@ -77,8 +77,8 @@ class Simulator(object):
     def create_scheduler(self, scheduler_type):
         self.job_scheduler = scheduler_type(job_queue=self.job_queue)
 
-    def create_connection_module(self, remote_throughput, cache_hitrate):
-        self.connection = Connection(remote_throughput, cache_hitrate)
+    def create_connection_module(self, remote_throughput):
+        self.connection = Connection(remote_throughput)
 
     def run(self, until=None):
         print(f"running until {until}")

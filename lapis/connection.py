@@ -10,12 +10,11 @@ from lapis.monitor import sampling_required
 
 class Connection(object):
 
-    __slots__ = ("storages", "remote_connection", "cachehitrate")
+    __slots__ = ("storages", "remote_connection")
 
-    def __init__(self, throughput=100, cache_hitrate=None):
+    def __init__(self, throughput=100):
         self.storages = dict()
         self.remote_connection = Pipe(throughput=throughput)
-        self.cachehitrate = cache_hitrate
 
     def add_storage_element(self, storage_element: Storage):
         """
