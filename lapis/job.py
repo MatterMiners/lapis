@@ -125,7 +125,7 @@ class Job(object):
     async def transfer_inputfiles(self):
         print("TRANSFERING INPUTFILES: Job {} @ {}".format(repr(self), time.now))
         if self.drone.connection and self.used_inputfiles:
-            self._streamtime = await self.drone.connection.transfer_inputfiles(
+            self._streamtime = await self.drone.connection.transfer_files(
                 self.drone, self.requested_inputfiles, repr(self)
             )
 

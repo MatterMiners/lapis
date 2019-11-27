@@ -99,7 +99,7 @@ class Connection(object):
                 )
             )
 
-    async def transfer_inputfiles(self, drone, requested_files: dict, job_repr):
+    async def transfer_files(self, drone, requested_files: dict, job_repr):
         """
         Converts dict information about requested files to RequestedFile object and
         parallely launches streaming for all files
