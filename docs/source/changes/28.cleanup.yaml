@@ -1,0 +1,8 @@
+category: changed
+summary: "Cleanup and improvements of existing code"
+description: |
+  usim related code was simplified and unused code was removed.
+pull requests:
+  - 28
+  - 32
+version: 0.1.1

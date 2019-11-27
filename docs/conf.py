@@ -17,9 +17,9 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import os
 import sys
-import lapis
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+import lapis  # noqa: E402
 
 
 # -- Project information -----------------------------------------------------
@@ -49,6 +49,8 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.imgmath",
     "sphinx.ext.viewcode",
+    "sphinxcontrib.contentui",
+    "sphinx_click.ext",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -196,34 +198,10 @@ epub_exclude_files = ["search.html"]
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "usim": ("https://usim.readthedocs.io/en/stable", None),
+    "cobald": ("https://cobald.readthedocs.io/en/stable", None),
 }
 
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-
-# -- Custom Extensions -------------------------------------------------------
-
-
-def run_apidoc(_):
-    """Run the `apidoc` tool to generate `autodoc` documentation for all modules"""
-    from sphinx.apidoc import main
-
-    output_dir = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "source", "api")
-    )
-    source_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "lapis"))
-    main(
-        [
-            "--module-first",
-            "--separate",
-            "--output-dir=" + output_dir,
-            source_dir,
-            "--force",
-        ]
-    )
-
-
-def setup(app):
-    app.connect("builder-inited", run_apidoc)

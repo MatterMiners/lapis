@@ -1,0 +1,11 @@
+category: fixed
+summary: "Jobs execution within drones"
+description: |
+  Until now jobs have been started implictly by the scheduler within its scheduling
+  cycle. This created some issues for asynchronous tasks within jobs as those were
+  bound to the duration of the scheduling cycle. Therefore, we introduced a new
+  queue within drones that receive the jobs from the scheduler. Further, the drone
+  now takes care to properly start the job so that it runs independently now in
+  the scope of the drone.
+pull requests:
+  - 63

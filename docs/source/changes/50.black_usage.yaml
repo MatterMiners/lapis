@@ -1,0 +1,7 @@
+category: fixed
+summary: "Handling of black for pypy"
+description: |
+  Black does not work when running CI with pypy. The usage of black with pypy
+  therefore has been removed now.
+pull requests:
+  - 50

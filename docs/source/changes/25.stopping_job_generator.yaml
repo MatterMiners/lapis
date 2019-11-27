@@ -1,0 +1,8 @@
+category: fixed
+summary: "StopIteration handling by Job Generator"
+description: |
+  The Job Generator so far did not properly handle StopIterations while importing
+  jobs. This has been fixed.
+pull requests:
+  - 25
+version: 0.1.1

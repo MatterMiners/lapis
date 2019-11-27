@@ -1,0 +1,9 @@
+category: changed
+summary: "Support of current API of usim"
+description: |
+  In preparation to support the usim features of borrowing and claiming resources
+  guaranteeing synchronisation of available resources in drones, the implementation was
+  adapted to meet the current requireements of usim v0.3.
+pull requests:
+  - 23
+version: 0.1.1

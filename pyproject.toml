@@ -12,23 +12,19 @@ description-file = "README.rst"
 keywords = "htcondor simulation python cobald tardis opportunistic scheduling scheduler"
 classifiers = [
     "License :: OSI Approved :: MIT License",
-    'Development Status :: 2 - Pre-Alpha',
-    'Intended Audience :: Developers',
-    'Intended Audience :: Information Technology',
-    'Intended Audience :: Science/Research',
-    'Intended Audience :: System Administrators',
-    'Topic :: Adaptive Technologies',
-    'Topic :: Office/Business :: Scheduling',
-    'Topic :: System :: Distributed Computing',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: 3.7'
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: System Administrators",
+    "Topic :: Adaptive Technologies",
+    "Topic :: Office/Business :: Scheduling",
+    "Topic :: System :: Distributed Computing",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
 ]
-requires = [
-    "cobald",
-    "usim == 0.4.2",
-    "click",
-]
+requires = ["cobald", "usim == 0.4.2", "click"]
 
 [tool.flit.metadata.requires-extra]
 test = [
@@ -37,7 +33,13 @@ test = [
     "flake8-bugbear",
     "black; implementation_name=='cpython'",
 ]
-doc = ["sphinx", "sphinx_rtd_theme"]
+doc = [
+    "sphinx",
+    "sphinx_rtd_theme",
+    "sphinxcontrib-contentui",
+    "sphinx-click",
+    "change-log",
+]
 dev = ["pre-commit"]
 
 [tool.flit.metadata.urls]

@@ -1,0 +1,12 @@
+category: fixed
+summary: "Termination of simulation"
+description: |
+  The scheduler so far did not have any information about when the simulation
+  was expected to terminate. Therefore, a new property `_collecting` was introduced
+  in the simlulator. This property is bound to the job queue. As soon as the
+  job generator does not produce any new jobs the job queue is closed and after
+  all jobs were removed, the property `_collecting` is set to `False` to
+  initiate termination of simulation.
+pull requests:
+  - 26
+version: 0.1.1

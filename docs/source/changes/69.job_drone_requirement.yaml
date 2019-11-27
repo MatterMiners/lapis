@@ -1,0 +1,7 @@
+category: added
+summary: "Drone as a requirement to run a job"
+description: |
+  Until now the run method of jobs did not require any parameter. This is changed
+  now and relies on a parameter for the executing drone.
+pull requests:
+  - 69

@@ -1,0 +1,9 @@
+category: fixed
+summary: "Proper termination of simulation"
+description: |
+  The simulation so far only awaited that the job queue became empty. This however
+  did not ensure that the jobs also properly finished. Therefore, the scheduler
+  now has a new property to store the number of running jobs. So the termination
+  of the scheduler is now additionally bound to this counter getting ``0``.
+pull requests:
+  - 66

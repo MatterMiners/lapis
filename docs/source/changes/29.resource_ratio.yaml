@@ -1,0 +1,10 @@
+category: fixed
+summary: "Calculation of used and requested resource ratio"
+description: |
+  The introduction of the borrowing and claiming concept of resources provided
+  by usim changed the way resources were handled internally. Therefore, the
+  calculation of used and requested resource ratios had to be adapted to not
+  result in wrong results.
+pull requests:
+  - 29
+version: 0.1.1

@@ -1,0 +1,8 @@
+category: added
+summary: "Pre-commit hooks"
+description: |
+  LAPIS now defines some pre-commit hooks including the execution of black for
+  proper formatting of source code. All files have, therefore, also been blackened.
+pull requests:
+  - 47
+version: 0.3.0
