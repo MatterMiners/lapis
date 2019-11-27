@@ -1,9 +1,10 @@
 from typing import Callable, Coroutine
 from functools import wraps
 
-from usim import run
+from usim import run, Resources
 
 from lapis.drone import Drone
+from lapis.job import Job
 
 
 class UnfinishedTest(RuntimeError):
@@ -47,6 +48,9 @@ def via_usim(test_case: Callable[..., Coroutine]):
 
 
 class DummyScheduler:
+    def __init__(self):
+        self.statistics = Resources(job_succeeded=0, job_failed=0)
+
     @staticmethod
     def register_drone(drone: Drone):
         pass
@@ -58,6 +62,12 @@ class DummyScheduler:
     @staticmethod
     def update_drone(drone: Drone):
         pass
+
+    async def job_finished(self, job: Job):
+        if job.successful:
+            await self.statistics.increase(job_succeeded=1)
+        else:
+            await self.statistics.increase(job_failed=1)
 
 
 class DummyDrone:
