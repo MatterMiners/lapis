@@ -7,10 +7,10 @@ from lapis.storage import Storage
 def storage_reader(
     storage,
     storage_content,
-    unit_conversion_mapping: dict = {
+    unit_conversion_mapping: dict = {  # noqa: B006
         "cachesizeGB": 1024 * 1024 * 1024,
         "throughput_limit": 1024 * 1024 * 1024,
-    },  # noqa: B006
+    },
 ):
     storage_content = storage_content_reader(storage_content)
     reader = csv.DictReader(storage, delimiter=" ", quotechar="'")
@@ -28,10 +28,10 @@ def storage_reader(
 
 def storage_content_reader(
     file_name,
-    unit_conversion_mapping: dict = {
+    unit_conversion_mapping: dict = {  # noqa: B006
         "filesize": 1024 * 1024 * 1024,
         "usedsize": 1024 * 1024 * 1024,
-    },  # noqa: B006
+    },
 ):
     reader = csv.DictReader(file_name, delimiter=" ", quotechar="'")
     cache_information = dict()
