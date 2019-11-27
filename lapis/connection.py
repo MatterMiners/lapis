@@ -1,11 +1,11 @@
+import random
 import logging
+
+from usim import Scope, time, Pipe
 
 from lapis.storage import Storage
 from lapis.files import RequestedFile
 from lapis.monitor import sampling_required
-
-from usim import Scope, time, Pipe
-import random
 
 
 class Connection(object):

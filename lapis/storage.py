@@ -1,6 +1,6 @@
-from usim import time, Resources, Pipe, Scope
-
 from typing import Optional, NamedTuple
+
+from usim import time, Resources, Pipe, Scope
 
 from lapis.files import StoredFile, RequestedFile
 from lapis.cachealgorithm import CacheAlgorithm
