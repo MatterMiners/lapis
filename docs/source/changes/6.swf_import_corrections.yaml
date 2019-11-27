@@ -1,0 +1,13 @@
+category: fixed
+summary: "Importing of SWF files"
+description: |
+  SWF imports did not properly do the unit conversion but instead accessed a
+  wrong dictionary to get the conversion information. Now they use the correct
+  dictionary.
+  Further, SWF defines values of ``-1`` as a default for user values that have
+  not been specified. However, negative values of resources in LAPIS are not
+  supported. Therefore, negative values now default to ``0`` in import process.ß
+pull requests:
+  - 6
+  - 22
+version: 0.1.1

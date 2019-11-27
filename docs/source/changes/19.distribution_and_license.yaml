@@ -1,0 +1,11 @@
+category: changed
+summary: "Distribution setup and license information"
+description: |
+  Usim is a new requirement for installing the package. Further, the distribution
+  process now uses flit and, therefore, setup.py was replaced by pyproject.toml.
+  Finally, the license file was adapted to also include Max as an author.
+pull requests:
+  - 19
+  - 33
+  - 30
+version: 0.1.1
