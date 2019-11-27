@@ -31,7 +31,6 @@ class TestSimulator(object):
                 job_input=job_input, job_reader=htcondor_job_reader
             )
             simulator.create_scheduler(scheduler_type=CondorJobScheduler)
-            simulator.create_connection_module()
             simulator.create_pools(
                 pool_input=machine_input,
                 pool_reader=htcondor_pool_reader,
