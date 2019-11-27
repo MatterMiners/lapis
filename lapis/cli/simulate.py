@@ -82,6 +82,7 @@ def cli(ctx, seed, until, log_tcp, log_file, log_telegraf):
         click.File("r"),
         click.Choice(list(storage_import_mapper.keys())),
     ),
+    default=(None, None, None),
 )
 @click.option("--remote-throughput", "remote_throughput", type=float, default=10)
 @click.option("--cache-hitrate", "cache_hitrate", type=float, default=None)
@@ -94,8 +95,15 @@ def static(ctx, job_file, pool_file, storage_files, remote_throughput, cache_hit
         job_input=file, job_reader=job_import_mapper[file_type]
     )
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
-    simulator.create_connection_module(remote_throughput, cache_hitrate)
 
+    if all(storage_files):
+        simulator.create_connection_module(remote_throughput, cache_hitrate)
+        storage_file, storage_content_file, storage_type = storage_files
+        simulator.create_storage(
+            storage_input=storage_file,
+            storage_content_input=storage_content_file,
+            storage_reader=storage_import_mapper[storage_type],
+        )
     for current_pool in pool_file:
         pool_file, pool_file_type = current_pool
         simulator.create_pools(
@@ -103,12 +111,6 @@ def static(ctx, job_file, pool_file, storage_files, remote_throughput, cache_hit
             pool_reader=pool_import_mapper[pool_file_type],
             pool_type=StaticPool,
         )
-    storage_file, storage_content_file, storage_type = storage_files
-    simulator.create_storage(
-        storage_input=storage_file,
-        storage_content_input=storage_content_file,
-        storage_reader=storage_import_mapper[storage_type],
-    )
     simulator.enable_monitoring()
     simulator.run(until=ctx.obj["until"])
 
