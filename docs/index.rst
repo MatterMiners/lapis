@@ -12,6 +12,7 @@ LAPIS -- Simulations for Opportunistic Resources
 
    source/topics/overview
    source/glossary
+   source/changelog
 
 The LAPIS simulator enables the simulation of :term:`job` execution and scheduling
 with a focus on :term:`opportunistic resources <Opportunistic Resource>`. The
