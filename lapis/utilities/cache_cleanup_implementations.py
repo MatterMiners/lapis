@@ -1,4 +1,9 @@
-def sort_files_by_cachedsince(stored_files: set):
+from typing import List
+
+from lapis.files import StoredFile
+
+
+def sort_files_by_cachedsince(stored_files: set) -> List[StoredFile]:
     return sorted(list(stored_files), key=lambda x: x.cachedsince)
 
 
