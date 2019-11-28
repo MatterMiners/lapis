@@ -20,9 +20,8 @@ def storage_reader(
             storage_type,
             name=row["name"],
             sitename=row["sitename"],
-            storagesize=int(
-                row["cachesizeGB"] * unit_conversion_mapping.get("cachesizeGB", 1)
-            ),
+            storagesize=int(row["cachesizeGB"])
+            * unit_conversion_mapping.get("cachesizeGB", 1),
             throughput_limit=int(row["throughput_limit"]),
             files=storage_content[row["name"]],
         )()
@@ -39,10 +38,12 @@ def storage_content_reader(
     cache_information = dict()
     for row in reader:
         for key in row:
+            if key not in ["filename", "cachename"]:
+                row[key] = int(row[key])
             row[key] = row[key] * unit_conversion_mapping.get(key, 1)
         cache_information.setdefault(row["cachename"], {})[
             row["filename"]
-        ] = StoredFile(row["filename"], **row)
+        ] = StoredFile(**row)
     if not cache_information:
         return None
     return cache_information
