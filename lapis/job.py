@@ -33,8 +33,8 @@ class Job(object):
         used_resources: dict,
         in_queue_since: float = 0,
         queue_date: float = 0,
-        name: str = None,
-        drone: "Drone" = None,
+        name: Optional[str] = None,
+        drone: "Optional[Drone]" = None,
         calculation_efficiency: Optional[float] = None,
     ):
         """
@@ -61,12 +61,12 @@ class Job(object):
                     self.used_resources[key],
                 )
                 self.resources[key] = self.used_resources[key]
-        self.walltime = used_resources.pop("walltime")
-        self.requested_walltime = resources.pop("walltime", None)
+        self.walltime: int = used_resources.pop("walltime")
+        self.requested_walltime: Optional[int] = resources.pop("walltime", None)
         self.queue_date = queue_date
         assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since
-        self.in_queue_until = None
+        self.in_queue_until: Optional[float] = None
         self.drone = drone
         self._name = name
         self._success: Optional[bool] = None
