@@ -11,6 +11,14 @@ class LookUpInformation(NamedTuple):
     storage: "Storage"
 
 
+class RemoteStorage(object):
+    def __init__(self, pipe: Pipe):
+        self._connection = pipe
+
+    async def transfer(self, file, job_repr):
+        await self._connection.transfer(total=file.filesize)
+
+
 class Storage(object):
 
     __slots__ = (

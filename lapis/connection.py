@@ -1,8 +1,9 @@
 import random
 
+from typing import Union
 from usim import Scope, time, Pipe
 
-from lapis.storage import Storage
+from lapis.storage import Storage, RemoteStorage
 from lapis.files import RequestedFile
 from lapis.monitor import sampling_required
 
@@ -13,7 +14,7 @@ class Connection(object):
 
     def __init__(self, throughput=100):
         self.storages = dict()
-        self.remote_connection = Pipe(throughput=throughput)
+        self.remote_connection = RemoteStorage(Pipe(throughput=throughput))
 
     def add_storage_element(self, storage_element: Storage):
         """
@@ -30,7 +31,7 @@ class Connection(object):
 
     async def _determine_inputfile_source(
         self, requested_file: RequestedFile, dronesite: str, job_repr: str
-    ):
+    ) -> Union[Storage, RemoteStorage]:
         """
         Collects NamedTuples containing the amount of data of the requested file
         cached in a storage element and the storage element for all reachable storage
@@ -80,11 +81,11 @@ class Connection(object):
         ):
             try:
                 potential_cache = random.choice(self.storages[dronesite])
-                await potential_cache.apply_caching_decision(requested_file, job_repr)
+                await potential_cache._apply_caching_decision(requested_file, job_repr)
             except KeyError:
                 pass
         print(f"now transfering {requested_file.filesize} from {used_connection}")
-        await used_connection.transfer(requested_file.filesize, job_repr)
+        await used_connection.transfer(requested_file, job_repr)
         print(
             "Job {}: finished transfering of file {}: {}GB @ {}".format(
                 job_repr, requested_file.filename, requested_file.filesize, time.now
