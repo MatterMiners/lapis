@@ -77,9 +77,9 @@ COBalD-specific Monitoring
 Caching-specific Monitoring
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. TODO::
-
-    Will be added as soon as the caching branch is merged.
+.. autofunction:: lapis.monitor.caching.storage_status
+.. autofunction:: lapis.monitor.caching.storage_connection
+.. autofunction:: lapis.monitor.caching.remote_connection
 
 Telegraf
 --------

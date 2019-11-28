@@ -31,8 +31,8 @@ class Storage(object):
         self,
         name: Optional[str] = None,
         sitename: Optional[str] = None,
-        storagesize: int = 1000,
-        throughput_limit: int = 10,
+        storagesize: int = 1000 * 1024 * 1024 * 1024,
+        throughput_limit: int = 10 * 1024 * 1024 * 1024,
         files: Optional[dict] = None,
     ):
         self.name = name
