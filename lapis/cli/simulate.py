@@ -38,11 +38,13 @@ storage_import_mapper = {"standard": storage_reader}
 @click.option("--log-tcp", "log_tcp", is_flag=True)
 @click.option("--log-file", "log_file", type=click.File("w"))
 @click.option("--log-telegraf", "log_telegraf", is_flag=True)
+@click.option("--calculation-efficiency", type=float)
 @click.pass_context
-def cli(ctx, seed, until, log_tcp, log_file, log_telegraf):
+def cli(ctx, seed, until, log_tcp, log_file, log_telegraf, calculation_efficiency):
     ctx.ensure_object(dict)
     ctx.obj["seed"] = seed
     ctx.obj["until"] = until
+    ctx.obj["calculation_efficiency"] = calculation_efficiency
     monitoring_logger = logging.getLogger()
     monitoring_logger.setLevel(logging.DEBUG)
     time_filter = SimulationTimeFilter()
@@ -95,7 +97,11 @@ def static(ctx, job_file, pool_file, storage_files, remote_throughput, cache_hit
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
     simulator.create_job_generator(
-        job_input=file, job_reader=job_import_mapper[file_type]
+        job_input=file,
+        job_reader=partial(
+            job_import_mapper[file_type],
+            calculation_efficiency=ctx.obj["calculation_efficiency"],
+        ),
     )
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
 
@@ -139,7 +145,11 @@ def dynamic(ctx, job_file, pool_file):
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
     simulator.create_job_generator(
-        job_input=file, job_reader=job_import_mapper[file_type]
+        job_input=file,
+        job_reader=partial(
+            job_import_mapper[file_type],
+            calculation_efficiency=ctx.obj["calculation_efficiency"],
+        ),
     )
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     for current_pool in pool_file:
@@ -178,7 +188,11 @@ def hybrid(ctx, job_file, static_pool_file, dynamic_pool_file):
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
     simulator.create_job_generator(
-        job_input=file, job_reader=job_import_mapper[file_type]
+        job_input=file,
+        job_reader=partial(
+            job_import_mapper[file_type],
+            calculation_efficiency=ctx.obj["calculation_efficiency"],
+        ),
     )
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     for current_pool in static_pool_file:

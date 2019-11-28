@@ -104,5 +104,5 @@ class Simulator(object):
 
     async def _queue_jobs(self, job_input, job_reader):
         await job_to_queue_scheduler(
-            job_generator=job_reader(job_input), job_queue=self.job_queue
+            job_generator=partial(job_reader, job_input)(), job_queue=self.job_queue
         )
