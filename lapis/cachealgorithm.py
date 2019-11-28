@@ -1,67 +1,57 @@
-from typing import Optional, Set
-from lapis.files import RequestedFile
-from lapis.utilities.cache_algorithm_implementations import cache_algorithm
+from typing import Optional, Callable, Tuple
+
+from lapis.files import RequestedFile, StoredFile
+from lapis.storage import Storage
 from lapis.utilities.cache_cleanup_implementations import sort_files_by_cachedsince
 
 
+def check_size(file: RequestedFile, storage: Storage):
+    return storage.size >= file.filesize
+
+
+def check_relevance(file: RequestedFile, storage: Storage):
+    return True
+
+
+def delete_oldest(
+    file: RequestedFile, storage: Storage
+) -> Tuple[bool, Tuple[StoredFile]]:
+    deletable_files = []
+    currently_free = storage.free_space
+    if currently_free < storage.free_space:
+        sorted_files = sort_files_by_cachedsince(storage.files.items())
+        while currently_free < file.filesize:
+            deletable_files.append(next(sorted_files))
+            currently_free += deletable_files[-1].filesize
+    return True, tuple(deletable_files)
+
+
+def delete_oldest_few_used(
+    file: RequestedFile, storage: Storage
+) -> Tuple[bool, Optional[Tuple[StoredFile]]]:
+    deletable_files = []
+    currently_free = storage.free_space
+    if currently_free < storage.free_space:
+        sorted_files = sort_files_by_cachedsince(storage.files.items())
+        for current_file in sorted_files:
+            if current_file.numberofaccesses < 3:
+                deletable_files.append(current_file)
+                currently_free += deletable_files[-1].filesize
+                if currently_free >= file.filesize:
+                    return True, tuple(deletable_files)
+    return False, None
+
+
 class CacheAlgorithm(object):
-    def __init__(self, storage, additional_information: Optional[str] = None):
-        """
-        Cache Algorithm class defining the handling of uncached files.
-        It's functionality is called via the consider() function.
-        :param storage: storage object that this algorithm is
-        :param additional_information: placeholder for additional external
-        information that might be passed to the cache algoritm.
-        """
-        self._storage = storage
-        self._additional_information = additional_information
+    def __init__(self, caching_strategy: Callable, deletion_strategy: Callable):
+        self._caching_strategy = lambda file, storage: check_size(
+            file, storage
+        ) and check_relevance(file, storage)
+        self._deletion_strategy = lambda file, storage: delete_oldest(file, storage)
 
-    def _file_based_consideration(self, candidate: RequestedFile) -> bool:
-        """
-        File based caching decision: Checks if candidate file should be cached based on
-        conditions that apply to
-        file itself without considering the caches overall state.
-        :param candidate:
-        :return:
-        """
-        if self._storage.storagesize > candidate.filesize:
-            return cache_algorithm["standard"](candidate)
-        else:
-            return False
-
-    def _context_based_consideration(self, candidate: RequestedFile):
-        """
-        Caching decision based on the the overall context
-        :param candidate:
-        :return:
-        """
-        to_be_removed = set()
-        sorted_stored_files = sort_files_by_cachedsince(self._storage.files)
-        current_free_storage = self._storage.free_space
-        for stored_file in sorted_stored_files:
-            if stored_file.numberofaccesses < 3:
-                to_be_removed.add(stored_file)
-                current_free_storage += stored_file.filesize
-                if current_free_storage >= candidate.filesize:
-                    return to_be_removed
-            else:
-                continue
-        if current_free_storage >= candidate.filesize:
-            return {candidate}
-
-    def consider(self, candidate: RequestedFile) -> Optional[Set[RequestedFile]]:
-        """
-        Decides whether the requested file should be cached.
-        The decision is split into a decision that is based on the
-        requested file only and a decision that takes the overall context (current
-        cache state, other cached files) into account.
-        :param candidate:
-        :return:
-        """
-        if self._file_based_consideration(candidate):
-            if self._storage.free_space < candidate.filesize:
-                return self._context_based_consideration(candidate)
-            else:
-                return set()
-        else:
-            return {candidate}
+    def consider(
+        self, file: RequestedFile, storage: Storage
+    ) -> Tuple[bool, Optional[Tuple[StoredFile]]]:
+        if self._caching_strategy(file, storage):
+            return self._deletion_strategy(file, storage)
+        return False, None

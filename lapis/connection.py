@@ -3,6 +3,12 @@ import random
 from typing import Union
 from usim import Scope, time, Pipe
 
+from lapis.cachealgorithm import (
+    CacheAlgorithm,
+    check_size,
+    check_relevance,
+    delete_oldest_few_used,
+)
 from lapis.storage import Storage, RemoteStorage
 from lapis.files import RequestedFile
 from lapis.monitor import sampling_required
@@ -10,11 +16,18 @@ from lapis.monitor import sampling_required
 
 class Connection(object):
 
-    __slots__ = ("storages", "remote_connection")
+    __slots__ = ("storages", "remote_connection", "caching_algorithm")
 
     def __init__(self, throughput=100):
         self.storages = dict()
         self.remote_connection = RemoteStorage(Pipe(throughput=throughput))
+        self.caching_algorithm = CacheAlgorithm(
+            caching_strategy=lambda file, storage: check_size(file, storage)
+            and check_relevance(file, storage),
+            deletion_strategy=lambda file, storage: delete_oldest_few_used(
+                file, storage
+            ),
+        )
 
     def add_storage_element(self, storage_element: Storage):
         """
@@ -81,7 +94,18 @@ class Connection(object):
         ):
             try:
                 potential_cache = random.choice(self.storages[dronesite])
-                await potential_cache.apply_caching_decision(requested_file, job_repr)
+                cache_file, files_for_deletion = self.caching_algorithm.consider(
+                    file=requested_file, storage=potential_cache
+                )
+                if cache_file:
+                    for file in files_for_deletion:
+                        await potential_cache.remove(file, job_repr)
+                    await potential_cache.add(requested_file, job_repr)
+                else:
+                    print(
+                        f"APPLY CACHING DECISION: Job {job_repr}, File {requested_file.filename}: File wasnt "
+                        f"cached @ {time.now}"
+                    )
             except KeyError:
                 pass
         print(f"now transfering {requested_file.filesize} from {used_connection}")

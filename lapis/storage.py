@@ -3,7 +3,6 @@ from typing import Optional, NamedTuple
 from usim import time, Resources, Pipe, Scope
 
 from lapis.files import StoredFile, RequestedFile
-from lapis.cachealgorithm import CacheAlgorithm
 
 
 class LookUpInformation(NamedTuple):
@@ -30,7 +29,6 @@ class Storage(object):
         "_usedstorage",
         "files",
         "filenames",
-        "cachealgorithm",
         "connection",
         "remote_connection",
     )
@@ -52,7 +50,6 @@ class Storage(object):
         self._usedstorage = Resources(
             size=sum(file.filesize for file in files.values())
         )
-        self.cachealgorithm = CacheAlgorithm(self)
         self.connection = Pipe(throughput_limit)
         self.remote_connection = None
 
@@ -134,34 +131,6 @@ class Storage(object):
         except AttributeError:
             pass
 
-    async def apply_caching_decision(self, requested_file: RequestedFile, job_repr):
-        """
-        Applies the storage objects caching algorithm to the requested_file and
-        initiates resulting changes like placement and deletion of files
-        :param requested_file:
-        :param job_repr: Needed for debug output, will be replaced
-        :return:
-        """
-
-        print(
-            "APPLY CACHING DECISION: Job {}, File {} @ {}".format(
-                job_repr, requested_file.filename, time.now
-            )
-        )
-        to_be_removed = self.cachealgorithm.consider(requested_file)
-        if not to_be_removed:
-            await self.add(requested_file, job_repr)
-        elif to_be_removed == {requested_file}:
-            # file will not be cached because it either does not match
-            # conditions or because there is no space in the cache
-            print(
-                "APPLY CACHING DECISION: Job {}, File {}: File wasnt "
-                "cached @ {}".format(job_repr, requested_file.filename, time.now)
-            )
-        else:
-            for file in to_be_removed:
-                await self.remove(file, job_repr)
-
     def look_up_file(self, requested_file: RequestedFile, job_repr):
         """
         Searches storage object for the requested_file and sends result (amount of
@@ -220,3 +189,9 @@ class HitrateStorage(Storage):
 
     def look_up_file(self, requested_file: RequestedFile, job_repr):
         return LookUpInformation(requested_file.filesize)
+
+    async def add(self, file: RequestedFile, job_repr):
+        pass
+
+    async def remove(self, file: StoredFile, job_repr):
+        pass
