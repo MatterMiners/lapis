@@ -81,7 +81,7 @@ class Connection(object):
         ):
             try:
                 potential_cache = random.choice(self.storages[dronesite])
-                await potential_cache._apply_caching_decision(requested_file, job_repr)
+                await potential_cache.apply_caching_decision(requested_file, job_repr)
             except KeyError:
                 pass
         print(f"now transfering {requested_file.filesize} from {used_connection}")
