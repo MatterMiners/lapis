@@ -1,7 +1,7 @@
 import logging
 from typing import Optional, TYPE_CHECKING
 
-from usim import time
+from usim import time, Scope, instant
 from usim import CancelTask
 
 from lapis.monitor import sampling_required
@@ -14,9 +14,7 @@ class Job(object):
     __slots__ = (
         "resources",
         "used_resources",
-        "_walltime",
-        "_calculationtime",
-        "_streamtime",
+        "walltime",
         "requested_walltime",
         "queue_date",
         "requested_inputfiles",
@@ -61,12 +59,8 @@ class Job(object):
                     self.used_resources[key],
                 )
                 self.resources[key] = self.used_resources[key]
-        self._walltime = used_resources.pop("walltime")
-        self._calculationtime = self.get_calculation_time()
-        self._streamtime = 0
+        self.walltime = used_resources.pop("walltime")
         self.requested_walltime = resources.pop("walltime", None)
-        self.requested_inputfiles = resources.pop("inputfiles", None)
-        self.used_inputfiles = used_resources.pop("inputfiles", None)
         self.queue_date = queue_date
         assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since
@@ -74,6 +68,10 @@ class Job(object):
         self.drone = drone
         self._name = name
         self._success: Optional[bool] = None
+
+        # caching-related
+        self.requested_inputfiles = resources.pop("inputfiles", None)
+        self.used_inputfiles = used_resources.pop("inputfiles", None)
 
     @property
     def name(self) -> str:
@@ -95,49 +93,40 @@ class Job(object):
             return self.in_queue_until - self.in_queue_since
         return float("Inf")
 
-    @property
-    def walltime(self) -> float:
-        """
-        :return: Time that passes while job is running
-        """
-        return self._streamtime + self.calculation_time
-
-    @property
-    def calculation_time(self):
-        print("WALLTIME: Job {} @ {}".format(repr(self), time.now))
-        return self._calculationtime
-
-    def get_calculation_time(self, calculation_efficiency=0.9):
+    async def _calculate(self, calculation_efficiency=0.9):
         """
         Determines a jobs calculation time based on the jobs CPU time and a
         calculation efficiency representing inefficient programming.
         :param calculation_efficiency:
         :return:
         """
+        print(f"WALLTIME: Job {self} @ {time.now}")
+        result = self.walltime
         try:
-            return (
+            result = (
                 self.used_resources["cores"] / calculation_efficiency
-            ) * self._walltime
+            ) * self.walltime
         except KeyError:
-            # logging.getLogger("implementation").info()
-            return self._walltime
+            pass
+        start = time.now
+        await (time + result)
+        print(f"finished calculation at {time.now - start}")
 
-    async def transfer_inputfiles(self):
-        print("TRANSFERING INPUTFILES: Job {} @ {}".format(repr(self), time.now))
-        if self.drone.connection and self.used_inputfiles:
-            self._streamtime = await self.drone.connection.transfer_files(
-                self.drone, self.requested_inputfiles, repr(self)
+    async def _transfer_inputfiles(self):
+        try:
+            start = time.now
+            print(f"TRANSFERING INPUTFILES: Job {self} @ {start}")
+            await self.drone.connection.transfer_files(
+                drone=self.drone,
+                requested_files=self.used_inputfiles,
+                job_repr=repr(self),
             )
-
             print(
-                "streamed inputfiles {} for job {} in {} timeunits, finished @ {}"
-                "".format(
-                    self.requested_inputfiles.keys(),
-                    repr(self),
-                    self._streamtime,
-                    time.now,
-                )
+                f"streamed inputfiles {self.used_inputfiles.keys()} for job {self} "
+                f"in {time.now - start} timeunits, finished @ {time.now}"
             )
+        except AttributeError:
+            pass
 
     async def run(self, drone: "Drone"):
         assert drone, "Jobs cannot run without a drone being assigned"
@@ -147,22 +136,24 @@ class Job(object):
         await sampling_required.put(self)
         print("running job {}  in drone {}".format(repr(self), repr(self.drone)))
         try:
-            if self.requested_inputfiles:
-                await self.transfer_inputfiles()
-                await (time + self.calculation_time)
-            else:
-                # ToDo: improve handling of jobs without inputfiles (correct value in
-                # self.walltime and therefore in monitoring etc)
-                await (time + self._walltime)
-            print(self.calculation_time, self._streamtime, self.walltime)
+            start = time.now
+            async with Scope() as scope:
+                await instant
+                scope.do(self._transfer_inputfiles())
+                scope.do(self._calculate())
         except CancelTask:
             self.drone = None
             self._success = False
+            # TODO: in_queue_until is still set
         except BaseException:
             self.drone = None
             self._success = False
+            # TODO: in_queue_until is still set
             raise
         else:
+            old_walltime = self.walltime
+            self.walltime = time.now - start
+            print(f"monitored walltime of {old_walltime} changed to {self.walltime}")
             self.drone = None
             self._success = True
         await sampling_required.put(self)
