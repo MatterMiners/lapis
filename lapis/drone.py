@@ -27,10 +27,7 @@ class Drone(interfaces.Pool):
         """
         super(Drone, self).__init__()
         self.scheduler = scheduler
-        if connection is not None:
-            self.connection = connection
-        else:
-            self.connection = Connection()
+        self.connection = connection
         self.sitename = sitename
         self.pool_resources = pool_resources
         self.resources = Capacities(**pool_resources)
