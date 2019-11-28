@@ -3,6 +3,9 @@ import random
 import time as pytime
 from functools import partial
 
+from typing import List
+
+from cobald.interfaces import Controller
 from usim import run, time, until, Scope, Queue
 
 import lapis.monitor as monitor
@@ -20,7 +23,7 @@ from lapis.monitor.general import (
 )
 from lapis.monitor import Monitoring
 from lapis.monitor.cobald import drone_statistics, pool_statistics
-
+from lapis.pool import Pool
 
 logging.getLogger("implementation").propagate = False
 
@@ -28,13 +31,12 @@ logging.getLogger("implementation").propagate = False
 class Simulator(object):
     def __init__(self, seed=1234):
         random.seed(seed)
-        self.job_queue = Queue()
-        self.pools = []
+        self.job_queue: Queue = Queue()
+        self.pools: List[Pool] = []
         self.connection: Connection = None
-        self.controllers = []
+        self.controllers: List[Controller] = []
         self.job_scheduler = None
         self.job_generator = None
-        self.cost = 0
         self._job_generators = []
         self.monitoring = Monitoring()
         self.duration = None
