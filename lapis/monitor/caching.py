@@ -18,7 +18,7 @@ def storage_status(storage: Storage) -> list:
         {
             "storage": repr(storage),
             "usedstorage": storage.usedstorage,
-            "storagesize": storage.storagesize,
+            "storagesize": storage.size,
             "numberoffiles": len(storage.files),
         }
     ]

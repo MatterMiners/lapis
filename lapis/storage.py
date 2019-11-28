@@ -24,7 +24,7 @@ class Storage(object):
     __slots__ = (
         "name",
         "sitename",
-        "storagesize",
+        "size",
         "deletion_duration",
         "update_duration",
         "_usedstorage",
@@ -39,7 +39,7 @@ class Storage(object):
         self,
         name: Optional[str] = None,
         sitename: Optional[str] = None,
-        storagesize: int = 1000 * 1024 * 1024 * 1024,
+        size: int = 1000 * 1024 * 1024 * 1024,
         throughput_limit: int = 10 * 1024 * 1024 * 1024,
         files: Optional[dict] = None,
     ):
@@ -47,7 +47,7 @@ class Storage(object):
         self.sitename = sitename
         self.deletion_duration = 5
         self.update_duration = 1
-        self.storagesize = storagesize
+        self.size = size
         self.files = files
         self._usedstorage = Resources(
             size=sum(file.filesize for file in files.values())
@@ -62,7 +62,7 @@ class Storage(object):
 
     @property
     def free_space(self):
-        return self.storagesize - self.usedstorage
+        return self.size - self.usedstorage
 
     async def remove(self, file: StoredFile, job_repr):
         """
@@ -198,14 +198,14 @@ class HitrateStorage(Storage):
         hitrate,
         name: Optional[str] = None,
         sitename: Optional[str] = None,
-        storagesize: int = 1000,
-        throughput_limit: int = 10,
+        size: int = 1000 * 1024 * 1024 * 1024,
+        throughput_limit: int = 10 * 1024 * 1024 * 1024,
         files: Optional[dict] = None,
     ):
         super(HitrateStorage, self).__init__(
             name=name,
             sitename=sitename,
-            storagesize=storagesize,
+            size=size,
             throughput_limit=throughput_limit,
             files=files,
         )
