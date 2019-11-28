@@ -7,6 +7,9 @@ from cobald.monitor.format_json import JsonFormatter
 from usim import time, Queue
 
 
+SIMULATION_START = None
+
+
 class LoggingSocketHandler(logging.handlers.SocketHandler):
     def makePickle(self, record):
         return self.format(record).encode()
@@ -46,6 +49,7 @@ class Monitoring(object):
             for statistic in self._statistics.get(type(log_object), set()):
                 # do the logging
                 for record in statistic(log_object):
+                    record["tardis"] = "lapis-%s" % SIMULATION_START
                     logging.getLogger(statistic.name).info(statistic.name, record)
 
     def register_statistic(self, statistic: Callable) -> None:
