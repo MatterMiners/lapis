@@ -1,12 +1,15 @@
 import logging
 import random
+import time as pytime
 from functools import partial
 
 from usim import run, time, until, Scope, Queue
 
+import lapis.monitor as monitor
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
 from lapis.connection import Connection
+from lapis.monitor.caching import storage_status, storage_connection, remote_connection
 from lapis.monitor.general import (
     user_demand,
     job_statistics,
@@ -14,9 +17,6 @@ from lapis.monitor.general import (
     pool_status,
     configuration_information,
     job_events,
-    storage_status,
-    storage_connection,
-    remote_connection,
 )
 from lapis.monitor import Monitoring
 from lapis.monitor.cobald import drone_statistics, pool_statistics
@@ -85,11 +85,12 @@ class Simulator(object):
         self.connection = Connection(remote_throughput)
 
     def run(self, until=None):
-        print(f"running until {until}")
+        monitor.SIMULATION_START = pytime.time()
+        print(f"[lapis-{monitor.SIMULATION_START}] running until {until}")
         run(self._simulate(until))
 
     async def _simulate(self, end):
-        print(f"Starting simulation at {time.now}")
+        print(f"[lapis-{monitor.SIMULATION_START}] Starting simulation at {time.now}")
         async with until(time == end) if end else Scope() as while_running:
             for pool in self.pools:
                 while_running.do(pool.run(), volatile=True)
@@ -100,7 +101,9 @@ class Simulator(object):
                 while_running.do(controller.run(), volatile=True)
             while_running.do(self.monitoring.run(), volatile=True)
         self.duration = time.now
-        print(f"Finished simulation at {self.duration}")
+        print(
+            f"[lapis-{monitor.SIMULATION_START}] Finished simulation at {self.duration}"
+        )
 
     async def _queue_jobs(self, job_input, job_reader):
         await job_to_queue_scheduler(
