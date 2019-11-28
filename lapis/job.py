@@ -24,6 +24,7 @@ class Job(object):
         "_name",
         "drone",
         "_success",
+        "calculation_efficiency",
     )
 
     def __init__(
@@ -34,6 +35,7 @@ class Job(object):
         queue_date: float = 0,
         name: str = None,
         drone: "Drone" = None,
+        calculation_efficiency: Optional[float] = None,
     ):
         """
         Definition of a job that uses a specified amount of resources `used_resources`
@@ -68,6 +70,7 @@ class Job(object):
         self.drone = drone
         self._name = name
         self._success: Optional[bool] = None
+        self.calculation_efficiency = calculation_efficiency
 
         # caching-related
         self.requested_inputfiles = resources.pop("inputfiles", None)
@@ -93,7 +96,7 @@ class Job(object):
             return self.in_queue_until - self.in_queue_since
         return float("Inf")
 
-    async def _calculate(self, calculation_efficiency=0.9):
+    async def _calculate(self):
         """
         Determines a jobs calculation time based on the jobs CPU time and a
         calculation efficiency representing inefficient programming.
@@ -104,9 +107,9 @@ class Job(object):
         result = self.walltime
         try:
             result = (
-                self.used_resources["cores"] / calculation_efficiency
+                self.used_resources["cores"] / self.calculation_efficiency
             ) * self.walltime
-        except KeyError:
+        except (KeyError, TypeError):
             pass
         start = time.now
         await (time + result)

@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+from typing import Optional
 
 from lapis.job import Job
 from copy import deepcopy
@@ -8,6 +9,7 @@ from copy import deepcopy
 
 def htcondor_job_reader(
     iterable,
+    calculation_efficiency: Optional[float] = None,
     resource_name_mapping={  # noqa: B006
         "cores": "RequestCpus",
         "walltime": "RequestWalltime",  # s
@@ -91,4 +93,5 @@ def htcondor_job_reader(
             resources=resources,
             used_resources=used_resources,
             queue_date=float(entry[used_resource_name_mapping["queuetime"]]),
+            calculation_efficiency=calculation_efficiency,
         )
