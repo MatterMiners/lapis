@@ -210,11 +210,19 @@ class HitrateStorage(StorageElement):
         return 0
 
     async def transfer(self, file: RequestedFile, job_repr):
+        print(
+            "TRANSFER: {}, filesize {}, remote: {}, cache: {}".format(
+                self._hitrate,
+                file.filesize,
+                (1 - self._hitrate) * file.filesize,
+                self._hitrate * file.filesize,
+            )
+        )
         async with Scope() as scope:
             scope.do(self.connection.transfer(total=self._hitrate * file.filesize))
             scope.do(
                 self.remote_storage.connection.transfer(
-                    total=(1 - self._hitrate) * file.filesize, job_repr=job_repr
+                    total=(1 - self._hitrate) * file.filesize
                 )
             )
 
