@@ -18,7 +18,7 @@ Version [Unreleased] - 2019-11-29
 
 * **[Changed]** Standardisation of units
 
-* **[Fixed]** Registering of drones
+* **[Fixed]** Duplicate registration of drones
 * **[Fixed]** Handling of black for pypy
 * **[Fixed]** Proper termination of simulation
 * **[Fixed]** Jobs execution within drones

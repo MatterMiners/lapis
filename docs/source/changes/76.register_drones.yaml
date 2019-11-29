@@ -1,5 +1,5 @@
 category: fixed
-summary: "Registering of drones"
+summary: "Duplicate registration of drones"
 description: |
   At startup drones were registered twice at the scheduler as the method
   ``register_drone`` was called during initialisation and in ``run``.
