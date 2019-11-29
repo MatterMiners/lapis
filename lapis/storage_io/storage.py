@@ -24,7 +24,10 @@ def storage_reader(
                 float(row["cachesizeGB"])
                 * unit_conversion_mapping.get("cachesizeGB", 1)
             ),
-            throughput_limit=int(row["throughput_limit"]),
+            throughput_limit=int(
+                float(row["throughput_limit"])
+                * unit_conversion_mapping.get("throughput_limit", 1)
+            ),
             files=storage_content[row["name"]],
         )()
 

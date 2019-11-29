@@ -31,6 +31,8 @@ def htcondor_job_reader(
         "RemoteWallClockTime": 1,
         "MemoryUsage": 1000 * 1000,
         "DiskUsage_RAW": 1024,
+        "filesize": 1024 * 1024 * 1024,
+        "usedsize": 1024 * 1024 * 1024,
     },
 ):
     input_file_type = iterable.name.split(".")[-1].lower()
@@ -78,8 +80,15 @@ def htcondor_job_reader(
             resources["inputfiles"] = deepcopy(entry["Inputfiles"])
             used_resources["inputfiles"] = deepcopy(entry["Inputfiles"])
             for filename, filespecs in entry["Inputfiles"].items():
+                for key in filespecs.keys():
+                    filespecs[key] = filespecs[key] * unit_conversion_mapping.get(
+                        key, 1
+                    )
+
+                print(filespecs)
                 if "usedsize" in filespecs:
                     del resources["inputfiles"][filename]["usedsize"]
+
                 if "filesize" in filespecs:
                     if "usedsize" not in filespecs:
                         used_resources["inputfiles"][filename]["usedsize"] = filespecs[

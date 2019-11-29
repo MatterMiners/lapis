@@ -106,7 +106,7 @@ def static(ctx, job_file, pool_file, storage_files, remote_throughput, cache_hit
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
 
     if all(storage_files):
-        simulator.create_connection_module(remote_throughput)
+        simulator.create_connection_module(remote_throughput * 1024 * 1024 * 1024)
         storage_file, storage_content_file, storage_type = storage_files
         simulator.create_storage(
             storage_input=storage_file,
