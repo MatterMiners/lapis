@@ -36,11 +36,7 @@ class Drone(interfaces.Pool):
         else:
             self._valid_resource_keys = self.pool_resources.keys()
         self.scheduling_duration = scheduling_duration
-        if scheduling_duration == 0:
-            self._supply = 1
-            self.scheduler.register_drone(self)
-        else:
-            self._supply = 0
+        self._supply = 0
         self.jobs = 0
         self._allocation = None
         self._utilisation = None
