@@ -9,7 +9,7 @@ from lapis.cachealgorithm import (
     check_relevance,
     delete_oldest_few_used,
 )
-from lapis.storage import Storage, RemoteStorage
+from lapis.storageelement import StorageElement, RemoteStorage
 from lapis.files import RequestedFile
 from lapis.monitor import sampling_required
 
@@ -29,7 +29,7 @@ class Connection(object):
             ),
         )
 
-    def add_storage_element(self, storage_element: Storage):
+    def add_storage_element(self, storage_element: StorageElement):
         """
         Register storage element in Connetion module clustering storage elements by
         sitename
@@ -44,7 +44,7 @@ class Connection(object):
 
     async def _determine_inputfile_source(
         self, requested_file: RequestedFile, dronesite: str, job_repr: str
-    ) -> Union[Storage, RemoteStorage]:
+    ) -> Union[StorageElement, RemoteStorage]:
         """
         Collects NamedTuples containing the amount of data of the requested file
         cached in a storage element and the storage element for all reachable storage
@@ -61,7 +61,7 @@ class Connection(object):
         if provided_storages is not None:
             look_up_list = []
             for storage in provided_storages:
-                look_up_list.append(storage.look_up_file(requested_file, job_repr))
+                look_up_list.append(storage.find(requested_file, job_repr))
             storage_list = sorted(
                 [entry for entry in look_up_list], key=lambda x: x[0], reverse=True
             )

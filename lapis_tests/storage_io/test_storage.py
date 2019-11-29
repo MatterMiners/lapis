@@ -1,6 +1,6 @@
 from tempfile import NamedTemporaryFile
 
-from lapis.storage import Storage
+from lapis.storageelement import StorageElement
 from lapis.storage_io.storage import storage_reader
 
 
@@ -25,7 +25,9 @@ class TestStorageReader(object):
     def test_empty_files(self):
         simple_config = self._create_simple_config()
         count = 0
-        for storage in storage_reader(open(simple_config.name, "r"), None, Storage):
+        for storage in storage_reader(
+            open(simple_config.name, "r"), None, StorageElement
+        ):
             assert storage is not None
             count += 1
         assert count == 1
@@ -35,11 +37,11 @@ class TestStorageReader(object):
         simple_files = self._create_simple_files()
         count = 0
         for storage in storage_reader(
-            open(simple_config.name, "r"), open(simple_files.name, "r"), Storage
+            open(simple_config.name, "r"), open(simple_files.name, "r"), StorageElement
         ):
             assert storage is not None
-            assert type(storage.free_space) == int
-            assert storage.free_space == int(5.1 * 1024 * 1024 * 1024)
+            assert type(storage.available) == int
+            assert storage.available == int(5.1 * 1024 * 1024 * 1024)
             assert type(storage.size) == int
             assert storage.size == int(10.1 * 1024 * 1024 * 1024)
             count += 1

@@ -5,10 +5,10 @@ from cobald.monitor.format_line import LineProtocolFormatter
 from usim import Pipe
 
 from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler
-from lapis.storage import Storage
+from lapis.storageelement import StorageElement
 
 
-def storage_status(storage: Storage) -> list:
+def storage_status(storage: StorageElement) -> list:
     """
     Log information about current storage object state
     :param storage:
@@ -17,7 +17,7 @@ def storage_status(storage: Storage) -> list:
     results = [
         {
             "storage": repr(storage),
-            "usedstorage": storage.usedstorage,
+            "usedstorage": storage.used,
             "storagesize": storage.size,
             "numberoffiles": len(storage.files),
         }
@@ -26,7 +26,7 @@ def storage_status(storage: Storage) -> list:
 
 
 storage_status.name = "storage_status"
-storage_status.whitelist = (Storage,)
+storage_status.whitelist = (StorageElement,)
 storage_status.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),
@@ -36,7 +36,7 @@ storage_status.logging_formatter = {
 }
 
 
-def storage_connection(storage: Storage) -> list:
+def storage_connection(storage: StorageElement) -> list:
     """
     Log information about the storages connection
     :param storage:
@@ -54,7 +54,7 @@ def storage_connection(storage: Storage) -> list:
 
 
 storage_connection.name = "storage_connection"
-storage_connection.whitelist = (Storage,)
+storage_connection.whitelist = (StorageElement,)
 storage_connection.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),

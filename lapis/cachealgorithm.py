@@ -1,24 +1,24 @@
 from typing import Optional, Callable, Tuple
 
 from lapis.files import RequestedFile, StoredFile
-from lapis.storage import Storage
+from lapis.storageelement import StorageElement
 from lapis.utilities.cache_cleanup_implementations import sort_files_by_cachedsince
 
 
-def check_size(file: RequestedFile, storage: Storage):
+def check_size(file: RequestedFile, storage: StorageElement):
     return storage.size >= file.filesize
 
 
-def check_relevance(file: RequestedFile, storage: Storage):
+def check_relevance(file: RequestedFile, storage: StorageElement):
     return True
 
 
 def delete_oldest(
-    file: RequestedFile, storage: Storage
+    file: RequestedFile, storage: StorageElement
 ) -> Tuple[bool, Tuple[StoredFile]]:
     deletable_files = []
-    currently_free = storage.free_space
-    if currently_free < storage.free_space:
+    currently_free = storage.available
+    if currently_free < storage.available:
         sorted_files = sort_files_by_cachedsince(storage.files.items())
         while currently_free < file.filesize:
             deletable_files.append(next(sorted_files))
@@ -27,11 +27,11 @@ def delete_oldest(
 
 
 def delete_oldest_few_used(
-    file: RequestedFile, storage: Storage
+    file: RequestedFile, storage: StorageElement
 ) -> Tuple[bool, Optional[Tuple[StoredFile]]]:
     deletable_files = []
-    currently_free = storage.free_space
-    if currently_free < storage.free_space:
+    currently_free = storage.available
+    if currently_free < storage.available:
         sorted_files = sort_files_by_cachedsince(storage.files.items())
         for current_file in sorted_files:
             if current_file.numberofaccesses < 3:
@@ -50,7 +50,7 @@ class CacheAlgorithm(object):
         self._deletion_strategy = lambda file, storage: delete_oldest(file, storage)
 
     def consider(
-        self, file: RequestedFile, storage: Storage
+        self, file: RequestedFile, storage: StorageElement
     ) -> Tuple[bool, Optional[Tuple[StoredFile]]]:
         if self._caching_strategy(file, storage):
             return self._deletion_strategy(file, storage)

@@ -1,29 +1,49 @@
-from typing import Optional, NamedTuple
+from typing import Optional
 
 from usim import time, Resources, Pipe, Scope
 
 from lapis.files import StoredFile, RequestedFile
+from lapis.interfaces._storage import Storage, LookUpInformation
 
 
-class LookUpInformation(NamedTuple):
-    cached_filesize: int
-    storage: "Storage"
-
-
-class RemoteStorage(object):
+class RemoteStorage(Storage):
     def __init__(self, pipe: Pipe):
         self.connection = pipe
 
-    async def transfer(self, file: RequestedFile, job_repr):
+    @property
+    def size(self):
+        return float("Inf")
+
+    @property
+    def available(self):
+        return float("Inf")
+
+    @property
+    def used(self):
+        return 0
+
+    async def transfer(self, file: RequestedFile, **kwargs):
         await self.connection.transfer(total=file.filesize)
 
+    async def add(self, file: StoredFile, **kwargs):
+        raise NotImplementedError
 
-class Storage(object):
+    async def remove(self, file: StoredFile, **kwargs):
+        raise NotImplementedError
+
+    async def update(self, file: StoredFile, **kwargs):
+        raise NotImplementedError
+
+    def find(self, file: RequestedFile, **kwargs) -> LookUpInformation:
+        raise NotImplementedError
+
+
+class StorageElement(Storage):
 
     __slots__ = (
         "name",
         "sitename",
-        "size",
+        "_size",
         "deletion_duration",
         "update_duration",
         "_usedstorage",
@@ -45,7 +65,7 @@ class Storage(object):
         self.sitename = sitename
         self.deletion_duration = 5
         self.update_duration = 1
-        self.size = size
+        self._size = size
         self.files = files
         self._usedstorage = Resources(
             size=sum(file.filesize for file in files.values())
@@ -54,12 +74,16 @@ class Storage(object):
         self.remote_storage = None
 
     @property
-    def usedstorage(self):
+    def size(self):
+        return self._size
+
+    @property
+    def used(self):
         return self._usedstorage.levels.size
 
     @property
-    def free_space(self):
-        return self.size - self.usedstorage
+    def available(self):
+        return self.size - self.used
 
     async def remove(self, file: StoredFile, job_repr):
         """
@@ -99,7 +123,7 @@ class Storage(object):
         self.files[file.filename] = file
         await self.connection.transfer(file.filesize)
 
-    async def update_file(self, stored_file: StoredFile, job_repr):
+    async def update(self, stored_file: StoredFile, job_repr):
         """
         Updates a stored files information upon access.
         :param stored_file:
@@ -127,11 +151,11 @@ class Storage(object):
         await self.connection.transfer(file.filesize)
         try:
             # TODO: needs handling of KeyError
-            await self.update_file(self.files[file.filename], job_repr)
+            await self.update(self.files[file.filename], job_repr)
         except AttributeError:
             pass
 
-    def look_up_file(self, requested_file: RequestedFile, job_repr):
+    def find(self, requested_file: RequestedFile, job_repr):
         """
         Searches storage object for the requested_file and sends result (amount of
         cached data, storage object) to the queue.
@@ -161,7 +185,7 @@ class Storage(object):
         return "<%s: %s>" % (self.__class__.__name__, self.name or id(self))
 
 
-class HitrateStorage(Storage):
+class HitrateStorage(StorageElement):
     def __init__(
         self,
         hitrate,
@@ -180,7 +204,15 @@ class HitrateStorage(Storage):
         )
         self._hitrate = hitrate
 
-    async def transfer(self, file, job_repr):
+    @property
+    def available(self):
+        return self.size
+
+    @property
+    def used(self):
+        return 0
+
+    async def transfer(self, file: RequestedFile, job_repr):
         async with Scope() as scope:
             scope.do(self.connection.transfer(total=self._hitrate * file.filesize))
             scope.do(
@@ -189,11 +221,14 @@ class HitrateStorage(Storage):
                 )
             )
 
-    def look_up_file(self, requested_file: RequestedFile, job_repr):
+    def find(self, requested_file: RequestedFile, job_repr):
         return LookUpInformation(requested_file.filesize, self)
 
     async def add(self, file: RequestedFile, job_repr):
         pass
 
     async def remove(self, file: StoredFile, job_repr):
+        pass
+
+    async def update(self, stored_file: StoredFile, job_repr):
         pass
