@@ -31,9 +31,6 @@ class RemoteStorage(Storage):
     async def remove(self, file: StoredFile, **kwargs):
         raise NotImplementedError
 
-    async def update(self, file: StoredFile, **kwargs):
-        raise NotImplementedError
-
     def find(self, file: RequestedFile, **kwargs) -> LookUpInformation:
         raise NotImplementedError
 
@@ -123,7 +120,7 @@ class StorageElement(Storage):
         self.files[file.filename] = file
         await self.connection.transfer(file.filesize)
 
-    async def update(self, stored_file: StoredFile, job_repr):
+    async def _update(self, stored_file: StoredFile, job_repr):
         """
         Updates a stored files information upon access.
         :param stored_file:
@@ -151,7 +148,7 @@ class StorageElement(Storage):
         await self.connection.transfer(file.filesize)
         try:
             # TODO: needs handling of KeyError
-            await self.update(self.files[file.filename], job_repr)
+            await self._update(self.files[file.filename], job_repr)
         except AttributeError:
             pass
 
@@ -228,7 +225,4 @@ class HitrateStorage(StorageElement):
         pass
 
     async def remove(self, file: StoredFile, job_repr):
-        pass
-
-    async def update(self, stored_file: StoredFile, job_repr):
         pass

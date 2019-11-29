@@ -56,15 +56,6 @@ class Storage(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    async def update(self, file: StoredFile, job_repr):
-        """
-        Updates a stored files information upon access.
-
-        .. TODO:: This should be included in an operation to access/transfer.
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def find(self, file: RequestedFile, job_repr) -> LookUpInformation:
         """Information if a file is stored in Storage"""
         raise NotImplementedError
