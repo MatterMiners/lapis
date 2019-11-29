@@ -14,8 +14,8 @@ class RemoteStorage(object):
     def __init__(self, pipe: Pipe):
         self.connection = pipe
 
-    async def transfer(self, total, job_repr):
-        await self.connection.transfer(total=total)
+    async def transfer(self, file: RequestedFile, job_repr):
+        await self.connection.transfer(total=file.filesize)
 
 
 class Storage(object):
@@ -115,7 +115,7 @@ class Storage(object):
             )
         )
 
-    async def transfer(self, file, job_repr):
+    async def transfer(self, file: RequestedFile, job_repr):
         """
         Manages file transfer via the storage elements connection and updates file
         information. If the file should have been deleted since it was originally
