@@ -12,10 +12,10 @@ class LookUpInformation(NamedTuple):
 
 class RemoteStorage(object):
     def __init__(self, pipe: Pipe):
-        self._connection = pipe
+        self.connection = pipe
 
     async def transfer(self, total, job_repr):
-        await self._connection.transfer(total=total)
+        await self.connection.transfer(total=total)
 
 
 class Storage(object):
@@ -30,7 +30,7 @@ class Storage(object):
         "files",
         "filenames",
         "connection",
-        "remote_connection",
+        "remote_storage",
     )
 
     def __init__(
@@ -51,7 +51,7 @@ class Storage(object):
             size=sum(file.filesize for file in files.values())
         )
         self.connection = Pipe(throughput_limit)
-        self.remote_connection = None
+        self.remote_storage = None
 
     @property
     def usedstorage(self):
@@ -184,7 +184,7 @@ class HitrateStorage(Storage):
         async with Scope() as scope:
             scope.do(self.connection.transfer(total=self._hitrate * file.filesize))
             scope.do(
-                self.remote_connection.transfer(
+                self.remote_storage.connection.transfer(
                     total=(1 - self._hitrate) * file.filesize, job_repr=job_repr
                 )
             )
