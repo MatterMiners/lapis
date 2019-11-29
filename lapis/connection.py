@@ -36,7 +36,7 @@ class Connection(object):
         :param storage_element:
         :return:
         """
-        storage_element.remote_connection = self.remote_connection
+        storage_element.remote_storage = self.remote_connection
         try:
             self.storages[storage_element.sitename].append(storage_element)
         except KeyError:
