@@ -100,7 +100,8 @@ class Connection(object):
                     await potential_cache.add(requested_file, job_repr)
                 else:
                     print(
-                        f"APPLY CACHING DECISION: Job {job_repr}, File {requested_file.filename}: File wasnt "
+                        f"APPLY CACHING DECISION: Job {job_repr}, "
+                        f"File {requested_file.filename}: File wasnt "
                         f"cached @ {time.now}"
                     )
             except KeyError:
