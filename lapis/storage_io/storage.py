@@ -41,8 +41,7 @@ def storage_content_reader(
     for row in reader:
         for key in row:
             if key not in ["filename", "cachename"]:
-                row[key] = int(row[key])
-            row[key] = row[key] * unit_conversion_mapping.get(key, 1)
+                row[key] = int(float(row[key]) * unit_conversion_mapping.get(key, 1))
         cache_information.setdefault(row["cachename"], {})[
             row["filename"]
         ] = StoredFile(**row)
