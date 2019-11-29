@@ -1,4 +1,7 @@
 from typing import Dict
+
+from classad._functions import quantize
+from classad._primitives import HTCInt
 from usim import Scope, interval, Resources
 
 from lapis.drone import Drone
@@ -7,6 +10,13 @@ from lapis.monitor import sampling_required
 
 class JobQueue(list):
     pass
+
+
+quantization_defaults = {
+    "memory": HTCInt(128 * 1024 * 1024),
+    "disk": HTCInt(1024 * 1024),
+    "cores": HTCInt(1),
+}
 
 
 class CondorJobScheduler(object):
@@ -28,7 +38,7 @@ class CondorJobScheduler(object):
 
     def __init__(self, job_queue):
         self._stream_queue = job_queue
-        self.drone_cluster = []
+        self.drone_cluster = {}
         self.interval = 60
         self.job_queue = JobQueue()
         self._collecting = True
@@ -36,7 +46,7 @@ class CondorJobScheduler(object):
 
     @property
     def drone_list(self):
-        for cluster in self.drone_cluster:
+        for cluster in self.drone_cluster.values():
             for drone in cluster:
                 yield drone
 
@@ -44,41 +54,33 @@ class CondorJobScheduler(object):
         self._add_drone(drone)
 
     def unregister_drone(self, drone: Drone):
-        for cluster in self.drone_cluster:
+        for key in self.drone_cluster:
             try:
-                cluster.remove(drone)
+                self.drone_cluster[key].remove(drone)
             except ValueError:
                 pass
             else:
-                if len(cluster) == 0:
-                    self.drone_cluster.remove(cluster)
+                break
+        else:
+            # nothing was removed
+            return
+        if len(self.drone_cluster[key]) == 0:
+            del self.drone_cluster[key]
+
+    def _clustering_key(self, resource_dict: Dict):
+        clustering_key = []
+        for key, value in resource_dict.items():
+            clustering_key.append(
+                int(quantize(value, quantization_defaults.get(key, 1)))
+            )
+        return tuple(clustering_key)
 
     def _add_drone(self, drone: Drone, drone_resources: Dict = None):
-        minimum_distance_cluster = None
-        distance = float("Inf")
-        if len(self.drone_cluster) > 0:
-            for cluster in self.drone_cluster:
-                current_distance = 0
-                for key in {*cluster[0].pool_resources, *drone.pool_resources}:
-                    if drone_resources:
-                        current_distance += abs(
-                            cluster[0].theoretical_available_resources.get(key, 0)
-                            - drone_resources.get(key, 0)
-                        )
-                    else:
-                        current_distance += abs(
-                            cluster[0].theoretical_available_resources.get(key, 0)
-                            - drone.theoretical_available_resources.get(key, 0)
-                        )
-                if current_distance < distance:
-                    minimum_distance_cluster = cluster
-                    distance = current_distance
-            if distance < 1:
-                minimum_distance_cluster.append(drone)
-            else:
-                self.drone_cluster.append([drone])
+        if drone_resources:
+            clustering_key = self._clustering_key(drone_resources)
         else:
-            self.drone_cluster.append([drone])
+            clustering_key = self._clustering_key(drone.theoretical_available_resources)
+        self.drone_cluster.setdefault(clustering_key, []).append(drone)
 
     def update_drone(self, drone: Drone):
         self.unregister_drone(drone)
@@ -88,19 +90,25 @@ class CondorJobScheduler(object):
         async with Scope() as scope:
             scope.do(self._collect_jobs())
             async for _ in interval(self.interval):
+                job_drone_mapping = {}
                 for job in self.job_queue:
-                    best_match = self._schedule_job(job)
+                    job_key = self._clustering_key(job.resources)
+                    try:
+                        drone_key = job_drone_mapping[job_key]
+                        if drone_key is None:
+                            continue
+                        best_match = self._schedule_job(
+                            job, self.drone_cluster[drone_key]
+                        )
+                    except KeyError:
+                        best_match = self._schedule_job(job)
                     if best_match:
-                        await best_match.schedule_job(job)
-                        self.job_queue.remove(job)
-                        await sampling_required.put(self.job_queue)
-                        self.unregister_drone(best_match)
-                        left_resources = best_match.theoretical_available_resources
-                        left_resources = {
-                            key: value - job.resources.get(key, 0)
-                            for key, value in left_resources.items()
-                        }
-                        self._add_drone(best_match, left_resources)
+                        job_drone_mapping[job_key] = self._clustering_key(
+                            best_match.theoretical_available_resources
+                        )
+                        await self._execute_job(job, best_match)
+                    else:
+                        job_drone_mapping[job_key] = None
                 if (
                     not self._collecting
                     and not self.job_queue
@@ -108,6 +116,17 @@ class CondorJobScheduler(object):
                 ):
                     break
                 await sampling_required.put(self)
+
+    async def _execute_job(self, job, drone):
+        await drone.schedule_job(job)
+        self.job_queue.remove(job)
+        await sampling_required.put(self.job_queue)
+        self.unregister_drone(drone)
+        left_resources = {
+            key: value - job.resources.get(key, 0)
+            for key, value in drone.theoretical_available_resources.items()
+        }
+        self._add_drone(drone, left_resources)
 
     async def _collect_jobs(self):
         async for job in self._stream_queue:
@@ -121,11 +140,13 @@ class CondorJobScheduler(object):
         if job.successful:
             await self._processing.decrease(jobs=1)
         else:
-            await self._stream_queue.put(job)
+            self.job_queue.append(job)
 
-    def _schedule_job(self, job) -> Drone:
+    def _schedule_job(self, job, cluster=None) -> Drone:
         priorities = {}
-        for cluster in self.drone_cluster:
+        if cluster and len(cluster) > 0:
+            return cluster[0]
+        for cluster in self.drone_cluster.values():
             drone = cluster[0]
             cost = 0
             resources = drone.theoretical_available_resources
