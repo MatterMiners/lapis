@@ -14,8 +14,8 @@ class RemoteStorage(object):
     def __init__(self, pipe: Pipe):
         self._connection = pipe
 
-    async def transfer(self, file, job_repr):
-        await self._connection.transfer(total=file.filesize)
+    async def transfer(self, total, job_repr):
+        await self._connection.transfer(total=total)
 
 
 class Storage(object):
@@ -184,11 +184,13 @@ class HitrateStorage(Storage):
         async with Scope() as scope:
             scope.do(self.connection.transfer(total=self._hitrate * file.filesize))
             scope.do(
-                self.remote_connection.transfer(total=1 - self._hitrate * file.filesize)
+                self.remote_connection.transfer(
+                    total=(1 - self._hitrate) * file.filesize, job_repr=job_repr
+                )
             )
 
     def look_up_file(self, requested_file: RequestedFile, job_repr):
-        return LookUpInformation(requested_file.filesize)
+        return LookUpInformation(requested_file.filesize, self)
 
     async def add(self, file: RequestedFile, job_repr):
         pass

@@ -63,9 +63,7 @@ class Connection(object):
             for storage in provided_storages:
                 look_up_list.append(storage.look_up_file(requested_file, job_repr))
             storage_list = sorted(
-                [entry async for entry in look_up_list],
-                key=lambda x: x[0],
-                reverse=True,
+                [entry for entry in look_up_list], key=lambda x: x[0], reverse=True
             )
             for entry in storage_list:
                 # TODO: check should better check that size is bigger than requested
@@ -87,7 +85,6 @@ class Connection(object):
         used_connection = await self._determine_inputfile_source(
             requested_file, dronesite, job_repr
         )
-
         await sampling_required.put(used_connection)
         if used_connection == self.remote_connection and self.storages.get(
             dronesite, None
@@ -130,7 +127,7 @@ class Connection(object):
         async with Scope() as scope:
             for inputfilename, inputfilespecs in requested_files.items():
                 requested_file = RequestedFile(
-                    inputfilename, inputfilespecs["filesize"]
+                    inputfilename, inputfilespecs["usedsize"]
                 )
                 scope.do(self.stream_file(requested_file, drone.sitename, job_repr))
         stream_time = time.now - start_time
