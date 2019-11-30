@@ -88,7 +88,7 @@ class CondorJobScheduler(object):
         async with Scope() as scope:
             scope.do(self._collect_jobs())
             async for _ in interval(self.interval):
-                for job in self.job_queue:
+                for job in self.job_queue.copy():
                     best_match = self._schedule_job(job)
                     if best_match:
                         await best_match.schedule_job(job)
