@@ -106,13 +106,13 @@ class Connection(object):
                     )
             except KeyError:
                 pass
-        print(f"now transfering {requested_file.filesize} from {used_connection}")
+        # print(f"now transfering {requested_file.filesize} from {used_connection}")
         await used_connection.transfer(requested_file, job_repr)
-        print(
-            "Job {}: finished transfering of file {}: {}GB @ {}".format(
-                job_repr, requested_file.filename, requested_file.filesize, time.now
-            )
-        )
+        # print(
+        #     "Job {}: finished transfering of file {}: {}GB @ {}".format(
+        #         job_repr, requested_file.filename, requested_file.filesize, time.now
+        #     )
+        # )
 
     async def transfer_files(self, drone, requested_files: dict, job_repr):
         """
@@ -123,7 +123,7 @@ class Connection(object):
         :param job_repr:
         :return:
         """
-        print("registered caches", self.storages)
+        # print("registered caches", self.storages)
         start_time = time.now
         async with Scope() as scope:
             for inputfilename, inputfilespecs in requested_files.items():
@@ -132,7 +132,7 @@ class Connection(object):
                 )
                 scope.do(self.stream_file(requested_file, drone.sitename, job_repr))
         stream_time = time.now - start_time
-        print(
-            "STREAMED files {} in {}".format(list(requested_files.keys()), stream_time)
-        )
+        # print(
+        #     "STREAMED files {} in {}".format(list(requested_files.keys()), stream_time)
+        # )
         return stream_time
