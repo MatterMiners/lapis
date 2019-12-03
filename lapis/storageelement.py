@@ -82,7 +82,7 @@ class StorageElement(Storage):
     def available(self):
         return self.size - self.used
 
-    async def remove(self, file: StoredFile, job_repr):
+    async def remove(self, file: StoredFile, job_repr=None):
         """
         Deletes file from storage object. The time this operation takes is defined
         by the storages deletion_duration attribute.
@@ -99,7 +99,7 @@ class StorageElement(Storage):
         await self._usedstorage.decrease(usedsize=file.filesize)
         self.files.pop(file.filename)
 
-    async def add(self, file: RequestedFile, job_repr):
+    async def add(self, file: RequestedFile, job_repr=None):
         """
         Adds file to storage object transfering it through the storage objects
         connection. This should be sufficient for now because files are only added
@@ -136,7 +136,7 @@ class StorageElement(Storage):
             )
         )
 
-    async def transfer(self, file: RequestedFile, job_repr):
+    async def transfer(self, file: RequestedFile, job_repr=None):
         """
         Manages file transfer via the storage elements connection and updates file
         information. If the file should have been deleted since it was originally
@@ -152,7 +152,7 @@ class StorageElement(Storage):
         except AttributeError:
             pass
 
-    def find(self, requested_file: RequestedFile, job_repr):
+    def find(self, requested_file: RequestedFile, job_repr=None):
         """
         Searches storage object for the requested_file and sends result (amount of
         cached data, storage object) to the queue.
@@ -209,7 +209,7 @@ class HitrateStorage(StorageElement):
     def used(self):
         return 0
 
-    async def transfer(self, file: RequestedFile, job_repr):
+    async def transfer(self, file: RequestedFile, job_repr=None):
         print(
             "TRANSFER: {}, filesize {}, remote: {}, cache: {}".format(
                 self._hitrate,
@@ -226,11 +226,11 @@ class HitrateStorage(StorageElement):
                 )
             )
 
-    def find(self, requested_file: RequestedFile, job_repr):
+    def find(self, requested_file: RequestedFile, job_repr=None):
         return LookUpInformation(requested_file.filesize, self)
 
-    async def add(self, file: RequestedFile, job_repr):
+    async def add(self, file: RequestedFile, job_repr=None):
         pass
 
-    async def remove(self, file: StoredFile, job_repr):
+    async def remove(self, file: StoredFile, job_repr=None):
         pass

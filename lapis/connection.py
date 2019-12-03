@@ -43,7 +43,7 @@ class Connection(object):
             self.storages[storage_element.sitename] = [storage_element]
 
     async def _determine_inputfile_source(
-        self, requested_file: RequestedFile, dronesite: str, job_repr: str
+        self, requested_file: RequestedFile, dronesite: str, job_repr: str = None
     ) -> Union[StorageElement, RemoteStorage]:
         """
         Collects NamedTuples containing the amount of data of the requested file
@@ -71,7 +71,9 @@ class Connection(object):
                     return entry.storage
         return self.remote_connection
 
-    async def stream_file(self, requested_file: RequestedFile, dronesite, job_repr):
+    async def stream_file(
+        self, requested_file: RequestedFile, dronesite, job_repr=None
+    ):
         """
         Determines which storage object is used to provide the requested file and
         startes the files transfer. For files transfered via remote connection a
@@ -114,7 +116,7 @@ class Connection(object):
         #     )
         # )
 
-    async def transfer_files(self, drone, requested_files: dict, job_repr):
+    async def transfer_files(self, drone, requested_files: dict, job_repr=None):
         """
         Converts dict information about requested files to RequestedFile object and
         parallely launches streaming for all files
@@ -123,7 +125,6 @@ class Connection(object):
         :param job_repr:
         :return:
         """
-        # print("registered caches", self.storages)
         start_time = time.now
         async with Scope() as scope:
             for inputfilename, inputfilespecs in requested_files.items():

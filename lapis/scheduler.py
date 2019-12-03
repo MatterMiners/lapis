@@ -90,9 +90,7 @@ class CondorJobScheduler(object):
             async for _ in interval(self.interval):
                 print("NEW SCHEDULING INTERVAL @ {}".format(time.now))
                 print(self.job_queue)
-
                 for job in self.job_queue.copy():
-                    print(self.job_queue)
                     print("SCHEDULING {}".format(repr(job)))
                     best_match = self._schedule_job(job)
                     if best_match:
@@ -106,17 +104,11 @@ class CondorJobScheduler(object):
                         await sampling_required.put(self.job_queue)
                         self.unregister_drone(best_match)
                         left_resources = best_match.theoretical_available_resources
-                        print(left_resources)
-                        for key, value in left_resources.items():
-                            print(key, value, job.resources.get(key, 0))
                         left_resources = {
                             key: value - job.resources.get(key, 0)
                             for key, value in left_resources.items()
                         }
-                        print(left_resources)
                         self._add_drone(best_match, left_resources)
-                    print("reached end of loop for ", repr(job), self.job_queue)
-                print("loop ended now there")
                 if (
                     not self._collecting
                     and not self.job_queue
@@ -145,9 +137,11 @@ class CondorJobScheduler(object):
             drone = cluster[0]
             cost = 0
             resources = drone.theoretical_available_resources
-            print("trying to match Job {} to {}, resources {}".format(repr(job),
-                                                                      repr(drone),
-                                                                      resources))
+            # print(
+            #     "trying to match Job {} to {}, resources {}".format(
+            #         repr(job), repr(drone), resources
+            #     )
+            # )
             for resource_type in job.resources:
                 if resources.get(resource_type, 0) < job.resources[resource_type]:
                     # Inf for all job resources that a drone does not support
