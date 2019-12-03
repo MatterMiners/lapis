@@ -96,7 +96,7 @@ class StorageElement(Storage):
             )
         )
         await (time + self.deletion_duration)
-        await self._usedstorage.decrease(usedsize=file.filesize)
+        await self._usedstorage.decrease(size=file.filesize)
         self.files.pop(file.filename)
 
     async def add(self, file: RequestedFile, job_repr=None):
@@ -116,7 +116,7 @@ class StorageElement(Storage):
             )
         )
         file = file.convert_to_stored_file_object(time.now)
-        await self._usedstorage.increase(usedsize=file.filesize)
+        await self._usedstorage.increase(size=file.filesize)
         self.files[file.filename] = file
         await self.connection.transfer(file.filesize)
 
