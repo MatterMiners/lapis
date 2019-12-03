@@ -1,10 +1,11 @@
-from typing import Callable, Coroutine
+from typing import Callable, Coroutine, Optional
 from functools import wraps
 
 from usim import run, Resources
 
 from lapis.drone import Drone
 from lapis.job import Job
+from lapis.connection import Connection
 
 
 class UnfinishedTest(RuntimeError):
@@ -71,4 +72,10 @@ class DummyScheduler:
 
 
 class DummyDrone:
-    connection = None
+    sitename = None
+
+    def __init__(self, throughput: Optional[float] = None):
+        if throughput:
+            self.connection = Connection(throughput)
+        else:
+            self.connection = None
