@@ -38,7 +38,7 @@ storage_import_mapper = {"standard": storage_reader}
 @click.option("--log-tcp", "log_tcp", is_flag=True)
 @click.option("--log-file", "log_file", type=click.File("w"))
 @click.option("--log-telegraf", "log_telegraf", is_flag=True)
-@click.option("--calculation-efficiency", type=float, default=0.9)
+@click.option("--calculation-efficiency", type=float)
 @click.pass_context
 def cli(ctx, seed, until, log_tcp, log_file, log_telegraf, calculation_efficiency):
     ctx.ensure_object(dict)
