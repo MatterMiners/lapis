@@ -59,7 +59,6 @@ class Monitoring(object):
         except GeneratorExit:
             await log_iter.aclose()
 
-
     def register_statistic(self, statistic: Callable) -> None:
         """
         Register a callable that takes an object for logging and generates a list
