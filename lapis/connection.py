@@ -1,6 +1,6 @@
 import random
 
-from typing import Union
+from typing import Union, Optional
 from usim import Scope, time, Pipe
 
 from lapis.cachealgorithm import (
@@ -43,7 +43,10 @@ class Connection(object):
             self.storages[storage_element.sitename] = [storage_element]
 
     async def _determine_inputfile_source(
-        self, requested_file: RequestedFile, dronesite: str, job_repr: str = None
+        self,
+        requested_file: RequestedFile,
+        dronesite: Optional[str],
+        job_repr: Optional[str] = None,
     ) -> Union[StorageElement, RemoteStorage]:
         """
         Collects NamedTuples containing the amount of data of the requested file
