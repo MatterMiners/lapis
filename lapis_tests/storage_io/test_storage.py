@@ -10,7 +10,8 @@ class TestStorageReader(object):
         with open(storage_config.name, "w") as write_stream:
             write_stream.write(
                 f"name sitename cachesizeGB throughput_limit\n"
-                f"name sitename {str(10) if to_string else 10} {str(10.1) if to_string else 10.1} {str(1) if to_string else 1}"
+                f"name sitename {str(10) if to_string else 10} "
+                f"{str(10.1) if to_string else 10.1} {str(1) if to_string else 1}"
             )
         return storage_config
 
@@ -18,8 +19,12 @@ class TestStorageReader(object):
         file_config = NamedTemporaryFile(suffix=".csv")
         with open(file_config.name, "w") as write_stream:
             write_stream.write(
-                f"filename cachename filesize storedsize cachedsince lastaccessed numberofaccesses\n"
-                f"file name {str(10.1) if to_string else 10.1} {str(5.0) if to_string else 5.0} {str(0) if to_string else 0} {str(0) if to_string else 0} {str(1) if to_string else 1}"
+                f"filename cachename filesize storedsize cachedsince lastaccessed "
+                f"numberofaccesses\n"
+                f"file name {str(10.1) if to_string else 10.1} "
+                f"{str(5.0) if to_string else 5.0} "
+                f"{str(0) if to_string else 0} {str(0) if to_string else 0} "
+                f"{str(1) if to_string else 1}"
             )
         return file_config
 
