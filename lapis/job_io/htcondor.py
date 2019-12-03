@@ -84,8 +84,6 @@ def htcondor_job_reader(
                     filespecs[key] = filespecs[key] * unit_conversion_mapping.get(
                         key, 1
                     )
-
-                print(filespecs)
                 if "usedsize" in filespecs:
                     del resources["inputfiles"][filename]["usedsize"]
 
