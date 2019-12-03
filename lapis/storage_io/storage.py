@@ -13,7 +13,10 @@ def storage_reader(
         "throughput_limit": 1024 * 1024 * 1024,
     },
 ):
-    storage_content = storage_content_reader(storage_content)
+    try:
+        storage_content = storage_content_reader(storage_content)
+    except TypeError:
+        storage_content = dict()
     reader = csv.DictReader(storage, delimiter=" ", quotechar="'")
     for row in reader:
         yield partial(
@@ -28,7 +31,7 @@ def storage_reader(
                 float(row["throughput_limit"])
                 * unit_conversion_mapping.get("throughput_limit", 1)
             ),
-            files=storage_content[row["name"]],
+            files=storage_content.get(row["name"], dict()),
         )()
 
 
@@ -36,7 +39,7 @@ def storage_content_reader(
     file_name,
     unit_conversion_mapping: dict = {  # noqa: B006
         "filesize": 1024 * 1024 * 1024,
-        "usedsize": 1024 * 1024 * 1024,
+        "storedsize": 1024 * 1024 * 1024,
     },
 ):
     reader = csv.DictReader(file_name, delimiter=" ", quotechar="'")
