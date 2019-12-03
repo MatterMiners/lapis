@@ -65,7 +65,7 @@ class StorageElement(Storage):
         self._size = size
         self.files = files
         self._usedstorage = Resources(
-            size=sum(file.filesize for file in files.values())
+            size=sum(file.storedsize for file in files.values())
         )
         self.connection = Pipe(throughput_limit)
         self.remote_storage = None
