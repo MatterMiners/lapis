@@ -27,7 +27,7 @@ class TestStorageReader(object):
         simple_config = self._create_simple_config()
         count = 0
         for storage in storage_reader(
-            open(simple_config.name, "r"), None, StorageElement
+            open(simple_config.name, "r+"), None, StorageElement
         ):
             assert storage is not None
             count += 1
@@ -46,8 +46,8 @@ class TestStorageReader(object):
             ):
                 assert storage is not None
                 assert type(storage.available) == int
-                assert storage.available == int(5.1 * 1024 * 1024 * 1024)
+                assert storage.available == int(5.0 * 1024 * 1024 * 1024)
                 assert type(storage.size) == int
-                assert storage.size == int(10.1 * 1024 * 1024 * 1024)
+                assert storage.size == int(10.0 * 1024 * 1024 * 1024)
                 count += 1
             assert count == 1
