@@ -51,6 +51,4 @@ def storage_content_reader(
         cache_information.setdefault(row["cachename"], {})[
             row["filename"]
         ] = StoredFile(**row)
-    if not cache_information:
-        return None
     return cache_information
