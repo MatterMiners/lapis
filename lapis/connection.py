@@ -137,6 +137,7 @@ class Connection(object):
                 scope.do(self.stream_file(requested_file, drone.sitename, job_repr))
         stream_time = time.now - start_time
         # print(
-        #     "STREAMED files {} in {}".format(list(requested_files.keys()), stream_time)
+        #     "STREAMED files {} in {}".format(list(requested_files.keys()),
+        #     stream_time)
         # )
         return stream_time
