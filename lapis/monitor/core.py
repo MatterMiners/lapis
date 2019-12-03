@@ -45,12 +45,20 @@ class Monitoring(object):
         self._statistics = {}
 
     async def run(self):
-        async for log_object in sampling_required:
-            for statistic in self._statistics.get(type(log_object), set()):
-                # do the logging
-                for record in statistic(log_object):
-                    record["tardis"] = "lapis-%s" % SIMULATION_START
-                    logging.getLogger(statistic.name).info(statistic.name, record)
+        # The Queue.__aiter__ cannot safely be finalised unless closed.
+        # We explicitly create and later on aclose it, to ensure this happens
+        # when the Scope collects us and the event loop is still around.
+        log_iter = sampling_required.__aiter__()
+        try:
+            async for log_object in log_iter:
+                for statistic in self._statistics.get(type(log_object), set()):
+                    # do the logging
+                    for record in statistic(log_object):
+                        record["tardis"] = "lapis-%s" % SIMULATION_START
+                        logging.getLogger(statistic.name).info(statistic.name, record)
+        except GeneratorExit:
+            await log_iter.aclose()
+
 
     def register_statistic(self, statistic: Callable) -> None:
         """
