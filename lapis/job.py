@@ -104,7 +104,8 @@ class Job(object):
         :return:
         """
         print(
-            f"WALLTIME: Job {self} @ {time.now}, {self.used_resources['cores']}, "
+            f"WALLTIME: Job {self} @ {time.now}, "
+            f"{self.used_resources.get('cores', None)}, "
             f"{self.calculation_efficiency}"
         )
         result = self.walltime
