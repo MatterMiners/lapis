@@ -1,9 +1,18 @@
 from usim import time
+from tempfile import NamedTemporaryFile
+import json
+from functools import partial
 
 from lapis_tests import via_usim, DummyDrone
 from lapis.connection import Connection
 from lapis.storageelement import HitrateStorage
+from lapis.storage_io.storage import storage_reader
 from lapis.files import RequestedFile
+from lapis.simulator import Simulator
+from lapis.job_io.htcondor import htcondor_job_reader
+from lapis.pool import StaticPool
+from lapis.pool_io.htcondor import htcondor_pool_reader
+from lapis.scheduler import CondorJobScheduler
 
 
 class TestHitrateCaching(object):
@@ -80,3 +89,123 @@ class TestHitrateCaching(object):
         )
         assert time.now == 15
         assert stream_time == 15
+
+    @via_usim
+    async def test_caching_simulation_duration_short_jobs(self):
+        simulator = Simulator()
+        with NamedTemporaryFile(suffix=".csv") as machine_config, NamedTemporaryFile(
+            suffix=".csv"
+        ) as storage_config, NamedTemporaryFile(suffix=".json") as job_config:
+            with open(machine_config.name, "w") as write_stream:
+                write_stream.write(
+                    "TotalSlotCPUs TotalSlotDisk TotalSlotMemory Count sitename\n"
+                    "1 44624348.0 8000 1 site1"
+                )
+            with open(job_config.name, "w") as write_stream:
+                job_description = [
+                    {
+                        "QDate": 0,
+                        "RequestCpus": 1,
+                        "RequestWalltime": 60,
+                        "RequestMemory": 1024,
+                        "RequestDisk": 1024,
+                        "RemoteWallClockTime": 1.0,
+                        "MemoryUsage": 1024,
+                        "DiskUsage_RAW": 1024,
+                        "RemoteSysCpu": 1.0,
+                        "RemoteUserCpu": 0.0,
+                        "Inputfiles": dict(
+                            file1=dict(usedsize=10), file2=dict(usedsize=5)
+                        ),
+                    }
+                ] * 2
+                json.dump(job_description, write_stream)
+            with open(storage_config.name, "w") as write_stream:
+                write_stream.write(
+                    "name sitename cachesizeGB throughput_limit\n"
+                    "cache1 site1 1000 1.0"
+                )
+
+            job_input = open(job_config.name, "r+")
+            machine_input = open(machine_config.name, "r+")
+            storage_input = open(storage_config.name, "r+")
+            storage_content_input = None
+            cache_hitrate = 0.5
+            simulator.create_job_generator(
+                job_input=job_input, job_reader=htcondor_job_reader
+            )
+            simulator.create_scheduler(scheduler_type=CondorJobScheduler)
+            simulator.create_connection_module(remote_throughput=1.0)
+            simulator.create_pools(
+                pool_input=machine_input,
+                pool_reader=htcondor_pool_reader,
+                pool_type=StaticPool,
+            )
+            simulator.create_storage(
+                storage_input=storage_input,
+                storage_content_input=storage_content_input,
+                storage_reader=storage_reader,
+                storage_type=partial(HitrateStorage, cache_hitrate),
+            )
+            simulator.run()
+            assert 180 == simulator.duration
+
+    @via_usim
+    async def test_caching_simulation_duration_long_jobs(self):
+        simulator = Simulator()
+        with NamedTemporaryFile(suffix=".csv") as machine_config, NamedTemporaryFile(
+            suffix=".csv"
+        ) as storage_config, NamedTemporaryFile(suffix=".json") as job_config:
+            with open(machine_config.name, "w") as write_stream:
+                write_stream.write(
+                    "TotalSlotCPUs TotalSlotDisk TotalSlotMemory Count sitename\n"
+                    "1 44624348.0 8000 1 site1"
+                )
+            with open(job_config.name, "w") as write_stream:
+                job_description = [
+                    {
+                        "QDate": 0,
+                        "RequestCpus": 1,
+                        "RequestWalltime": 60,
+                        "RequestMemory": 1024,
+                        "RequestDisk": 1024,
+                        "RemoteWallClockTime": 1.0,
+                        "MemoryUsage": 1024,
+                        "DiskUsage_RAW": 1024,
+                        "RemoteSysCpu": 1.0,
+                        "RemoteUserCpu": 0.0,
+                        "Inputfiles": dict(
+                            file1=dict(usedsize=60), file2=dict(usedsize=60)
+                        ),
+                    }
+                ] * 2
+                json.dump(job_description, write_stream)
+            with open(storage_config.name, "w") as write_stream:
+                write_stream.write(
+                    "name sitename cachesizeGB throughput_limit\n"
+                    "cache1 site1 1000 1.0"
+                )
+
+            job_input = open(job_config.name, "r+")
+            machine_input = open(machine_config.name, "r+")
+            storage_input = open(storage_config.name, "r+")
+            storage_content_input = None
+            cache_hitrate = 0.5
+            simulator.create_job_generator(
+                job_input=job_input, job_reader=htcondor_job_reader
+            )
+            simulator.create_scheduler(scheduler_type=CondorJobScheduler)
+            simulator.create_connection_module(remote_throughput=1.0)
+            simulator.create_pools(
+                pool_input=machine_input,
+                pool_reader=htcondor_pool_reader,
+                pool_type=StaticPool,
+            )
+            simulator.create_storage(
+                storage_input=storage_input,
+                storage_content_input=storage_content_input,
+                storage_reader=storage_reader,
+                storage_type=partial(HitrateStorage, cache_hitrate),
+            )
+            simulator.run()
+            assert 300 == simulator.duration
