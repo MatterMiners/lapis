@@ -89,9 +89,8 @@ def job_statistics(scheduler: CondorJobScheduler) -> List[Dict]:
     :return: list of records for logging
     """
     result = 0
-    for cluster in (scheduler.drone_cluster.copy()).values():
-        for drone in cluster:
-            result += drone.jobs
+    for drone in scheduler.drone_list:
+        result += drone.jobs
     return [
         {
             "pool_configuration": "None",
