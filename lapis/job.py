@@ -24,6 +24,7 @@ class Job(object):
         "_name",
         "drone",
         "_success",
+        "__weakref__",
     )
 
     def __init__(
@@ -83,7 +84,7 @@ class Job(object):
     def waiting_time(self) -> float:
         """
         The time the job spent in the simulators scheduling queue. `Inf` when
-        the job is still waitiing.
+        the job is still waiting.
 
         :return: Time in queue
         """
