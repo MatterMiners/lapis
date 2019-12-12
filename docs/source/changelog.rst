@@ -1,4 +1,4 @@
-.. Created by log.py at 2019-11-30, command
+.. Created by log.py at 2019-12-12, command
    '/Users/eileenwork/development/work/lapis/venv/lib/python3.7/site-packages/change/__main__.py log docs/source/changes compile --output docs/source/changelog.rst'
    based on the format of 'https://keepachangelog.com/'
 #########
@@ -8,7 +8,7 @@ ChangeLog
 Upcoming
 ========
 
-Version [Unreleased] - 2019-11-30
+Version [Unreleased] - 2019-12-12
 +++++++++++++++++++++++++++++++++
 
 * **[Added]** Basic documentation
@@ -23,6 +23,7 @@ Version [Unreleased] - 2019-11-30
 * **[Fixed]** Proper termination of simulation
 * **[Fixed]** Jobs execution within drones
 * **[Fixed]** Scheduling of jobs
+* **[Fixed]** Cancelation of jobs
 * **[Fixed]** Importing of HTCondor jobs
 
 0.3 Series
@@ -64,3 +65,4 @@ Version [0.1.1] - 2019-10-24
 * **[Fixed]** Calculation of used and requested resource ratio
 * **[Fixed]** StopIteration handling by Job Generator
 * **[Fixed]** Importing of SWF files
+
