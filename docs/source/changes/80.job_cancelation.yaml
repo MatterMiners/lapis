@@ -1,0 +1,8 @@
+category: fixed
+summary: "Cancelation of jobs"
+description: |
+  When a drone tried to cancel a job it could happen that the success state
+  of that job was not properly set as the job was not yet in running state.
+  This is fixed now by additionally waiting for an `instant`.
+pull requests:
+  - 80

@@ -137,7 +137,9 @@ class Drone(interfaces.Pool):
                                     job.resources[resource_key]
                                     < job.used_resources[resource_key]
                                 ):
+                                    await instant
                                     job_execution.cancel()
+                                    await instant
                             except KeyError:
                                 # check is not relevant if the data is not stored
                                 pass
@@ -146,9 +148,11 @@ class Drone(interfaces.Pool):
             except ResourcesUnavailable:
                 await instant
                 job_execution.cancel()
+                await instant
             except AssertionError:
                 await instant
                 job_execution.cancel()
+                await instant
             self.jobs -= 1
             await self.scheduler.job_finished(job)
             self._utilisation = self._allocation = None
