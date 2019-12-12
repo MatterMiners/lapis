@@ -1,0 +1,8 @@
+category: fixed
+summary: "Scheduling of jobs"
+description: |
+  During the scheduling cycle the original job queue was used although jobs
+  could be removed during scheduling. Now scheduling is performed on a copy
+  of the job queue.
+pull requests:
+  - 79

@@ -1,4 +1,4 @@
-.. Created by log.py at 2019-11-29, command
+.. Created by log.py at 2019-11-30, command
    '/Users/eileenwork/development/work/lapis/venv/lib/python3.7/site-packages/change/__main__.py log docs/source/changes compile --output docs/source/changelog.rst'
    based on the format of 'https://keepachangelog.com/'
 #########
@@ -8,7 +8,7 @@ ChangeLog
 Upcoming
 ========
 
-Version [Unreleased] - 2019-11-29
+Version [Unreleased] - 2019-11-30
 +++++++++++++++++++++++++++++++++
 
 * **[Added]** Basic documentation
@@ -22,6 +22,7 @@ Version [Unreleased] - 2019-11-29
 * **[Fixed]** Handling of black for pypy
 * **[Fixed]** Proper termination of simulation
 * **[Fixed]** Jobs execution within drones
+* **[Fixed]** Scheduling of jobs
 * **[Fixed]** Importing of HTCondor jobs
 
 0.3 Series
