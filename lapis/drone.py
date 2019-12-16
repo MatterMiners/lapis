@@ -143,7 +143,6 @@ class Drone(interfaces.Pool):
                             except KeyError:
                                 # check is not relevant if the data is not stored
                                 pass
-                    self.scheduler.update_drone(self)
                     await job_execution.done
             except ResourcesUnavailable:
                 await instant
