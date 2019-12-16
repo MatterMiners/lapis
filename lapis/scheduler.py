@@ -1,9 +1,9 @@
-from typing import Dict, Union
+from typing import Dict, Iterator, Union, Tuple, List, TypeVar, Generic, Optional
 from weakref import WeakKeyDictionary
 
 from classad import parse
 from classad._functions import quantize
-from classad._primitives import HTCInt
+from classad._primitives import HTCInt, Undefined
 from classad._expression import ClassAd
 from usim import Scope, interval, Resources
 
@@ -22,14 +22,14 @@ quantization_defaults = {
     "cores": HTCInt(1),
 }
 
+DJ = TypeVar("DJ", Drone, Job)
 
-class WrappedClassAd(ClassAd):
+
+class WrappedClassAd(ClassAd, Generic[DJ]):
 
     __slots__ = "_wrapped"
 
-    _wrapped: Union[Job, Drone]
-
-    def __init__(self, classad: ClassAd, wrapped: Union[Job, Drone]):
+    def __init__(self, classad: ClassAd, wrapped: DJ):
         super(WrappedClassAd, self).__init__()
         self._wrapped = wrapped
         self._data = classad._data
@@ -37,9 +37,7 @@ class WrappedClassAd(ClassAd):
     def __getitem__(self, item):
         def access_wrapped(name, requested=True):
             if isinstance(self._wrapped, Drone):
-                if requested:
-                    return self._wrapped.theoretical_available_resources[name]
-                return self._wrapped.available_resources[name]
+                return self._wrapped.theoretical_available_resources[name]
             if requested:
                 return self._wrapped.resources[name]
             return self._wrapped.used_resources[name]
@@ -48,15 +46,15 @@ class WrappedClassAd(ClassAd):
             if "requestcpus" in item:
                 return access_wrapped("cores", requested=True)
             elif "requestmemory" in item:
-                return 0.000000953674316 * access_wrapped("memory", requested=True)
+                return (1 / 1024 / 1024) * access_wrapped("memory", requested=True)
             elif "requestdisk" in item:
-                return 0.0009765625 * access_wrapped("disk", requested=True)
+                return (1 / 1024) * access_wrapped("disk", requested=True)
             elif "cpus" in item:
                 return access_wrapped("cores", requested=False)
             elif "memory" in item:
-                return 0.000001 * access_wrapped("memory", requested=False)
+                return (1 / 1000 / 1000) * access_wrapped("memory", requested=False)
             elif "disk" in item:
-                return 0.0009765625 * access_wrapped("disk", requested=False)
+                return (1 / 1024) * access_wrapped("disk", requested=False)
         return super(WrappedClassAd, self).__getitem__(item)
 
     def __repr__(self):
@@ -64,6 +62,14 @@ class WrappedClassAd(ClassAd):
 
     def __eq__(self, other):
         return super().__eq__(other) and self._wrapped == other._wrapped
+
+
+class Cluster(List[WrappedClassAd[DJ]], Generic[DJ]):
+    pass
+
+
+class Bucket(List[Cluster[DJ]], Generic[DJ]):
+    pass
 
 
 class CondorJobScheduler(object):
@@ -85,8 +91,8 @@ class CondorJobScheduler(object):
 
     def __init__(self, job_queue):
         self._stream_queue = job_queue
-        self.drone_cluster = {}
-        self.job_cluster = {}  # TODO: should be sorted
+        self.drone_cluster: Dict[Tuple[float, ...], Cluster[WrappedClassAd[Drone]]] = {}
+        self.job_cluster: Dict[Tuple[float, ...], Cluster[WrappedClassAd[Job]]] = {}
         self.interval = 60
         self.job_queue = JobQueue()
         self._collecting = True
@@ -96,7 +102,7 @@ class CondorJobScheduler(object):
         self._wrapped_classads = WeakKeyDictionary()
         self._machine_classad = parse(
             """
-        requirements = target.requestcpus > my.cpus
+        requirements = target.requestcpus <= my.cpus
         """
         )
         self._job_classad = parse(
@@ -106,7 +112,7 @@ class CondorJobScheduler(object):
         )
 
     @property
-    def drone_list(self):
+    def drone_list(self) -> Iterator[Drone]:
         for cluster in self.drone_cluster.values():
             for drone in cluster:
                 yield drone._wrapped
@@ -131,7 +137,8 @@ class CondorJobScheduler(object):
         if len(self.drone_cluster[key]) == 0:
             del self.drone_cluster[key]
 
-    def _clustering_key(self, resource_dict: Dict):
+    @staticmethod
+    def _clustering_key(resource_dict: Dict):
         clustering_key = []
         for key, value in resource_dict.items():
             clustering_key.append(
@@ -144,43 +151,46 @@ class CondorJobScheduler(object):
         if drone_resources:
             clustering_key = self._clustering_key(drone_resources)
         else:
-            # TODO: I think this should be available_resources
-            clustering_key = self._clustering_key(
-                wrapped_drone.theoretical_available_resources
-            )
-        self.drone_cluster.setdefault(clustering_key, []).append(drone)
+            clustering_key = self._clustering_key(wrapped_drone.available_resources)
+        self.drone_cluster.setdefault(clustering_key, Cluster()).append(drone)
 
     def update_drone(self, drone: Drone):
         self.unregister_drone(drone)
         self._add_drone(self._wrapped_classads[drone])
 
     def _sort_drone_cluster(self):
-        return [[list(drones) for drones in self.drone_cluster.values()]]
+        return [Bucket(self.drone_cluster.values())]
 
     def _sort_job_cluster(self):
-        return list(self.job_cluster.values())
+        return Bucket(self.job_cluster.values())
 
     async def run(self):
-        def filter_drones(job, drone_bucket):
-            result = {}
+        def filter_drones(job: WrappedClassAd[Job], drone_bucket: Bucket[Drone]):
+            result = {}  # type: Dict[Union[Undefined, float], Bucket[Drone]]
             for drones in drone_bucket:
-                drone = drones[0]
-                filtered = job.evaluate("requirements", my=job, target=drone)
-                if filtered:
+                drone = drones[0]  # type: WrappedClassAd[Drone]
+                if job.evaluate(
+                    "requirements", my=job, target=drone
+                ) and drone.evaluate("requirements", my=drone, target=job):
                     rank = job.evaluate("rank", my=job, target=drone)
-                    result.setdefault(rank, []).append(drones)
+                    result.setdefault(rank, Bucket()).append(drones)
             return result
 
-        def pop_first(ranked_drones: Dict):
-            keys = sorted(ranked_drones.keys())
-            if len(keys) == 0:
+        def pop_first(
+            ranked_drones: Dict[Union[Undefined, float], Bucket[Drone]]
+        ) -> Optional[WrappedClassAd[Drone]]:
+            if not ranked_drones:
                 return None
-            values = ranked_drones.get(keys[0])
+            key = sorted(ranked_drones)[0]
+            values = ranked_drones[key]
             result = values[0]
             values.remove(result)
-            if len(values) == 0:
-                del ranked_drones[keys[0]]
-            return result[0]
+            if not values:
+                del ranked_drones[key]
+            try:
+                return result[0]
+            except IndexError:
+                return pop_first(ranked_drones)
 
         async with Scope() as scope:
             scope.do(self._collect_jobs())
@@ -190,10 +200,10 @@ class CondorJobScheduler(object):
                 # TODO: get sorted drone clusters PreJob [{{PSlot, ...}, ...}, ...]
                 # TODO: filter (Job.Requirements) and sort (Job.Rank) for job and drones => lazy
 
-                all_drone_buckets = self._sort_drone_cluster().copy()
+                all_drone_buckets = self._sort_drone_cluster()
                 filtered_drones = {}
-                current_drone_bucket = 0
                 for jobs in self._sort_job_cluster().copy():
+                    current_drone_bucket = 0
                     for job in jobs:
                         best_match = pop_first(filtered_drones)
                         while best_match is None:
