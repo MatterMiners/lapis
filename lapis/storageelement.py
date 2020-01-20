@@ -2,8 +2,10 @@ from typing import Optional
 
 from usim import time, Resources, Pipe, Scope
 
-from lapis.files import StoredFile, RequestedFile
+from lapis.files import StoredFile, RequestedFile, RequestedFile_HitrateBased
 from lapis.interfaces._storage import Storage, LookUpInformation
+
+import logging
 
 
 class RemoteStorage(Storage):
@@ -211,18 +213,87 @@ class HitrateStorage(StorageElement):
 
     async def transfer(self, file: RequestedFile, job_repr=None):
         print(
-            "TRANSFER: {}, filesize {}, remote: {}, cache: {}".format(
+            "TRANSFER: {}, filesize {}, remote: {}/{}, cache: {}/{}".format(
                 self._hitrate,
                 file.filesize,
                 (1 - self._hitrate) * file.filesize,
+                self.remote_storage.connection.throughput,
                 self._hitrate * file.filesize,
+                self.connection.throughput,
             )
         )
         async with Scope() as scope:
+            logging.getLogger("implementation").warning(
+                "{} {} @ {} in {}".format(
+                    self._hitrate * file.filesize,
+                    (1 - self._hitrate) * file.filesize,
+                    time.now,
+                    file.filename[-30:],
+                )
+            )
             scope.do(self.connection.transfer(total=self._hitrate * file.filesize))
             scope.do(
                 self.remote_storage.connection.transfer(
                     total=(1 - self._hitrate) * file.filesize
+                )
+            )
+
+    def find(self, requested_file: RequestedFile, job_repr=None):
+        return LookUpInformation(requested_file.filesize, self)
+
+    async def add(self, file: RequestedFile, job_repr=None):
+        pass
+
+    async def remove(self, file: StoredFile, job_repr=None):
+        pass
+
+
+class FileBasedHitrateStorage(StorageElement):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        sitename: Optional[str] = None,
+        size: int = 1000 * 1024 * 1024 * 1024,
+        throughput_limit: int = 10 * 1024 * 1024 * 1024,
+        files: Optional[dict] = None,
+    ):
+        super(FileBasedHitrateStorage, self).__init__(
+            name=name,
+            sitename=sitename,
+            size=size,
+            throughput_limit=throughput_limit,
+            files=files,
+        )
+
+    @property
+    def available(self):
+        return self.size
+
+    @property
+    def used(self):
+        return 0
+
+    async def transfer(self, file: RequestedFile_HitrateBased, job_repr=None):
+        current_cachehitrate = file.cachehitrate.get(self.name, 0)
+        print(
+            "TRANSFER: on {} with {}, filesize {}, remote: {}/{}, cache: {}/{}".format(
+                self.name,
+                file.cachehitrate.get(self.name, 0),
+                file.filesize,
+                (1 - current_cachehitrate) * file.filesize,
+                self.remote_storage.connection.throughput,
+                current_cachehitrate * file.filesize,
+                self.connection.throughput,
+            )
+        )
+        async with Scope() as scope:
+
+            scope.do(
+                self.connection.transfer(total=current_cachehitrate * file.filesize)
+            )
+            scope.do(
+                self.remote_storage.connection.transfer(
+                    total=(1 - current_cachehitrate) * file.filesize
                 )
             )
 

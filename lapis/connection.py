@@ -10,7 +10,7 @@ from lapis.cachealgorithm import (
     delete_oldest_few_used,
 )
 from lapis.storageelement import StorageElement, RemoteStorage
-from lapis.files import RequestedFile
+from lapis.files import RequestedFile, RequestedFile_HitrateBased
 from lapis.monitor import sampling_required
 
 
@@ -131,9 +131,16 @@ class Connection(object):
         start_time = time.now
         async with Scope() as scope:
             for inputfilename, inputfilespecs in requested_files.items():
-                requested_file = RequestedFile(
-                    inputfilename, inputfilespecs["usedsize"]
-                )
+                if "hitrates" in inputfilespecs.keys():
+                    requested_file = RequestedFile_HitrateBased(
+                        inputfilename,
+                        inputfilespecs["usedsize"],
+                        inputfilespecs["hitrates"],
+                    )
+                else:
+                    requested_file = RequestedFile(
+                        inputfilename, inputfilespecs["usedsize"]
+                    )
                 scope.do(self.stream_file(requested_file, drone.sitename, job_repr))
         stream_time = time.now - start_time
         print(

@@ -74,6 +74,10 @@ def htcondor_job_reader(
                 * unit_conversion_mapping.get(original_key, 1)
             )
 
+        calculation_efficiency = entry.get(
+            "calculation_efficiency", calculation_efficiency
+        )
+
         try:
             if not entry["Inputfiles"]:
                 del entry["Inputfiles"]
@@ -81,6 +85,8 @@ def htcondor_job_reader(
             used_resources["inputfiles"] = deepcopy(entry["Inputfiles"])
             for filename, filespecs in entry["Inputfiles"].items():
                 for key in filespecs.keys():
+                    if key == "hitrates":
+                        continue
                     resources["inputfiles"][filename][key] = filespecs[
                         key
                     ] * unit_conversion_mapping.get(key, 1)
@@ -98,8 +104,6 @@ def htcondor_job_reader(
                         ][filename]["filesize"]
                     del used_resources["inputfiles"][filename]["filesize"]
 
-            print(resources["inputfiles"], used_resources["inputfiles"])
-
         except KeyError:
             pass
         yield Job(
@@ -107,4 +111,5 @@ def htcondor_job_reader(
             used_resources=used_resources,
             queue_date=float(entry[used_resource_name_mapping["queuetime"]]),
             calculation_efficiency=calculation_efficiency,
+            name=entry.get("name", None),
         )

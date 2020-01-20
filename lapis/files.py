@@ -46,3 +46,9 @@ class RequestedFile(NamedTuple):
             lastaccessed=currenttime,
             numberofaccesses=1,
         )
+
+
+class RequestedFile_HitrateBased(NamedTuple):
+    filename: str
+    filesize: float
+    cachehitrate: dict

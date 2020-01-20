@@ -52,3 +52,32 @@ def storage_content_reader(
             row["filename"]
         ] = StoredFile(**row)
     return cache_information
+
+
+def storage_reader_filebased_hitrate_caching(
+    storage,
+    storage_type,
+    storage_content=None,
+    unit_conversion_mapping: dict = {  # noqa: B006
+        "cachesizeGB": 1024 * 1024 * 1024,
+        "throughput_limit": 1024 * 1024 * 1024,
+    },
+):
+
+    reader = csv.DictReader(storage, delimiter=" ", quotechar="'")
+    for row in reader:
+        print(row)
+        yield partial(
+            storage_type,
+            name=row["name"],
+            sitename=row["sitename"],
+            size=int(
+                float(row["cachesizeGB"])
+                * unit_conversion_mapping.get("cachesizeGB", 1)
+            ),
+            throughput_limit=int(
+                float(row["throughput_limit"])
+                * unit_conversion_mapping.get("throughput_limit", 1)
+            ),
+            files=dict(),
+        )()
