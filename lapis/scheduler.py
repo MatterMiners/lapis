@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Dict, Iterator, Union, Tuple, List, TypeVar, Generic, Optional
 from weakref import WeakKeyDictionary
 
@@ -72,7 +73,30 @@ class Bucket(List[Cluster[DJ]], Generic[DJ]):
     pass
 
 
-class CondorJobScheduler(object):
+class JobScheduler(ABC):
+    __slots__ = ()
+
+    @property
+    def drone_list(self) -> Iterator[Drone]:
+        raise NotImplementedError
+
+    def register_drone(self, drone: Drone):
+        raise NotImplementedError
+
+    def unregister_drone(self, drone: Drone):
+        raise NotImplementedError
+
+    def update_drone(self, drone: Drone):
+        raise NotImplementedError
+
+    async def run(self):
+        raise NotImplementedError
+
+    async def job_finished(self, job):
+        raise NotImplementedError
+
+
+class CondorJobScheduler(JobScheduler):
     """
     Goal of the htcondor job scheduler is to have a scheduler that somehow
     mimics how htcondor does schedule jobs.
