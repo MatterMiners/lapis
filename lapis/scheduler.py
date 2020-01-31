@@ -28,12 +28,13 @@ DJ = TypeVar("DJ", Drone, Job)
 
 class WrappedClassAd(ClassAd, Generic[DJ]):
 
-    __slots__ = "_wrapped"
+    __slots__ = "_wrapped", "_temp"
 
     def __init__(self, classad: ClassAd, wrapped: DJ):
         super(WrappedClassAd, self).__init__()
         self._wrapped = wrapped
         self._data = classad._data
+        self._temp = {}
 
     def __getitem__(self, item):
         def access_wrapped(name, requested=True):
@@ -51,12 +52,24 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
             elif "requestdisk" in item:
                 return (1 / 1024) * access_wrapped("disk", requested=True)
             elif "cpus" in item:
-                return access_wrapped("cores", requested=False)
+                try:
+                    return self._temp["cores"]
+                except KeyError:
+                    return access_wrapped("cores", requested=False)
             elif "memory" in item:
-                return (1 / 1000 / 1000) * access_wrapped("memory", requested=False)
+                try:
+                    return self._temp["memory"]
+                except KeyError:
+                    return (1 / 1000 / 1000) * access_wrapped("memory", requested=False)
             elif "disk" in item:
-                return (1 / 1024) * access_wrapped("disk", requested=False)
+                try:
+                    return self._temp["disk"]
+                except KeyError:
+                    return (1 / 1024) * access_wrapped("disk", requested=False)
         return super(WrappedClassAd, self).__getitem__(item)
+
+    def clear_temporary_resources(self):
+        self._temp.clear()
 
     def __repr__(self):
         return f"<{self.__class__.__name__}>: {self._wrapped}"
