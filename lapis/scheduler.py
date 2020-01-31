@@ -91,21 +91,31 @@ class JobScheduler(ABC):
 
     @property
     def drone_list(self) -> Iterator[Drone]:
+        """Yields the registered drones"""
         raise NotImplementedError
 
     def register_drone(self, drone: Drone):
+        """Register a drone at the scheduler"""
         raise NotImplementedError
 
     def unregister_drone(self, drone: Drone):
+        """Unregister a drone at the scheduler"""
         raise NotImplementedError
 
     def update_drone(self, drone: Drone):
+        """Update parameters of a drone"""
         raise NotImplementedError
 
     async def run(self):
+        """Run method of the scheduler"""
         raise NotImplementedError
 
     async def job_finished(self, job):
+        """
+        Declare a job as finished by a drone. This might even mean, that the job
+        has failed and that the scheduler needs to requeue the job for further
+        processing.
+        """
         raise NotImplementedError
 
 
