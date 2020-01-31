@@ -96,7 +96,7 @@ class JobScheduler(ABC):
         raise NotImplementedError
 
 
-class CondorJobScheduler(object):
+class CondorJobScheduler(JobScheduler):
     """
     Goal of the htcondor job scheduler is to have a scheduler that somehow
     mimics how htcondor does schedule jobs.
