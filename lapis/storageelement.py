@@ -1,6 +1,7 @@
 from typing import Optional
 
-from usim import time, Resources, Pipe, Scope
+from usim import time, Resources, Scope
+from monitoredpipe import MonitoredPipe
 
 from lapis.files import StoredFile, RequestedFile, RequestedFile_HitrateBased
 from lapis.interfaces._storage import Storage, LookUpInformation
@@ -9,8 +10,9 @@ import logging
 
 
 class RemoteStorage(Storage):
-    def __init__(self, pipe: Pipe):
+    def __init__(self, pipe: MonitoredPipe):
         self.connection = pipe
+        pipe.storage = repr(self)
 
     @property
     def size(self):
@@ -56,8 +58,8 @@ class StorageElement(Storage):
         self,
         name: Optional[str] = None,
         sitename: Optional[str] = None,
-        size: int = 1000 * 1024 * 1024 * 1024,
-        throughput_limit: int = 10 * 1024 * 1024 * 1024,
+        size: int = 1000 * 1000 * 1000 * 1000,
+        throughput_limit: int = 10 * 1000 * 1000 * 1000,
         files: Optional[dict] = None,
     ):
         self.name = name
@@ -69,7 +71,9 @@ class StorageElement(Storage):
         self._usedstorage = Resources(
             size=sum(file.storedsize for file in files.values())
         )
-        self.connection = Pipe(throughput_limit)
+        self.connection = MonitoredPipe(throughput_limit)
+        self.connection.storage = repr(self)
+
         self.remote_storage = None
 
     @property
@@ -190,8 +194,8 @@ class HitrateStorage(StorageElement):
         hitrate,
         name: Optional[str] = None,
         sitename: Optional[str] = None,
-        size: int = 1000 * 1024 * 1024 * 1024,
-        throughput_limit: int = 10 * 1024 * 1024 * 1024,
+        size: int = 1000 * 1000 * 1000 * 1000,
+        throughput_limit: int = 10 * 1000 * 1000 * 1000,
         files: Optional[dict] = None,
     ):
         super(HitrateStorage, self).__init__(
@@ -253,8 +257,8 @@ class FileBasedHitrateStorage(StorageElement):
         self,
         name: Optional[str] = None,
         sitename: Optional[str] = None,
-        size: int = 1000 * 1024 * 1024 * 1024,
-        throughput_limit: int = 10 * 1024 * 1024 * 1024,
+        size: int = 1000 * 1000 * 1000 * 1000,
+        throughput_limit: int = 10 * 1000 * 1000 * 1000,
         files: Optional[dict] = None,
     ):
         super(FileBasedHitrateStorage, self).__init__(
@@ -274,31 +278,27 @@ class FileBasedHitrateStorage(StorageElement):
         return 0
 
     async def transfer(self, file: RequestedFile_HitrateBased, job_repr=None):
-        current_cachehitrate = file.cachehitrate.get(self.name, 0)
         print(
             "TRANSFER: on {} with {}, filesize {}, remote: {}/{}, cache: {}/{}".format(
                 self.name,
-                file.cachehitrate.get(self.name, 0),
+                file.cachehitrate,
                 file.filesize,
-                (1 - current_cachehitrate) * file.filesize,
+                (1 - file.cachehitrate) * file.filesize,
                 self.remote_storage.connection.throughput,
-                current_cachehitrate * file.filesize,
+                file.cachehitrate * file.filesize,
                 self.connection.throughput,
             )
         )
-        async with Scope() as scope:
+        if file.cachehitrate:
+            await self.connection.transfer(total=file.filesize)
+        else:
+            await self.remote_storage.connection.transfer(total=file.filesize)
 
-            scope.do(
-                self.connection.transfer(total=current_cachehitrate * file.filesize)
-            )
-            scope.do(
-                self.remote_storage.connection.transfer(
-                    total=(1 - current_cachehitrate) * file.filesize
-                )
-            )
-
-    def find(self, requested_file: RequestedFile, job_repr=None):
-        return LookUpInformation(requested_file.filesize, self)
+    def find(self, requested_file: RequestedFile_HitrateBased, job_repr=None):
+        # return LookUpInformation(requested_file.filesize, self)
+        return LookUpInformation(
+            requested_file.filesize * requested_file.cachehitrate, self
+        )
 
     async def add(self, file: RequestedFile, job_repr=None):
         pass
