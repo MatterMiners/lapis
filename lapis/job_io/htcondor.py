@@ -26,13 +26,13 @@ def htcondor_job_reader(
         "RequestCpus": 1,
         "RequestWalltime": 1,
         "RequestMemory": 1024 * 1024,
-        "RequestDisk": 1024,
+        "RequestDisk": 1024,  # KBytes
         "queuetime": 1,
         "RemoteWallClockTime": 1,
-        "MemoryUsage": 1000 * 1000,
-        "DiskUsage_RAW": 1024,
-        "filesize": 1024 * 1024 * 1024,
-        "usedsize": 1024 * 1024 * 1024,
+        "MemoryUsage": 1000 * 1000,  # MB
+        "DiskUsage_RAW": 1024,  # KBytes
+        "filesize": 1000 * 1000 * 1000,  # GB
+        "usedsize": 1000 * 1000 * 1000,  # GB
     },
 ):
     input_file_type = iterable.name.split(".")[-1].lower()
