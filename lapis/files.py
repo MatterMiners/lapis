@@ -50,5 +50,5 @@ class RequestedFile(NamedTuple):
 
 class RequestedFile_HitrateBased(NamedTuple):
     filename: str
-    filesize: float
-    cachehitrate: dict
+    filesize: int
+    cachehitrate: int
