@@ -33,6 +33,7 @@ class Drone(interfaces.Pool):
         self.resources = Capacities(**pool_resources)
         # shadowing requested resources to determine jobs to be killed
         self.used_resources = Capacities(**pool_resources)
+
         if ignore_resources:
             self._valid_resource_keys = [
                 resource
@@ -47,6 +48,9 @@ class Drone(interfaces.Pool):
         self._allocation = None
         self._utilisation = None
         self._job_queue = Queue()
+
+        # caching-related
+        self.jobs_using_caching = 0
 
     @property
     def theoretical_available_resources(self):
@@ -95,9 +99,15 @@ class Drone(interfaces.Pool):
         levels = self.resources.levels
         resources = []
         for resource_key in self._valid_resource_keys:
-            resources.append(
-                getattr(levels, resource_key) / self.pool_resources[resource_key]
-            )
+            if (
+                getattr(levels, resource_key) == 0
+                and self.pool_resources[resource_key] == 0
+            ):
+                pass
+            else:
+                resources.append(
+                    getattr(levels, resource_key) / self.pool_resources[resource_key]
+                )
         self._allocation = max(resources)
         self._utilisation = min(resources)
 
@@ -147,7 +157,7 @@ class Drone(interfaces.Pool):
                             except KeyError:
                                 # check is not relevant if the data is not stored
                                 pass
-                    self.scheduler.update_drone(self)
+                    # self.scheduler.update_drone(self)
                     await job_execution.done
                     print(
                         "finished job {} on drone {} @ {}".format(
@@ -167,4 +177,4 @@ class Drone(interfaces.Pool):
             await sampling_required.put(self)
 
     def __repr__(self):
-        return "<%s: %s>" % (self.__class__.__name__, id(self))
+        return "<%s: %s %s>" % (self.__class__.__name__, id(self), self.sitename)
