@@ -25,6 +25,10 @@ class Job(object):
         "drone",
         "_success",
         "calculation_efficiency",
+        "__weakref__",
+        "_coordinated",
+        "_used_cache",
+        "_total_input_data",
     )
 
     def __init__(
@@ -75,6 +79,11 @@ class Job(object):
         # caching-related
         self.requested_inputfiles = resources.pop("inputfiles", None)
         self.used_inputfiles = used_resources.pop("inputfiles", None)
+        self._coordinated = 0
+        self._used_cache = 0
+        self._total_input_data = sum(
+            [fileinfo["usedsize"] for fileinfo in self.used_inputfiles.values()]
+        )
 
     @property
     def name(self) -> str:
@@ -88,7 +97,7 @@ class Job(object):
     def waiting_time(self) -> float:
         """
         The time the job spent in the simulators scheduling queue. `Inf` when
-        the job is still waitiing.
+        the job is still waiting.
 
         :return: Time in queue
         """
@@ -163,7 +172,7 @@ class Job(object):
             print(f"monitored walltime of {old_walltime} changed to {self.walltime}")
             self.drone = None
             self._success = True
-        await sampling_required.put(self)
+            await sampling_required.put(self)
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self._name or id(self))
