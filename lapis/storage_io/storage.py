@@ -9,8 +9,8 @@ def storage_reader(
     storage_content,
     storage_type,
     unit_conversion_mapping: dict = {  # noqa: B006
-        "cachesizeGB": 1024 * 1024 * 1024,
-        "throughput_limit": 1024 * 1024 * 1024,
+        "cachesizeGB": 1000 * 1000 * 1000,  # GB
+        "throughput_limit": 1000 * 1000 * 1000,  # GB
     },
 ):
     try:
@@ -38,8 +38,8 @@ def storage_reader(
 def storage_content_reader(
     file_name,
     unit_conversion_mapping: dict = {  # noqa: B006
-        "filesize": 1024 * 1024 * 1024,
-        "storedsize": 1024 * 1024 * 1024,
+        "filesize": 1000 * 1000 * 1000,
+        "storedsize": 1000 * 1000 * 1000,
     },
 ):
     reader = csv.DictReader(file_name, delimiter=" ", quotechar="'")
@@ -59,14 +59,13 @@ def storage_reader_filebased_hitrate_caching(
     storage_type,
     storage_content=None,
     unit_conversion_mapping: dict = {  # noqa: B006
-        "cachesizeGB": 1024 * 1024 * 1024,
-        "throughput_limit": 1024 * 1024 * 1024,
+        "cachesizeGB": 1000 * 1000 * 1000,
+        "throughput_limit": 1000 * 1000 * 1000,
     },
 ):
 
     reader = csv.DictReader(storage, delimiter=" ", quotechar="'")
     for row in reader:
-        print(row)
         yield partial(
             storage_type,
             name=row["name"],
