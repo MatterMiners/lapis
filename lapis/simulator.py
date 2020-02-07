@@ -12,7 +12,7 @@ import lapis.monitor as monitor
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
 from lapis.connection import Connection
-from lapis.monitor.caching import storage_status, storage_connection, remote_connection
+from lapis.monitor.caching import storage_status, pipe_status
 from lapis.monitor.general import (
     user_demand,
     job_statistics,
@@ -20,6 +20,7 @@ from lapis.monitor.general import (
     pool_status,
     configuration_information,
     job_events,
+    drone_statistics_caching,
 )
 from lapis.monitor.cobald import drone_statistics, pool_statistics
 from lapis.pool import Pool
@@ -50,8 +51,8 @@ class Simulator(object):
         self.monitoring.register_statistic(pool_status)
         self.monitoring.register_statistic(configuration_information)
         self.monitoring.register_statistic(storage_status)
-        self.monitoring.register_statistic(storage_connection)
-        self.monitoring.register_statistic(remote_connection)
+        self.monitoring.register_statistic(pipe_status)
+        self.monitoring.register_statistic(drone_statistics_caching)
 
     def create_job_generator(self, job_input, job_reader):
         self._job_generators.append((job_input, job_reader))
@@ -101,6 +102,7 @@ class Simulator(object):
             for controller in self.controllers:
                 while_running.do(controller.run(), volatile=True)
             while_running.do(self.monitoring.run(), volatile=True)
+            while_running.do(self.connection.run_pipemonitoring(), volatile=True)
         self.duration = time.now
         print(
             f"[lapis-{monitor.SIMULATION_START}] Finished simulation at {self.duration}"
