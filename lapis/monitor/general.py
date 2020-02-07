@@ -26,18 +26,31 @@ def resource_statistics(drone: Drone) -> List[Dict]:
     resources = drone.theoretical_available_resources
     used_resources = drone.available_resources
     for resource_type in resources:
-        results.append(
-            {
-                "resource_type": resource_type,
-                "pool_configuration": "None",
-                "pool_type": "drone",
-                "pool": repr(drone),
-                "used_ratio": 1
-                - used_resources[resource_type] / drone.pool_resources[resource_type],
-                "requested_ratio": 1
-                - resources[resource_type] / drone.pool_resources[resource_type],
-            }
-        )
+        try:
+            results.append(
+                {
+                    "resource_type": resource_type,
+                    "pool_configuration": "None",
+                    "pool_type": "drone",
+                    "pool": repr(drone),
+                    "used_ratio": 1
+                    - used_resources[resource_type]
+                    / drone.pool_resources[resource_type],
+                    "requested_ratio": 1
+                    - resources[resource_type] / drone.pool_resources[resource_type],
+                }
+            )
+        except ZeroDivisionError:
+            results.append(
+                {
+                    "resource_type": resource_type,
+                    "pool_configuration": "None",
+                    "pool_type": "drone",
+                    "pool": repr(drone),
+                    "used_ratio": 1,
+                    "requested_ratio": 1,
+                }
+            )
     return results
 
 
@@ -89,9 +102,8 @@ def job_statistics(scheduler: CondorJobScheduler) -> List[Dict]:
     :return: list of records for logging
     """
     result = 0
-    for cluster in scheduler.drone_cluster.copy():
-        for drone in cluster:
-            result += drone.jobs
+    for drone in scheduler.drone_list:
+        result += drone.jobs
     return [
         {
             "pool_configuration": "None",
@@ -143,6 +155,7 @@ def job_events(job: Job) -> List[Dict]:
     if job.successful is None:
         result["queue_time"] = job.queue_date
         result["waiting_time"] = job.waiting_time
+        result["starting"] = 1
     elif job.successful:
         result["wall_time"] = job.walltime
         result["success"] = 1
@@ -213,5 +226,37 @@ configuration_information.logging_formatter = {
     logging.StreamHandler.__name__: JsonFormatter(),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "pool_configuration", "resource_type"}, resolution=1
+    ),
+}
+
+
+def drone_statistics_caching(drone: Drone) -> List[Dict]:
+    """
+
+
+    :param drone: the drone
+    :return: list of records for logging
+    """
+    full_resources = drone.pool_resources
+    resources = drone.theoretical_available_resources
+
+    results = [
+        {
+            "pool_type": "drone",
+            "pool": repr(drone),
+            "claimed_slots": full_resources["cores"] - resources["cores"],
+            "free_slots": resources["cores"],
+        }
+    ]
+    return results
+
+
+drone_statistics_caching.name = "drone_status_caching"
+drone_statistics_caching.whitelist = (Drone,)
+drone_statistics_caching.logging_formatter = {
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: JsonFormatter(),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "pool_type", "pool"}, resolution=1
     ),
 }
