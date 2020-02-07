@@ -1,7 +1,8 @@
 import random
 
 from typing import Union, Optional
-from usim import Scope, time, Pipe
+from usim import Scope, time
+from monitoredpipe import MonitoredPipe
 
 from lapis.cachealgorithm import (
     CacheAlgorithm,
@@ -12,15 +13,16 @@ from lapis.cachealgorithm import (
 from lapis.storageelement import StorageElement, RemoteStorage
 from lapis.files import RequestedFile, RequestedFile_HitrateBased
 from lapis.monitor import sampling_required
+from lapis.monitor.caching import MonitoredPipeInfo
 
 
 class Connection(object):
 
     __slots__ = ("storages", "remote_connection", "caching_algorithm")
 
-    def __init__(self, throughput=100):
+    def __init__(self, throughput=1000 * 1000 * 1000):
         self.storages = dict()
-        self.remote_connection = RemoteStorage(Pipe(throughput=throughput))
+        self.remote_connection = RemoteStorage(MonitoredPipe(throughput=throughput))
         self.caching_algorithm = CacheAlgorithm(
             caching_strategy=lambda file, storage: check_size(file, storage)
             and check_relevance(file, storage),
@@ -28,6 +30,28 @@ class Connection(object):
                 file, storage
             ),
         )
+
+    async def run_pipemonitoring(self):
+        async def report_load_to_monitoring(pipe: MonitoredPipe):
+            async for throughput in pipe.load():
+                await sampling_required.put(
+                    MonitoredPipeInfo(
+                        throughput,
+                        pipe.throughput,
+                        repr(pipe),
+                        pipe._throughput_scale,
+                        len(pipe._subscriptions),
+                    )
+                )
+                print(
+                    f"{time.now:6.0f}: {throughput} \t [{throughput / pipe.throughput * 100:03.0f}%]"
+                )
+
+        async with Scope() as scope:
+            scope.do(report_load_to_monitoring(self.remote_connection.connection))
+            for storage_key, storage_list in self.storages.items():
+                for storage in storage_list:
+                    scope.do(report_load_to_monitoring(storage.connection))
 
     def add_storage_element(self, storage_element: StorageElement):
         """
@@ -90,7 +114,7 @@ class Connection(object):
         used_connection = await self._determine_inputfile_source(
             requested_file, dronesite, job_repr
         )
-        await sampling_required.put(used_connection)
+        # await sampling_required.put(used_connection)
         if used_connection == self.remote_connection and self.storages.get(
             dronesite, None
         ):
@@ -113,37 +137,52 @@ class Connection(object):
                 pass
         print(f"now transfering {requested_file.filesize} from {used_connection}")
         await used_connection.transfer(requested_file, job_repr=job_repr)
-        print(
-            "Job {}: finished transfering of file {}: {}GB @ {}".format(
-                job_repr, requested_file.filename, requested_file.filesize, time.now
-            )
-        )
+        # print(
+        #     "Job {}: finished transfering of file {}: {}B @ {}".format(
+        #         job_repr, requested_file.filename, requested_file.filesize, time.now
+        #     )
+        # )
 
     async def transfer_files(self, drone, requested_files: dict, job_repr=None):
         """
         Converts dict information about requested files to RequestedFile object and
-        parallely launches streaming for all files
+        sequentially streams all files
         :param drone:
         :param requested_files:
         :param job_repr:
         :return:
         """
         start_time = time.now
-        async with Scope() as scope:
-            for inputfilename, inputfilespecs in requested_files.items():
-                if "hitrates" in inputfilespecs.keys():
-                    requested_file = RequestedFile_HitrateBased(
-                        inputfilename,
-                        inputfilespecs["usedsize"],
-                        inputfilespecs["hitrates"],
-                    )
-                else:
-                    requested_file = RequestedFile(
-                        inputfilename, inputfilespecs["usedsize"]
-                    )
-                scope.do(self.stream_file(requested_file, drone.sitename, job_repr))
+
+        # decision if a jobs inputfiles are cached based on hitrate
+        random_inputfile_information = next(iter(requested_files.values()))
+        if "hitrates" in random_inputfile_information.keys():
+            hitrate = sum(
+                [
+                    file["usedsize"] * file["hitrates"].get(drone.sitename, 0.0)
+                    for file in requested_files.values()
+                ]
+            ) / sum([file["usedsize"] for file in requested_files.values()])
+            provides_file = int(random.random() < hitrate)
+            print(
+                "{} on {} hitrate {} => {}".format(
+                    requested_files, drone.sitename, hitrate, provides_file
+                )
+            )
+
+        for inputfilename, inputfilespecs in requested_files.items():
+            if "hitrates" in inputfilespecs.keys():
+                requested_file = RequestedFile_HitrateBased(
+                    inputfilename, inputfilespecs["usedsize"], provides_file
+                )
+
+            else:
+                requested_file = RequestedFile(
+                    inputfilename, inputfilespecs["usedsize"]
+                )
+            await self.stream_file(requested_file, drone.sitename, job_repr)
         stream_time = time.now - start_time
-        print(
-            "STREAMED files {} in {}".format(list(requested_files.keys()), stream_time)
-        )
+        # print(
+        #     "STREAMED files {} in {}".format(list(requested_files.keys()), stream_time)
+        # )
         return stream_time
