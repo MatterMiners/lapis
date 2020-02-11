@@ -47,9 +47,6 @@ def ini_and_run(
     calculation_efficiency=1.0,
     log_telegraf=False,
 ):
-    logging.getLogger("implementation").info(
-        job_file, pool_files, storage_file, log_file
-    )
     # ini logging to file
     monitoring_logger = logging.getLogger()
     monitoring_logger.setLevel(logging.DEBUG)
@@ -110,7 +107,7 @@ ini_and_run(
     storage_file=sys.argv[4],
     storage_type="filehitrate",
     log_file=sys.argv[5],
-    remote_throughput=sys.argv[6],
-    calculation_efficiency=sys.argv[7],
+    remote_throughput=float(sys.argv[6]),
+    calculation_efficiency=float(sys.argv[7]),
     log_telegraf=False,
 )
