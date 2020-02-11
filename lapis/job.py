@@ -81,9 +81,12 @@ class Job(object):
         self.used_inputfiles = used_resources.pop("inputfiles", None)
         self._coordinated = 0
         self._used_cache = 0
-        self._total_input_data = sum(
-            [fileinfo["usedsize"] for fileinfo in self.used_inputfiles.values()]
-        )
+        try:
+            self._total_input_data = sum(
+                [fileinfo["usedsize"] for fileinfo in self.used_inputfiles.values()]
+            )
+        except AttributeError:
+            self._total_input_data = 0
 
     @property
     def name(self) -> str:
