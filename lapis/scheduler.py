@@ -89,6 +89,9 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
     def __eq__(self, other):
         return super().__eq__(other) and self._wrapped == other._wrapped
 
+    def __hash__(self):
+        return id(self._wrapped)
+
 
 class Cluster(List[WrappedClassAd[DJ]], Generic[DJ]):
     pass
