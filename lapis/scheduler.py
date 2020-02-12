@@ -361,13 +361,16 @@ class RankedAutoClusters(Generic[DJ]):
     def cluster_groups(self) -> Iterator[List[Set[WrappedClassAd[Drone]]]]:
         """Group autoclusters by PreJobRank"""
         group = []
-        current_rank = 0
+        current_rank = None
         for ranked_key, drones in self._clusters.items():
-            if ranked_key.rank != current_rank and group:
+            if ranked_key.rank != current_rank:
                 current_rank = ranked_key.rank
-                yield group
-                group = []
+                if group:
+                    yield group
+                    group = []
             group.append(drones)
+        if group:
+            yield group
 
 
 class CondorClassadJobScheduler(JobScheduler):
@@ -444,7 +447,7 @@ class CondorClassadJobScheduler(JobScheduler):
     def _match_job(
         job: ClassAd, pre_job_clusters: Iterator[List[Set[WrappedClassAd[Drone]]]]
     ):
-        if job["Requirements"] != Undefined:
+        if job["Requirements"] != Undefined():
             pre_job_clusters = (
                 [
                     cluster
@@ -453,7 +456,7 @@ class CondorClassadJobScheduler(JobScheduler):
                 ]
                 for cluster_group in pre_job_clusters
             )
-        if job["Rank"] != Undefined:
+        if job["Rank"] != Undefined():
             pre_job_clusters = (
                 sorted(
                     cluster_group,
@@ -467,7 +470,7 @@ class CondorClassadJobScheduler(JobScheduler):
             # TODO: if we have POST_JOB_RANK, collect *all* matches of a group
             for cluster in cluster_group:
                 for drone in cluster:
-                    if drone["Requirements"] == Undefined or drone.evaluate(
+                    if drone["Requirements"] == Undefined() or drone.evaluate(
                         "Requirements", my=drone, target=job
                     ):
                         return drone
