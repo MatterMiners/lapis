@@ -122,6 +122,8 @@ class Job(object):
         # )
         result = self.walltime
         try:
+            if not self.requested_inputfiles:
+                raise KeyError
             result = (
                 self.used_resources["cores"] / self.calculation_efficiency
             ) * self.walltime
@@ -170,9 +172,9 @@ class Job(object):
             # TODO: in_queue_until is still set
             raise
         else:
-            old_walltime = self.walltime
+            # old_walltime = self.walltime
             self.walltime = time.now - start
-            print(f"monitored walltime of {old_walltime} changed to {self.walltime}")
+            # print(f"monitored walltime of {old_walltime} changed to {self.walltime}")
             self.drone = None
             self._success = True
             await sampling_required.put(self)
