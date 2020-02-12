@@ -135,7 +135,7 @@ class Connection(object):
                     )
             except KeyError:
                 pass
-        print(f"now transfering {requested_file.filesize} from {used_connection}")
+        # print(f"now transfering {requested_file.filesize} from {used_connection}")
         await used_connection.transfer(requested_file, job_repr=job_repr)
         # print(
         #     "Job {}: finished transfering of file {}: {}B @ {}".format(
@@ -157,13 +157,16 @@ class Connection(object):
         # decision if a jobs inputfiles are cached based on hitrate
         random_inputfile_information = next(iter(requested_files.values()))
         if "hitrates" in random_inputfile_information.keys():
-            hitrate = sum(
-                [
-                    file["usedsize"] * file["hitrates"].get(drone.sitename, 0.0)
-                    for file in requested_files.values()
-                ]
-            ) / sum([file["usedsize"] for file in requested_files.values()])
-            provides_file = int(random.random() < hitrate)
+            try:
+                hitrate = sum(
+                    [
+                        file["usedsize"] * file["hitrates"].get(drone.sitename, 0.0)
+                        for file in requested_files.values()
+                    ]
+                ) / sum([file["usedsize"] for file in requested_files.values()])
+                provides_file = int(random.random() < hitrate)
+            except ZeroDivisionError:
+                provides_file = 0
             # print(
             #     "{} on {} hitrate {} => {}".format(
             #         requested_files, drone.sitename, hitrate, provides_file
