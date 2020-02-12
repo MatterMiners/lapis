@@ -256,7 +256,6 @@ class CondorJobScheduler(object):
             self.job_queue.append(wrapped_job)
             cluster_key = self._clustering_key(job.resources)
             self.job_cluster.setdefault(cluster_key, []).append(wrapped_job)
-            print(self.job_cluster)
             await self._processing.increase(jobs=1)
             # TODO: logging happens with each job
             # TODO: job queue to the outside now contains wrapped classads...

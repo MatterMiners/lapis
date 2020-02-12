@@ -43,9 +43,9 @@ class Connection(object):
                         len(pipe._subscriptions),
                     )
                 )
-                print(
-                    f"{time.now:6.0f}: {throughput} \t [{throughput / pipe.throughput * 100:03.0f}%]"
-                )
+                # print(
+                #     f"{time.now:6.0f}: {throughput} \t [{throughput / pipe.throughput * 100:03.0f}%]"
+                # )
 
         async with Scope() as scope:
             scope.do(report_load_to_monitoring(self.remote_connection.connection))
@@ -164,11 +164,11 @@ class Connection(object):
                 ]
             ) / sum([file["usedsize"] for file in requested_files.values()])
             provides_file = int(random.random() < hitrate)
-            print(
-                "{} on {} hitrate {} => {}".format(
-                    requested_files, drone.sitename, hitrate, provides_file
-                )
-            )
+            # print(
+            #     "{} on {} hitrate {} => {}".format(
+            #         requested_files, drone.sitename, hitrate, provides_file
+            #     )
+            # )
 
         for inputfilename, inputfilespecs in requested_files.items():
             if "hitrates" in inputfilespecs.keys():
