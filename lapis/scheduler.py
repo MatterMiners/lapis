@@ -89,6 +89,9 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
     def __eq__(self, other):
         return super().__eq__(other) and self._wrapped == other._wrapped
 
+    def __hash__(self):
+        return id(self._wrapped)
+
 
 class Cluster(List[WrappedClassAd[DJ]], Generic[DJ]):
     pass
@@ -286,6 +289,7 @@ class CondorJobScheduler(JobScheduler):
 
 # HTCondor ClassAd Scheduler
 
+
 class NoMatch(Exception):
     """A job could not be matched to any drone"""
 
@@ -297,18 +301,18 @@ class RankedClusterKey(NamedTuple):
 
 class RankedAutoClusters(Generic[DJ]):
     """Automatically cluster similar jobs or drones"""
+
     def __init__(self, quantization: Dict[str, HTCInt], ranking: Expression):
         self._quantization = quantization
         self._ranking = ranking
         self._clusters: Dict[RankedClusterKey, Set[WrappedClassAd[DJ]]] = SortedDict()
         self._inverse: Dict[WrappedClassAd[DJ], RankedClusterKey] = {}
 
-    def copy(self) -> 'RankedAutoClusters[DJ]':
+    def copy(self) -> "RankedAutoClusters[DJ]":
         """Copy the entire ranked auto clusters"""
         clone = type(self)(quantization=self._quantization, ranking=self._ranking)
         clone._clusters = SortedDict(
-            (key, value.copy())
-            for key, value in self._clusters.items()
+            (key, value.copy()) for key, value in self._clusters.items()
         )
         clone._inverse = self._inverse.copy()
         return clone
@@ -316,7 +320,7 @@ class RankedAutoClusters(Generic[DJ]):
     def add(self, item: WrappedClassAd[DJ]):
         """Add a new item"""
         if item in self._inverse:
-            raise ValueError(f'{item!r} already stored; use `.update(item)` instead')
+            raise ValueError(f"{item!r} already stored; use `.update(item)` instead")
         item_key = self._clustering_key(item)
         try:
             self._clusters[item_key].add(item)
@@ -345,7 +349,7 @@ class RankedAutoClusters(Generic[DJ]):
             key=tuple(
                 int(quantize(value, quantization.get(key, 1)))
                 for key, value in item._wrapped.available_resources.items()
-            )
+            ),
         )
 
     def clusters(self) -> Iterator[Set[WrappedClassAd[DJ]]]:
@@ -388,13 +392,12 @@ class CondorClassadJobScheduler(JobScheduler):
         job_queue,
         machine_ad: str = machine_ad_defaults,
         job_ad: str = job_ad_defaults,
-        pre_job_rank: str = '0',
+        pre_job_rank: str = "0",
         interval: float = 60,
     ):
         self._stream_queue = job_queue
         self._drones: RankedAutoClusters[Drone] = RankedAutoClusters(
-            quantization=quantization_defaults,
-            ranking=parse(pre_job_rank),
+            quantization=quantization_defaults, ranking=parse(pre_job_rank)
         )
         self.interval = interval
         self.job_queue = JobQueue()
@@ -438,20 +441,25 @@ class CondorClassadJobScheduler(JobScheduler):
                     break
 
     @staticmethod
-    def _match_job(job: ClassAd, pre_job_clusters: Iterator[List[Set[WrappedClassAd[Drone]]]]):
-        if job['Requirements'] != Undefined:
+    def _match_job(
+        job: ClassAd, pre_job_clusters: Iterator[List[Set[WrappedClassAd[Drone]]]]
+    ):
+        if job["Requirements"] != Undefined:
             pre_job_clusters = (
                 [
-                    cluster for cluster in cluster_group
-                    if job.evaluate('Requirements', my=job, target=next(iter(cluster)))
+                    cluster
+                    for cluster in cluster_group
+                    if job.evaluate("Requirements", my=job, target=next(iter(cluster)))
                 ]
                 for cluster_group in pre_job_clusters
             )
-        if job['Rank'] != Undefined:
+        if job["Rank"] != Undefined:
             pre_job_clusters = (
                 sorted(
                     cluster_group,
-                    key=lambda cluster: job.evaluate('Rank', my=job, target=next(iter(cluster)))
+                    key=lambda cluster: job.evaluate(
+                        "Rank", my=job, target=next(iter(cluster))
+                    ),
                 )
                 for cluster_group in pre_job_clusters
             )
@@ -459,9 +467,8 @@ class CondorClassadJobScheduler(JobScheduler):
             # TODO: if we have POST_JOB_RANK, collect *all* matches of a group
             for cluster in cluster_group:
                 for drone in cluster:
-                    if (
-                        drone['Requirements'] == Undefined
-                        or drone.evaluate('Requirements', my=drone, target=job)
+                    if drone["Requirements"] == Undefined or drone.evaluate(
+                        "Requirements", my=drone, target=job
                     ):
                         return drone
         raise NoMatch()
@@ -474,8 +481,7 @@ class CondorClassadJobScheduler(JobScheduler):
         for queue_index, candidate_job in enumerate(self.job_queue):
             try:
                 matched_drone = self._match_job(
-                    candidate_job,
-                    pre_job_drones.cluster_groups()
+                    candidate_job, pre_job_drones.cluster_groups()
                 )
             except NoMatch:
                 continue
