@@ -1,8 +1,11 @@
 from abc import ABC
-from typing import Dict, Iterator, Union, Tuple, List, TypeVar, Generic, Optional
+from typing import Dict, Iterator, Tuple, List, TypeVar, Generic, Set, NamedTuple
 from weakref import WeakKeyDictionary
 
+from sortedcontainers import SortedDict
+
 from classad import parse
+from classad._base_expression import Expression
 from classad._functions import quantize
 from classad._primitives import HTCInt, Undefined
 from classad._expression import ClassAd
@@ -23,6 +26,15 @@ quantization_defaults = {
     "cores": HTCInt(1),
 }
 
+machine_ad_defaults = """
+requirements = target.requestcpus <= my.cpus
+""".strip()
+
+job_ad_defaults = """
+requirements = my.requestcpus <= target.cpus && my.requestmemory <= target.memory
+"""
+
+T = TypeVar("T")
 DJ = TypeVar("DJ", Drone, Job)
 
 
@@ -272,6 +284,89 @@ class CondorJobScheduler(JobScheduler):
         return None
 
 
+# HTCondor ClassAd Scheduler
+
+
+class NoMatch(Exception):
+    """A job could not be matched to any drone"""
+
+
+class RankedClusterKey(NamedTuple):
+    rank: float
+    key: Tuple[float, ...]
+
+
+class RankedAutoClusters(Generic[DJ]):
+    """Automatically cluster similar jobs or drones"""
+
+    def __init__(self, quantization: Dict[str, HTCInt], ranking: Expression):
+        self._quantization = quantization
+        self._ranking = ranking
+        self._clusters: Dict[RankedClusterKey, Set[WrappedClassAd[DJ]]] = SortedDict()
+        self._inverse: Dict[WrappedClassAd[DJ], RankedClusterKey] = {}
+
+    def copy(self) -> "RankedAutoClusters[DJ]":
+        """Copy the entire ranked auto clusters"""
+        clone = type(self)(quantization=self._quantization, ranking=self._ranking)
+        clone._clusters = SortedDict(
+            (key, value.copy()) for key, value in self._clusters.items()
+        )
+        clone._inverse = self._inverse.copy()
+        return clone
+
+    def add(self, item: WrappedClassAd[DJ]):
+        """Add a new item"""
+        if item in self._inverse:
+            raise ValueError(f"{item!r} already stored; use `.update(item)` instead")
+        item_key = self._clustering_key(item)
+        try:
+            self._clusters[item_key].add(item)
+        except KeyError:
+            self._clusters[item_key] = {item}
+        self._inverse[item] = item_key
+
+    def remove(self, item: WrappedClassAd[DJ]):
+        """Remove an existing item"""
+        item_key = self._inverse.pop(item)
+        cluster = self._clusters[item_key]
+        cluster.remove(item)
+        if not cluster:
+            del self._clusters[item_key]
+
+    def update(self, item):
+        """Update an existing item with its current state"""
+        self.remove(item)
+        self.add(item)
+
+    def _clustering_key(self, item: WrappedClassAd[DJ]):
+        # TODO: assert that order is consistent
+        quantization = self._quantization
+        return RankedClusterKey(
+            rank=self._ranking.evaluate(my=item),
+            key=tuple(
+                int(quantize(value, quantization.get(key, 1)))
+                for key, value in item._wrapped.available_resources.items()
+            ),
+        )
+
+    def clusters(self) -> Iterator[Set[WrappedClassAd[DJ]]]:
+        return iter(self._clusters.values())
+
+    def items(self) -> Iterator[Tuple[RankedClusterKey, Set[WrappedClassAd[DJ]]]]:
+        return iter(self._clusters.items())
+
+    def cluster_groups(self) -> Iterator[List[Set[WrappedClassAd[Drone]]]]:
+        """Group autoclusters by PreJobRank"""
+        group = []
+        current_rank = 0
+        for ranked_key, drones in self._clusters.items():
+            if ranked_key.rank != current_rank and group:
+                current_rank = ranked_key.rank
+                yield group
+                group = []
+            group.append(drones)
+
+
 class CondorClassadJobScheduler(JobScheduler):
     """
     Goal of the htcondor job scheduler is to have a scheduler that somehow
@@ -288,174 +383,130 @@ class CondorClassadJobScheduler(JobScheduler):
     :return:
     """
 
-    def __init__(self, job_queue):
+    def __init__(
+        self,
+        job_queue,
+        machine_ad: str = machine_ad_defaults,
+        job_ad: str = job_ad_defaults,
+        pre_job_rank: str = "0",
+        interval: float = 60,
+    ):
         self._stream_queue = job_queue
-        self.drone_cluster: Dict[Tuple[float, ...], Cluster[WrappedClassAd[Drone]]] = {}
-        self.job_cluster: Dict[Tuple[float, ...], Cluster[WrappedClassAd[Job]]] = {}
-        self.interval = 60
+        self._drones: RankedAutoClusters[Drone] = RankedAutoClusters(
+            quantization=quantization_defaults, ranking=parse(pre_job_rank)
+        )
+        self.interval = interval
         self.job_queue = JobQueue()
         self._collecting = True
         self._processing = Resources(jobs=0)
 
         # temporary solution
         self._wrapped_classads = WeakKeyDictionary()
-        self._machine_classad = parse(
-            """
-        requirements = target.requestcpus <= my.cpus
-        pre_job_rank = 1
-        rank = 0
-
-        """
-        )
-        self._job_classad = parse(
-            """
-        requirements = my.requestcpus <= target.cpus && my.requestmemory <= target.memory
-        """
-        )
+        self._machine_classad = parse(machine_ad)
+        self._job_classad = parse(job_ad)
 
     @property
     def drone_list(self) -> Iterator[Drone]:
-        for cluster in self.drone_cluster.values():
+        for cluster in self._drones.clusters():
             for drone in cluster:
                 yield drone._wrapped
 
     def register_drone(self, drone: Drone):
         wrapped_drone = WrappedClassAd(classad=self._machine_classad, wrapped=drone)
         self._wrapped_classads[drone] = wrapped_drone
-        self._add_drone(wrapped_drone)
+        self._drones.add(wrapped_drone)
 
     def unregister_drone(self, drone: Drone):
         drone_wrapper = self._wrapped_classads[drone]
-        for key in self.drone_cluster:
-            try:
-                self.drone_cluster[key].remove(drone_wrapper)
-            except ValueError:
-                pass
-            else:
-                break
-        else:
-            # nothing was removed
-            return
-        if len(self.drone_cluster[key]) == 0:
-            del self.drone_cluster[key]
-
-    @staticmethod
-    def _clustering_key(resource_dict: Dict):
-        clustering_key = []
-        for key, value in resource_dict.items():
-            clustering_key.append(
-                int(quantize(value, quantization_defaults.get(key, 1)))
-            )
-        return tuple(clustering_key)
-
-    def _add_drone(self, drone: WrappedClassAd, drone_resources: Dict = None):
-        wrapped_drone = drone._wrapped
-        if drone_resources:
-            clustering_key = self._clustering_key(drone_resources)
-        else:
-            clustering_key = self._clustering_key(wrapped_drone.available_resources)
-        self.drone_cluster.setdefault(clustering_key, Cluster()).append(drone)
+        self._drones.remove(drone_wrapper)
 
     def update_drone(self, drone: Drone):
-        self.unregister_drone(drone)
-        self._add_drone(self._wrapped_classads[drone])
-
-    def _sort_drone_cluster(self):
-        return [Bucket(self.drone_cluster.values())]
-
-    def _sort_job_cluster(self):
-        return Bucket(self.job_cluster.values())
+        drone_wrapper = self._wrapped_classads[drone]
+        self._drones.update(drone_wrapper)
 
     async def run(self):
-        def filter_drones(job: WrappedClassAd[Job], drone_bucket: Bucket[Drone]):
-            result = {}  # type: Dict[Union[Undefined, float], Bucket[Drone]]
-            for drones in drone_bucket:
-                drone = drones[0]  # type: WrappedClassAd[Drone]
-                if job.evaluate(
-                    "requirements", my=job, target=drone
-                ) and drone.evaluate("requirements", my=drone, target=job):
-                    rank = drone.evaluate("rank", my=job, target=drone)
-                    result.setdefault(rank, Bucket()).append(drones)
-            return result
-
-        def pop_first(
-            ranked_drones: Dict[Union[Undefined, float], Bucket[Drone]]
-        ) -> Optional[WrappedClassAd[Drone]]:
-            if not ranked_drones:
-                return None
-            # print(ranked_drones)
-            key = sorted(ranked_drones)[0]
-            values = ranked_drones[key]
-            # print(key, values)
-            result = values[0]
-            values.remove(result)
-            if not values:
-                del ranked_drones[key]
-            try:
-                return result[0]
-            except IndexError:
-                return pop_first(ranked_drones)
-
         async with Scope() as scope:
             scope.do(self._collect_jobs())
             async for _ in interval(self.interval):
-                # TODO: get sorted job cluster [{Job, ...}, ...]
-                # TODO: get set of drone cluster {{PSlot, ...}, ...}
-                # TODO: get sorted drone clusters PreJob [{{PSlot, ...}, ...}, ...]
-                # TODO: filter (Job.Requirements) and sort (Job.Rank) for job and drones => lazy
-
-                all_drone_buckets = self._sort_drone_cluster()
-                filtered_drones = {}
-                for jobs in self._sort_job_cluster().copy():
-                    current_drone_bucket = 0
-                    for job in jobs:
-                        best_match = pop_first(filtered_drones)
-                        while best_match is None:
-                            # lazily evaluate more PSlots
-                            try:
-                                # TODO: sort filtered_drones
-                                filtered_drones = filter_drones(
-                                    job, all_drone_buckets[current_drone_bucket]
-                                )
-                            except IndexError:
-                                break
-                            current_drone_bucket += 1
-                            best_match = pop_first(filtered_drones)
-                        else:
-                            # TODO: update drone and check if it gets reinserted to filtered_drones
-                            await self._execute_job(job=job, drone=best_match)
+                await self._schedule_jobs()
                 if (
                     not self._collecting
                     and not self.job_queue
                     and self._processing.levels.jobs == 0
                 ):
                     break
-                await sampling_required.put(self)
+
+    @staticmethod
+    def _match_job(
+        job: ClassAd, pre_job_clusters: Iterator[List[Set[WrappedClassAd[Drone]]]]
+    ):
+        if job["Requirements"] != Undefined:
+            pre_job_clusters = (
+                [
+                    cluster
+                    for cluster in cluster_group
+                    if job.evaluate("Requirements", my=job, target=next(iter(cluster)))
+                ]
+                for cluster_group in pre_job_clusters
+            )
+        if job["Rank"] != Undefined:
+            pre_job_clusters = (
+                sorted(
+                    cluster_group,
+                    key=lambda cluster: job.evaluate(
+                        "Rank", my=job, target=next(iter(cluster))
+                    ),
+                )
+                for cluster_group in pre_job_clusters
+            )
+        for cluster_group in pre_job_clusters:
+            # TODO: if we have POST_JOB_RANK, collect *all* matches of a group
+            for cluster in cluster_group:
+                for drone in cluster:
+                    if drone["Requirements"] == Undefined or drone.evaluate(
+                        "Requirements", my=drone, target=job
+                    ):
+                        return drone
+        raise NoMatch()
+
+    async def _schedule_jobs(self):
+        # Pre Job Rank is the same for all jobs
+        # Use a copy to allow temporary "remainder after match" estimates
+        pre_job_drones = self._drones.copy()
+        matches: List[Tuple[int, WrappedClassAd[Job], WrappedClassAd[Drone]]] = []
+        for queue_index, candidate_job in enumerate(self.job_queue):
+            try:
+                matched_drone = self._match_job(
+                    candidate_job, pre_job_drones.cluster_groups()
+                )
+            except NoMatch:
+                continue
+            else:
+                matches.append((queue_index, candidate_job, matched_drone))
+                # TODO: deduct job-resources from matched drone
+                #       and update instead of remove
+                pre_job_drones.remove(matched_drone)
+        if not matches:
+            return
+        # TODO: optimize for few matches, many matches, all matches
+        for queue_index, _, _ in reversed(matches):
+            del self.job_queue[queue_index]
+        for _, job, drone in matches:
+            await self._execute_job(job=job, drone=drone)
+        await sampling_required.put(self)
+        # NOTE: Is this correct? Triggers once instead of for each job
+        await sampling_required.put(self.job_queue)
 
     async def _execute_job(self, job: WrappedClassAd, drone: WrappedClassAd):
         wrapped_job = job._wrapped
         wrapped_drone = drone._wrapped
         await wrapped_drone.schedule_job(wrapped_job)
-        self.job_queue.remove(job)
-        cluster_key = self._clustering_key(wrapped_job.resources)
-        self.job_cluster[cluster_key].remove(job)
-        if len(self.job_cluster[cluster_key]) == 0:
-            del self.job_cluster[cluster_key]
-        await sampling_required.put(self.job_queue)
-        self.unregister_drone(wrapped_drone)
-        left_resources = {
-            key: value - wrapped_job.resources.get(key, 0)
-            for key, value in wrapped_drone.theoretical_available_resources.items()
-        }
-        self._add_drone(drone, left_resources)
 
     async def _collect_jobs(self):
         async for job in self._stream_queue:
             wrapped_job = WrappedClassAd(classad=self._job_classad, wrapped=job)
             self._wrapped_classads[job] = wrapped_job
             self.job_queue.append(wrapped_job)
-            cluster_key = self._clustering_key(job.resources)
-            self.job_cluster.setdefault(cluster_key, []).append(wrapped_job)
             await self._processing.increase(jobs=1)
             # TODO: logging happens with each job
             # TODO: job queue to the outside now contains wrapped classads...
@@ -467,7 +518,3 @@ class CondorClassadJobScheduler(JobScheduler):
             await self._processing.decrease(jobs=1)
         else:
             self.job_queue.append(self._wrapped_classads[job])
-            cluster_key = self._clustering_key(job.resources)
-            self.job_cluster.setdefault(cluster_key, []).append(
-                self._wrapped_classads[job]
-            )
