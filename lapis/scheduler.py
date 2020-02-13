@@ -489,7 +489,7 @@ class CondorClassadJobScheduler(JobScheduler):
                 continue
             else:
                 matches.append((queue_index, candidate_job, matched_drone))
-                for key, value in enumerate(candidate_job._wrapped.resources):
+                for key, value in candidate_job._wrapped.resources.items():
                     matched_drone._temp[key] = (
                         matched_drone._temp.get(
                             key,
