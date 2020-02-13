@@ -1,3 +1,4 @@
+import random
 from abc import ABC
 from typing import Dict, Iterator, Tuple, List, TypeVar, Generic, Set, NamedTuple
 from weakref import WeakKeyDictionary
@@ -468,6 +469,7 @@ class CondorClassadJobScheduler(JobScheduler):
             )
         for cluster_group in pre_job_clusters:
             # TODO: if we have POST_JOB_RANK, collect *all* matches of a group
+            random.shuffle(cluster_group)  # shuffle cluster to remove bias towards cpus
             for cluster in cluster_group:
                 for drone in cluster:
                     if drone["Requirements"] == Undefined() or drone.evaluate(
