@@ -345,10 +345,10 @@ class RankedAutoClusters(Generic[DJ]):
         # TODO: assert that order is consistent
         quantization = self._quantization
         return RankedClusterKey(
-            rank=self._ranking.evaluate(my=item),
+            rank=-self._ranking.evaluate(my=item),
             key=tuple(
-                int(quantize(value, quantization.get(key, 1)))
-                for key, value in item._wrapped.available_resources.items()
+                int(quantize(item[key], quantization.get(key, 1)))
+                for key in ("cpus", "memory", "disk")
             ),
         )
 
@@ -462,6 +462,7 @@ class CondorClassadJobScheduler(JobScheduler):
                     key=lambda cluster: job.evaluate(
                         "Rank", my=job, target=next(iter(cluster))
                     ),
+                    reverse=True,
                 )
                 for cluster_group in pre_job_clusters
             )
