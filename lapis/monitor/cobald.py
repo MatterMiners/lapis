@@ -35,7 +35,10 @@ drone_statistics.name = "cobald_status"
 drone_statistics.whitelist = (Drone,)
 drone_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
-    logging.StreamHandler.__name__: JsonFormatter(),
+    # logging.StreamHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+    ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
     ),
@@ -67,7 +70,10 @@ pool_statistics.name = "cobald_status"
 pool_statistics.whitelist = (Pool,)
 pool_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
-    logging.StreamHandler.__name__: JsonFormatter(),
+    # logging.StreamHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+    ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
     ),

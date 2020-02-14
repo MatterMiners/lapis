@@ -38,7 +38,10 @@ storage_status.name = "storage_status"
 storage_status.whitelist = (StorageElement,)
 storage_status.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
-    logging.StreamHandler.__name__: JsonFormatter(),
+    # logging.StreamHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "storage"}, resolution=1
+    ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "storage"}, resolution=1
     ),
@@ -67,7 +70,10 @@ pipe_status.name = "pipe_status"
 pipe_status.whitelist = (MonitoredPipeInfo,)
 pipe_status.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
-    logging.StreamHandler.__name__: JsonFormatter(),
+    # logging.StreamHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "pipe"}, resolution=1
+    ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "pipe"}, resolution=1
     ),
