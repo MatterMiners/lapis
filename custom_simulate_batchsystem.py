@@ -15,13 +15,25 @@ from lapis.storage_io.storage import (
     storage_reader_filebased_hitrate_caching,
 )
 
-from lapis.scheduler import CondorJobScheduler
+from lapis.scheduler import CondorClassadJobScheduler
 from lapis.simulator import Simulator
 
 import sys
 
 from lapis.monitor import LoggingUDPSocketHandler, SimulationTimeFilter
 
+# from time import time
+
+machine_ad_defaults = """
+    requirements = target.requestcpus <= my.cpus
+    rank = 0
+    """.strip()
+
+job_ad_defaults = """
+requirements = my.requestcpus <= target.cpus && my.requestmemory <= target.memory
+rank = 1
+"""
+pre_job_rank_defaults = "0"
 
 last_step = 0
 
@@ -46,6 +58,7 @@ def ini_and_run(
     until=None,
     calculation_efficiency=1.0,
     log_telegraf=False,
+    pre_job_rank=pre_job_rank_defaults,
 ):
     # ini logging to file
     monitoring_logger = logging.getLogger()
@@ -68,15 +81,20 @@ def ini_and_run(
     simulator = Simulator(seed=seed)
     file_type = "htcondor"
     file = job_file
-    # print()
-    # input()
+
     simulator.create_job_generator(
         job_input=open(file, "r"),
         job_reader=partial(
             job_import_mapper[file_type], calculation_efficiency=calculation_efficiency
         ),
     )
-    simulator.create_scheduler(scheduler_type=CondorJobScheduler)
+
+    simulator.job_scheduler = CondorClassadJobScheduler(
+        job_queue=simulator.job_queue,
+        pre_job_rank=pre_job_rank,
+        machine_ad=machine_ad_defaults,
+        job_ad=job_ad_defaults,
+    )
 
     simulator.create_connection_module(remote_throughput * 1024 * 1024 * 1024)
     with open(storage_file, "r") as storage_file:
