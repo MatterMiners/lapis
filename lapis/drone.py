@@ -52,8 +52,6 @@ class Drone(interfaces.Pool):
         # caching-related
         self.jobs_using_caching = 0
 
-        print(repr(self), "pool resources: ", self.pool_resources)
-
     @property
     def theoretical_available_resources(self):
         return dict(self.resources.levels)

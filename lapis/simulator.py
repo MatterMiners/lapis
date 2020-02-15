@@ -19,7 +19,7 @@ from lapis.monitor.general import (
     resource_statistics,
     pool_status,
     configuration_information,
-    job_events,
+    # job_events,
     drone_statistics_caching,
 )
 from lapis.monitor.cobald import drone_statistics, pool_statistics
@@ -44,7 +44,7 @@ class Simulator(object):
     def enable_monitoring(self):
         self.monitoring.register_statistic(user_demand)
         self.monitoring.register_statistic(job_statistics)
-        self.monitoring.register_statistic(job_events)
+        # self.monitoring.register_statistic(job_events)
         self.monitoring.register_statistic(pool_statistics)
         self.monitoring.register_statistic(drone_statistics)
         self.monitoring.register_statistic(resource_statistics)
