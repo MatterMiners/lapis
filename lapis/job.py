@@ -163,10 +163,12 @@ class Job(object):
                 scope.do(self._transfer_inputfiles())
                 scope.do(self._calculate())
         except CancelTask:
+            print("CancelTask")
             self.drone = None
             self._success = False
             # TODO: in_queue_until is still set
         except BaseException:
+            print("BaseException")
             self.drone = None
             self._success = False
             # TODO: in_queue_until is still set
