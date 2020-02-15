@@ -157,18 +157,17 @@ class Job(object):
         await sampling_required.put(self)
         # print("running job {}  in drone {}".format(repr(self), repr(self.drone)))
         try:
+
             start = time.now
             async with Scope() as scope:
                 await instant
                 scope.do(self._transfer_inputfiles())
                 scope.do(self._calculate())
         except CancelTask:
-            print("CancelTask")
             self.drone = None
             self._success = False
             # TODO: in_queue_until is still set
         except BaseException:
-            print("BaseException")
             self.drone = None
             self._success = False
             # TODO: in_queue_until is still set

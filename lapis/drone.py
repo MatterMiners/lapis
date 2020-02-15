@@ -142,9 +142,7 @@ class Drone(interfaces.Pool):
             job_execution = scope.do(job.run(self))
             self.jobs += 1
             try:
-                async with self.resources.claim(
-                    **job.resources
-                ), self.used_resources.claim(**job.used_resources):
+                async with self.resources.claim(**job.resources):
                     await sampling_required.put(self)
                     if kill:
                         for resource_key in job.resources:
@@ -165,6 +163,7 @@ class Drone(interfaces.Pool):
                     #     )
                     # )
             except ResourcesUnavailable:
+                print(repr(job), "ResourcesUnavailable")
                 await instant
                 job_execution.cancel()
             except AssertionError:
