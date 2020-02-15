@@ -173,9 +173,12 @@ def job_events(job: Job) -> List[Dict]:
         result["success"] = 0
         error_logged = False
         for resource_key in job.resources:
+            print(resource_key)
             usage = job.used_resources.get(
                 resource_key, job.resources.get(resource_key, None)
             )
+            print(usage, job.resources)
+            print(job.drone)
             value = usage / job.resources.get(
                 resource_key, job.drone.pool_resources[resource_key]
             )
