@@ -59,6 +59,8 @@ def ini_and_run(
     calculation_efficiency=1.0,
     log_telegraf=False,
     pre_job_rank=pre_job_rank_defaults,
+    machine_ads=machine_ad_defaults,
+    job_ads=job_ad_defaults,
 ):
     # ini logging to file
     monitoring_logger = logging.getLogger()
@@ -89,11 +91,18 @@ def ini_and_run(
         ),
     )
 
+    print(
+        "scheduler configuration: \n "
+        "\tpre job rank: {} \n"
+        "\tmachine classad: {}\n"
+        "\tjob classad: {}".format(pre_job_rank, machine_ads, job_ads)
+    )
+
     simulator.job_scheduler = CondorClassadJobScheduler(
         job_queue=simulator.job_queue,
         pre_job_rank=pre_job_rank,
-        machine_ad=machine_ad_defaults,
-        job_ad=job_ad_defaults,
+        machine_ad=machine_ads,
+        job_ad=job_ads,
     )
 
     simulator.create_connection_module(remote_throughput * 1024 * 1024 * 1024)

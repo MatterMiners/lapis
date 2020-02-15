@@ -58,6 +58,8 @@ def ini_and_run(
     calculation_efficiency=1.0,
     log_telegraf=False,
     pre_job_rank=pre_job_rank_defaults,
+    machine_ads=machine_ad_defaults,
+    job_ads=job_ad_defaults,
 ):
     # ini logging to file
     monitoring_logger = logging.getLogger()
@@ -77,11 +79,9 @@ def ini_and_run(
 
     # ini simulation
     print("starting static environment")
-    simulator = Simulator(seed=time())
+    simulator = Simulator(seed=seed)
     file_type = "htcondor"
     file = job_file
-    # print()
-    # input()
     simulator.create_job_generator(
         job_input=open(file, "r"),
         job_reader=partial(
@@ -92,8 +92,8 @@ def ini_and_run(
     simulator.job_scheduler = CondorClassadJobScheduler(
         job_queue=simulator.job_queue,
         pre_job_rank=pre_job_rank,
-        machine_ad=machine_ad_defaults,
-        job_ad=job_ad_defaults,
+        machine_ad=machine_ads,
+        job_ad=job_ads,
     )
 
     simulator.create_connection_module(remote_throughput * 1024 * 1024 * 1024)
@@ -120,7 +120,10 @@ def ini_and_run(
 
 
 # job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal.json"
-job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal_only_cpu.json"
+# job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal_only_cpu.json"
+job_file = "/home/tabea/work/testdata/fullsim/test_24h_jobinput.json"
+# job_file = "/home/tabea/work/testdata/fullsim/resampled_reduced_025week_16_jobinput" \
+#            ".json"
 # pool_files = ["/home/tabea/work/testdata/hitratebased/sg_machines.csv",
 #              "/home/tabea/work/testdata/hitratebased/dummycluster.csv"]
 # storage_file = "/home/tabea/work/testdata/hitratebased/sg_caches.csv"
@@ -134,9 +137,11 @@ job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal_only_cpu.jso
 # job_file = "/home/tabea/work/testdata/hitratebased/week.json"
 # job_file = "/home/tabea/work/testdata/hitratebased/day_jobinput.json"
 # job_file = "/home/tabea/work/testdata/hitratebased/week_1_sample_time_jobinput.json"
-pool_files = ["/home/tabea/work/testdata/hitratebased/sg_machines_only_cpu.csv"]
-# "/home/tabea/work/testdata/hitratebased/dummycluster.csv"]
-storage_file = "/home/tabea/work/testdata/hitratebased/sg_caches.csv"
+pool_files = [
+    "/home/tabea/work/testdata/fullsim/sg_machines_shared_cache.csv",
+    "/home/tabea/work/testdata/fullsim/dummycluster.csv",
+]
+storage_file = "/home/tabea/work/testdata/fullsim/sg_caches_shared.csv"
 storage_type = "filehitrate"
 ini_and_run(
     job_file=job_file,
