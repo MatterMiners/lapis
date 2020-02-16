@@ -23,16 +23,16 @@ from lapis.monitor import LoggingUDPSocketHandler, SimulationTimeFilter
 
 from time import time
 
+pre_job_rank_defaults = "0"
+
 machine_ad_defaults = """
     requirements = target.requestcpus <= my.cpus
-    rank = 0
+    rank = 1
     """.strip()
 
 job_ad_defaults = """
 requirements = my.requestcpus <= target.cpus && my.requestmemory <= target.memory
-rank = 1
-"""
-pre_job_rank_defaults = "0"
+rank = 0"""
 
 last_step = 0
 
@@ -120,8 +120,8 @@ def ini_and_run(
 
 
 # job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal.json"
-# job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal_only_cpu.json"
-job_file = "/home/tabea/work/testdata/fullsim/test_24h_jobinput.json"
+job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal_only_cpu.json"
+# job_file = "/home/tabea/work/testdata/fullsim/test_12h_jobinput.json"
 # job_file = "/home/tabea/work/testdata/fullsim/resampled_reduced_025week_16_jobinput" \
 #            ".json"
 # pool_files = ["/home/tabea/work/testdata/hitratebased/sg_machines.csv",
@@ -150,6 +150,11 @@ ini_and_run(
     storage_type=storage_type,
     log_file="test_new_scheduler.log",
     log_telegraf=True,
-    # pre_job_rank="100000 * my.cpus + my.memory - 1000000 - 10000000 * my.rank "
-    pre_job_rank="1",
+    pre_job_rank="10000000 * my.Rank + 1000000 - 100000 * my.cpus - my.memory",
+    machine_ads="""
+    requirements = target.requestcpus <= my.cpus
+    rank = 1 / my.cache_average_throughput
+    """.strip(),
 )
+
+# rank = my.pipe_utilization + my.average_throughput
