@@ -1,4 +1,4 @@
-import random
+# import random
 from abc import ABC
 from typing import Dict, Iterator, Tuple, List, TypeVar, Generic, Set, NamedTuple
 from weakref import WeakKeyDictionary
@@ -52,6 +52,8 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
         self._temp = {}
 
     def __getitem__(self, item):
+        print(item)
+
         def access_wrapped(name, requested=True):
             if isinstance(self._wrapped, Drone):
                 return self._wrapped.theoretical_available_resources[name]
@@ -85,22 +87,41 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
                 caches = self._wrapped.connection.storages.get(
                     self._wrapped.sitename, None
                 )
+
                 try:
+                    # print(mean(
+                    #     [cache.connection._throughput_scale for cache in caches]
+                    # ))
                     return mean(
                         [cache.connection._throughput_scale for cache in caches]
                     )
                 except TypeError:
+                    print(0)
                     return 0
-            elif "cache_average_throughput" in item:
+            elif "cache_throughput_per_core" in item:
                 caches = self._wrapped.connection.storages.get(
                     self._wrapped.sitename, None
                 )
+
                 try:
+                    # print(sum(
+                    #     [cache.connection.throughput / 1000. / 1000. / 1000. for cache
+                    #      in
+                    #      caches]
+                    # ) / float(access_wrapped("cores")))
                     return sum(
-                        [cache.connection.throughput for cache in caches]
+                        [
+                            cache.connection.throughput / 1000.0 / 1000.0 / 1000.0
+                            for cache in caches
+                        ]
                     ) / float(access_wrapped("cores"))
                 except TypeError:
+                    print(0)
                     return 0
+
+            elif "cached_data" in item:
+                # print(self._wrapped, self._wrapped.cached_data / 1000. / 1000. / 1000.)
+                return self._wrapped.cached_data / 1000.0 / 1000.0 / 1000.0
 
         return super(WrappedClassAd, self).__getitem__(item)
 
@@ -365,6 +386,11 @@ class RankedAutoClusters(Generic[DJ]):
         self.remove(item)
         self.add(item)
 
+    def lookup(self, job: Job):
+        for ranked_key, drones in self._clusters.items():
+            for drone in drones:
+                drone._wrapped.look_up_cached_data(job)
+
     def _clustering_key(self, item: WrappedClassAd[DJ]):
         # TODO: assert that order is consistent
         quantization = self._quantization
@@ -479,6 +505,7 @@ class CondorClassadJobScheduler(JobScheduler):
                 ]
                 for cluster_group in pre_job_clusters
             )
+
         if job["Rank"] != Undefined():
             pre_job_clusters = (
                 sorted(
@@ -490,9 +517,10 @@ class CondorClassadJobScheduler(JobScheduler):
                 )
                 for cluster_group in pre_job_clusters
             )
+
         for cluster_group in pre_job_clusters:
             # TODO: if we have POST_JOB_RANK, collect *all* matches of a group
-            random.shuffle(cluster_group)  # shuffle cluster to remove bias towards cpus
+            # random.shuffle(cluster_group)  # shuffle cluster to remove bias towards cpus
             for cluster in cluster_group:
                 for drone in cluster:
                     if drone["Requirements"] == Undefined() or drone.evaluate(
@@ -508,6 +536,7 @@ class CondorClassadJobScheduler(JobScheduler):
         matches: List[Tuple[int, WrappedClassAd[Job], WrappedClassAd[Drone]]] = []
         for queue_index, candidate_job in enumerate(self.job_queue):
             try:
+                pre_job_drones.lookup(candidate_job._wrapped)
                 matched_drone = self._match_job(
                     candidate_job, pre_job_drones.cluster_groups()
                 )

@@ -51,6 +51,7 @@ class Drone(interfaces.Pool):
 
         # caching-related
         self.jobs_using_caching = 0
+        self.cached_data = 0
 
     @property
     def theoretical_available_resources(self):
@@ -174,6 +175,19 @@ class Drone(interfaces.Pool):
             self._utilisation = self._allocation = None
             self.scheduler.update_drone(self)
             await sampling_required.put(self)
+
+    def look_up_cached_data(self, job: Job):
+        cached_data = 0
+        caches = self.connection.storages.get(self.sitename, None)
+        if caches:
+            cached_data = sum(
+                [
+                    filespecs["hitrates"].get(cache.sitename, 0) * filespecs["filesize"]
+                    for cache in caches
+                    for filespecs in job.requested_inputfiles.values()
+                ]
+            )
+        self.cached_data = cached_data
 
     def __repr__(self):
         return "<%s: %s %s>" % (self.__class__.__name__, id(self), self.sitename)
