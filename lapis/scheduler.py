@@ -346,7 +346,7 @@ class RankedAutoClusters(Generic[DJ]):
         # TODO: assert that order is consistent
         quantization = self._quantization
         return RankedClusterKey(
-            rank=-self._ranking.evaluate(my=item),
+            rank=-1.0 * self._ranking.evaluate(my=item),
             key=tuple(
                 int(quantize(item[key], quantization.get(key, 1)))
                 for key in ("cpus", "memory", "disk")
