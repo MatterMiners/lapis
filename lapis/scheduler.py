@@ -16,6 +16,8 @@ from lapis.drone import Drone
 from lapis.job import Job
 from lapis.monitor import sampling_required
 
+from numpy import mean
+
 
 class JobQueue(list):
     pass
@@ -79,6 +81,27 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
                     return (1 / 1024) * self._temp["disk"]
                 except KeyError:
                     return (1 / 1024) * access_wrapped("disk", requested=False)
+            elif "cache_demand" in item:
+                caches = self._wrapped.connection.storages.get(
+                    self._wrapped.sitename, None
+                )
+                try:
+                    return mean(
+                        [cache.connection._throughput_scale for cache in caches]
+                    )
+                except TypeError:
+                    return 0
+            elif "cache_average_throughput" in item:
+                caches = self._wrapped.connection.storages.get(
+                    self._wrapped.sitename, None
+                )
+                try:
+                    return sum(
+                        [cache.connection.throughput for cache in caches]
+                    ) / float(access_wrapped("cores"))
+                except TypeError:
+                    return 0
+
         return super(WrappedClassAd, self).__getitem__(item)
 
     def clear_temporary_resources(self):
@@ -346,7 +369,7 @@ class RankedAutoClusters(Generic[DJ]):
         # TODO: assert that order is consistent
         quantization = self._quantization
         return RankedClusterKey(
-            rank=-self._ranking.evaluate(my=item),
+            rank=-1.0 * self._ranking.evaluate(my=item),
             key=tuple(
                 int(quantize(item[key], quantization.get(key, 1)))
                 for key in ("cpus", "memory", "disk")
