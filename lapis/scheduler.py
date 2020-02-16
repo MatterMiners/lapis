@@ -52,8 +52,6 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
         self._temp = {}
 
     def __getitem__(self, item):
-        print(item)
-
         def access_wrapped(name, requested=True):
             if isinstance(self._wrapped, Drone):
                 return self._wrapped.theoretical_available_resources[name]
@@ -96,7 +94,6 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
                         [cache.connection._throughput_scale for cache in caches]
                     )
                 except TypeError:
-                    print(0)
                     return 0
             elif "cache_throughput_per_core" in item:
                 caches = self._wrapped.connection.storages.get(
@@ -116,7 +113,6 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
                         ]
                     ) / float(access_wrapped("cores"))
                 except TypeError:
-                    print(0)
                     return 0
 
             elif "cached_data" in item:
