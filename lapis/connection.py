@@ -164,7 +164,10 @@ class Connection(object):
                         for file in requested_files.values()
                     ]
                 ) / sum([file["usedsize"] for file in requested_files.values()])
+                print(drone, requested_files, random_inputfile_information, hitrate)
                 provides_file = int(random.random() < hitrate)
+                print(drone, provides_file)
+                # input()
             except ZeroDivisionError:
                 provides_file = 0
             # print(
