@@ -419,6 +419,64 @@ class RankedAutoClusters(Generic[DJ]):
             yield group
 
 
+class RankedNonClusters(Generic[DJ]):
+    """Automatically cluster jobs or drones by rank only"""
+
+    def __init__(self, quantization: Dict[str, HTCInt], ranking: Expression):
+        self._quantization = quantization
+        self._ranking = ranking
+        self._clusters: Dict[float, Set[WrappedClassAd[DJ]]] = SortedDict()
+        self._inverse: Dict[WrappedClassAd[DJ], float] = {}
+
+    def copy(self) -> "RankedNonClusters[DJ]":
+        """Copy the entire ranked auto clusters"""
+        clone = type(self)(quantization=self._quantization, ranking=self._ranking)
+        clone._clusters = SortedDict(
+            (key, value.copy()) for key, value in self._clusters.items()
+        )
+        clone._inverse = self._inverse.copy()
+        return clone
+
+    def add(self, item: WrappedClassAd[DJ]):
+        """Add a new item"""
+        if item in self._inverse:
+            raise ValueError(f"{item!r} already stored; use `.update(item)` instead")
+        item_key = self._clustering_key(item)
+        try:
+            self._clusters[item_key].add(item)
+        except KeyError:
+            self._clusters[item_key] = {item}
+        self._inverse[item] = item_key
+
+    def remove(self, item: WrappedClassAd[DJ]):
+        """Remove an existing item"""
+        item_key = self._inverse.pop(item)
+        cluster = self._clusters[item_key]
+        cluster.remove(item)
+        if not cluster:
+            del self._clusters[item_key]
+
+    def update(self, item):
+        """Update an existing item with its current state"""
+        self.remove(item)
+        self.add(item)
+
+    def _clustering_key(self, item: WrappedClassAd[DJ]):
+        # TODO: assert that order is consistent
+        return -1.0 * self._ranking.evaluate(my=item)
+
+    def clusters(self) -> Iterator[Set[WrappedClassAd[DJ]]]:
+        return iter(self._clusters.values())
+
+    def items(self) -> Iterator[Tuple[float, Set[WrappedClassAd[DJ]]]]:
+        return iter(self._clusters.items())
+
+    def cluster_groups(self) -> Iterator[List[Set[WrappedClassAd[Drone]]]]:
+        """Group autoclusters by PreJobRank"""
+        for ranked_key, drones in self._clusters.items():
+            yield [{item} for item in drones]
+
+
 class CondorClassadJobScheduler(JobScheduler):
     """
     Goal of the htcondor job scheduler is to have a scheduler that somehow
