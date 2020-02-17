@@ -164,7 +164,7 @@ class Drone(interfaces.Pool):
                     #     )
                     # )
             except ResourcesUnavailable:
-                print(repr(job), "ResourcesUnavailable")
+                # print(repr(job), "ResourcesUnavailable")
                 await instant
                 job_execution.cancel()
             except AssertionError:
@@ -180,13 +180,15 @@ class Drone(interfaces.Pool):
         cached_data = 0
         caches = self.connection.storages.get(self.sitename, None)
         if caches:
-            cached_data = sum(
-                [
-                    filespecs["hitrates"].get(cache.sitename, 0) * filespecs["filesize"]
-                    for cache in caches
-                    for filespecs in job.requested_inputfiles.values()
-                ]
-            )
+            if job.requested_inputfiles:
+                cached_data = sum(
+                    [
+                        filespecs["hitrates"].get(cache.sitename, 0)
+                        * filespecs["filesize"]
+                        for cache in caches
+                        for filespecs in job.requested_inputfiles.values()
+                    ]
+                )
         self.cached_data = cached_data
 
     def __repr__(self):
