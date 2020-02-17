@@ -1,6 +1,6 @@
 import random
-from abc import ABC
-from typing import Dict, Iterator, Tuple, List, TypeVar, Generic, Set, NamedTuple
+from abc import ABC, abstractmethod
+from typing import Dict, Iterator, Tuple, List, TypeVar, Generic, Set, NamedTuple, Any
 from weakref import WeakKeyDictionary
 
 from sortedcontainers import SortedDict
@@ -300,7 +300,51 @@ class RankedClusterKey(NamedTuple):
     key: Tuple[float, ...]
 
 
-class RankedAutoClusters(Generic[DJ]):
+RC = TypeVar('RC', bound='RankedClusters')
+
+
+class RankedClusters(Generic[DJ]):
+    """Automatically cluster drones by rank"""
+
+    @abstractmethod
+    def __init__(self, quantization: Dict[str, HTCInt], ranking: Expression):
+        raise NotImplementedError
+
+    @abstractmethod
+    def copy(self: RC[DJ]) -> RC[DJ]:
+        """Copy the entire ranked auto clusters"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def add(self, item: WrappedClassAd[DJ]) -> None:
+        """Add a new item"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def remove(self, item: WrappedClassAd[DJ]) -> None:
+        """Remove an existing item"""
+        raise NotImplementedError
+
+    def update(self, item) -> None:
+        """Update an existing item with its current state"""
+        self.remove(item)
+        self.add(item)
+
+    @abstractmethod
+    def clusters(self) -> Iterator[Set[WrappedClassAd[DJ]]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def items(self) -> Iterator[Tuple[Any, Set[WrappedClassAd[DJ]]]]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def cluster_groups(self) -> Iterator[List[Set[WrappedClassAd[Drone]]]]:
+        """Group autoclusters by PreJobRank"""
+        raise NotImplementedError
+
+
+class RankedAutoClusters(RankedClusters[DJ]):
     """Automatically cluster similar jobs or drones"""
 
     def __init__(self, quantization: Dict[str, HTCInt], ranking: Expression):
@@ -310,7 +354,6 @@ class RankedAutoClusters(Generic[DJ]):
         self._inverse: Dict[WrappedClassAd[DJ], RankedClusterKey] = {}
 
     def copy(self) -> "RankedAutoClusters[DJ]":
-        """Copy the entire ranked auto clusters"""
         clone = type(self)(quantization=self._quantization, ranking=self._ranking)
         clone._clusters = SortedDict(
             (key, value.copy()) for key, value in self._clusters.items()
@@ -319,7 +362,6 @@ class RankedAutoClusters(Generic[DJ]):
         return clone
 
     def add(self, item: WrappedClassAd[DJ]):
-        """Add a new item"""
         if item in self._inverse:
             raise ValueError(f"{item!r} already stored; use `.update(item)` instead")
         item_key = self._clustering_key(item)
@@ -330,17 +372,11 @@ class RankedAutoClusters(Generic[DJ]):
         self._inverse[item] = item_key
 
     def remove(self, item: WrappedClassAd[DJ]):
-        """Remove an existing item"""
         item_key = self._inverse.pop(item)
         cluster = self._clusters[item_key]
         cluster.remove(item)
         if not cluster:
             del self._clusters[item_key]
-
-    def update(self, item):
-        """Update an existing item with its current state"""
-        self.remove(item)
-        self.add(item)
 
     def _clustering_key(self, item: WrappedClassAd[DJ]):
         # TODO: assert that order is consistent
@@ -360,7 +396,6 @@ class RankedAutoClusters(Generic[DJ]):
         return iter(self._clusters.items())
 
     def cluster_groups(self) -> Iterator[List[Set[WrappedClassAd[Drone]]]]:
-        """Group autoclusters by PreJobRank"""
         group = []
         current_rank = None
         for ranked_key, drones in self._clusters.items():
@@ -374,7 +409,7 @@ class RankedAutoClusters(Generic[DJ]):
             yield group
 
 
-class RankedNonClusters(Generic[DJ]):
+class RankedNonClusters(RankedClusters[DJ]):
     """Automatically cluster jobs or drones by rank only"""
 
     def __init__(self, quantization: Dict[str, HTCInt], ranking: Expression):
@@ -384,7 +419,6 @@ class RankedNonClusters(Generic[DJ]):
         self._inverse: Dict[WrappedClassAd[DJ], float] = {}
 
     def copy(self) -> "RankedNonClusters[DJ]":
-        """Copy the entire ranked auto clusters"""
         clone = type(self)(quantization=self._quantization, ranking=self._ranking)
         clone._clusters = SortedDict(
             (key, value.copy()) for key, value in self._clusters.items()
@@ -393,7 +427,6 @@ class RankedNonClusters(Generic[DJ]):
         return clone
 
     def add(self, item: WrappedClassAd[DJ]):
-        """Add a new item"""
         if item in self._inverse:
             raise ValueError(f"{item!r} already stored; use `.update(item)` instead")
         item_key = self._clustering_key(item)
@@ -404,7 +437,6 @@ class RankedNonClusters(Generic[DJ]):
         self._inverse[item] = item_key
 
     def remove(self, item: WrappedClassAd[DJ]):
-        """Remove an existing item"""
         item_key = self._inverse.pop(item)
         cluster = self._clusters[item_key]
         cluster.remove(item)
@@ -412,12 +444,10 @@ class RankedNonClusters(Generic[DJ]):
             del self._clusters[item_key]
 
     def update(self, item):
-        """Update an existing item with its current state"""
         self.remove(item)
         self.add(item)
 
     def _clustering_key(self, item: WrappedClassAd[DJ]):
-        # TODO: assert that order is consistent
         return -1.0 * self._ranking.evaluate(my=item)
 
     def clusters(self) -> Iterator[Set[WrappedClassAd[DJ]]]:
@@ -427,7 +457,6 @@ class RankedNonClusters(Generic[DJ]):
         return iter(self._clusters.items())
 
     def cluster_groups(self) -> Iterator[List[Set[WrappedClassAd[Drone]]]]:
-        """Group autoclusters by PreJobRank"""
         for ranked_key, drones in self._clusters.items():
             yield [{item} for item in drones]
 
@@ -458,7 +487,7 @@ class CondorClassadJobScheduler(JobScheduler):
         interval: float = 60,
     ):
         self._stream_queue = job_queue
-        self._drones: RankedAutoClusters[Drone] = RankedAutoClusters(
+        self._drones: RankedClusters[Drone] = RankedAutoClusters(
             quantization=quantization_defaults, ranking=parse(pre_job_rank)
         )
         self.interval = interval
