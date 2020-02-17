@@ -1,4 +1,4 @@
-# import random
+import random
 from abc import ABC
 from typing import Dict, Iterator, Tuple, List, TypeVar, Generic, Set, NamedTuple
 from weakref import WeakKeyDictionary
@@ -506,8 +506,9 @@ class CondorClassadJobScheduler(JobScheduler):
             pre_job_clusters = (
                 sorted(
                     cluster_group,
-                    key=lambda cluster: job.evaluate(
-                        "Rank", my=job, target=next(iter(cluster))
+                    key=lambda cluster: (
+                        job.evaluate("Rank", my=job, target=next(iter(cluster))),
+                        random.random(),
                     ),
                     reverse=True,
                 )
@@ -531,6 +532,8 @@ class CondorClassadJobScheduler(JobScheduler):
         pre_job_drones = self._drones.copy()
         matches: List[Tuple[int, WrappedClassAd[Job], WrappedClassAd[Drone]]] = []
         for queue_index, candidate_job in enumerate(self.job_queue):
+            # if not candidate_job._wrapped.requested_inputfiles:
+            #     continue
             try:
                 pre_job_drones.lookup(candidate_job._wrapped)
                 matched_drone = self._match_job(
