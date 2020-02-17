@@ -13,7 +13,7 @@ from lapis.cachealgorithm import (
 from lapis.storageelement import StorageElement, RemoteStorage
 from lapis.files import RequestedFile, RequestedFile_HitrateBased
 from lapis.monitor import sampling_required
-from lapis.monitor.caching import MonitoredPipeInfo
+from lapis.monitor.caching import MonitoredPipeInfo, HitrateInfo
 
 
 class Connection(object):
@@ -167,6 +167,13 @@ class Connection(object):
                 print(drone, requested_files, random_inputfile_information, hitrate)
                 provides_file = int(random.random() < hitrate)
                 print(drone, provides_file)
+                await sampling_required.put(
+                    HitrateInfo(
+                        hitrate,
+                        sum([file["usedsize"] for file in requested_files.values()]),
+                        provides_file,
+                    )
+                )
                 # input()
             except ZeroDivisionError:
                 provides_file = 0

@@ -17,6 +17,37 @@ class MonitoredPipeInfo(NamedTuple):
     no_subscriptions: int
 
 
+class HitrateInfo(NamedTuple):
+    hitrate: float
+    volume: float
+    provides_file: int
+
+
+def hitrate_evaluation(hitrateinfo: HitrateInfo) -> list:
+    results = [
+        {
+            "hitrate": hitrateinfo.hitrate,
+            "volume": hitrateinfo.volume,
+            "providesfile": hitrateinfo.provides_file,
+        }
+    ]
+    return results
+
+
+hitrate_evaluation.name = "hitrate_evaluation"
+hitrate_evaluation.whitelist = (HitrateInfo,)
+hitrate_evaluation.logging_formatter = {
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    # logging.StreamHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: LineProtocolFormatter(
+        tags={"tardis"}, resolution=1
+    ),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis"}, resolution=1
+    ),
+}
+
+
 def storage_status(storage: StorageElement) -> list:
     """
     Log information about current storage object state
