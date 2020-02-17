@@ -461,16 +461,15 @@ class CondorClassadJobScheduler(JobScheduler):
             pre_job_clusters = (
                 sorted(
                     cluster_group,
-                    key=lambda cluster: job.evaluate(
+                    key=lambda cluster: (job.evaluate(
                         "Rank", my=job, target=next(iter(cluster))
-                    ),
+                    ), random.random()),
                     reverse=True,
                 )
                 for cluster_group in pre_job_clusters
             )
         for cluster_group in pre_job_clusters:
             # TODO: if we have POST_JOB_RANK, collect *all* matches of a group
-            random.shuffle(cluster_group)  # shuffle cluster to remove bias towards cpus
             for cluster in cluster_group:
                 for drone in cluster:
                     if drone["Requirements"] == Undefined() or drone.evaluate(
