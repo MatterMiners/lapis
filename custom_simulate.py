@@ -5,6 +5,8 @@ import logging.handlers
 from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
 
+from lapis.connection import Connection
+from lapis.drone import Drone
 from lapis.job_io.htcondor import htcondor_job_reader
 from lapis.pool import StaticPool
 from lapis.pool_io.htcondor import htcondor_pool_reader
@@ -44,6 +46,19 @@ storage_import_mapper = {
     "standard": storage_reader,
     "filehitrate": storage_reader_filebased_hitrate_caching,
 }
+
+
+def create_pool_in_simulator(simulator, pool_input, pool_reader, pool_type, connection,
+                             controller=None):
+    for pool in pool_reader(
+            iterable=pool_input,
+            pool_type=pool_type,
+            make_drone=partial(Drone, simulator.job_scheduler),
+            connection=connection,
+    ):
+        self.pools.append(pool)
+        if controller:
+            simulator.controllers.append(controller(target=pool, rate=1))
 
 
 def ini_and_run(
@@ -97,6 +112,7 @@ def ini_and_run(
     )
 
     simulator.create_connection_module(remote_throughput * 1024 * 1024 * 1024)
+    dummy_pool_connection = Connection(float("Inf"))
     with open(storage_file, "r") as storage_file:
         simulator.create_storage(
             storage_input=storage_file,
@@ -108,11 +124,25 @@ def ini_and_run(
     for pool_file in pool_files:
         with open(pool_file, "r") as pool_file:
             pool_file_type = "htcondor"
-            simulator.create_pools(
-                pool_input=pool_file,
-                pool_reader=pool_import_mapper[pool_file_type],
-                pool_type=StaticPool,
-            )
+            if "dummycluster" in pool_file:
+                # Attention: dummy_pool_connection is currently not part of
+                # monitoring as it is not known within the simulator itself
+                # TODO: do you need this in monitoring?
+                create_pool_in_simulator(
+                    simulator=simulator,
+                    pool_input=pool_file,
+                    pool_reader=pool_import_mapper[pool_file_type],
+                    pool_type=StaticPool,
+                    connection=dummy_pool_connection
+                )
+            else:
+                create_pool_in_simulator(
+                    simulator=simulator,
+                    pool_input=pool_file,
+                    pool_reader=pool_import_mapper[pool_file_type],
+                    pool_type=StaticPool,
+                    connection=simulator.connection
+                )
     simulator.enable_monitoring()
 
     # run simulation
