@@ -27,7 +27,7 @@ def hitrate_evaluation(hitrateinfo: HitrateInfo) -> list:
     results = [
         {
             "hitrate": hitrateinfo.hitrate,
-            "volume": hitrateinfo.volume,
+            "volume": hitrateinfo.volume / 1000.0 / 1000.0 / 1000.0,
             "providesfile": hitrateinfo.provides_file,
         }
     ]
@@ -88,8 +88,11 @@ def pipe_status(pipeinfo: MonitoredPipeInfo) -> list:
     results = [
         {
             "pipe": repr(pipeinfo.pipename),
-            "throughput": pipeinfo.available_throughput,
-            "requested_throughput": pipeinfo.requested_throughput,
+            "throughput": pipeinfo.available_throughput / 1000.0 / 1000.0 / 1000.0,
+            "requested_throughput": pipeinfo.requested_throughput
+            / 1000.0
+            / 1000.0
+            / 1000.0,
             "throughput_scale": pipeinfo.throughputscale,
             "no_subscribers": pipeinfo.no_subscriptions,
         }
