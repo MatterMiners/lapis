@@ -539,11 +539,21 @@ class CondorClassadJobScheduler(JobScheduler):
         job_ad: str = job_ad_defaults,
         pre_job_rank: str = "0",
         interval: float = 60,
+        autocluster: bool = False,
     ):
         self._stream_queue = job_queue
-        self._drones: RankedClusters[Drone] = RankedAutoClusters(
+        self._drones: RankedClusters[Drone] = RankedNonClusters(
             quantization=quantization_defaults, ranking=parse(pre_job_rank)
         )
+        # if autocluster:
+        #     self._drones: RankedClusters[Drone] = RankedAutoClusters(
+        #         quantization=quantization_defaults, ranking=parse(pre_job_rank)
+        #     )
+        # else:
+        #     self._drones: RankedClusters[Drone] = RankedNonClusters(
+        #         quantization=quantization_defaults, ranking=parse(pre_job_rank)
+        #     )
+
         self.interval = interval
         self.job_queue = JobQueue()
         self._collecting = True
@@ -590,31 +600,33 @@ class CondorClassadJobScheduler(JobScheduler):
         job: ClassAd, pre_job_clusters: Iterator[List[Set[WrappedClassAd[Drone]]]]
     ):
         if job["Requirements"] != Undefined():
-            pre_job_clusters = (
-                [
-                    cluster
-                    for cluster in cluster_group
-                    if job.evaluate("Requirements", my=job, target=next(iter(cluster)))
-                ]
-                for cluster_group in pre_job_clusters
-            )
+            pre_job_clusters_tmp = []
+            for cluster_group in pre_job_clusters:
+                cluster_group_tmp = []
+                for cluster in cluster_group:
+                    if job.evaluate("Requirements", my=job, target=next(iter(cluster))):
+                        cluster_group_tmp.append(cluster)
+                pre_job_clusters_tmp.append(cluster_group_tmp)
+            pre_job_clusters = pre_job_clusters_tmp
 
         if job["Rank"] != Undefined():
-            pre_job_clusters = (
-                sorted(
-                    cluster_group,
-                    key=lambda cluster: (
-                        job.evaluate("Rank", my=job, target=next(iter(cluster))),
-                        random.random(),
-                    ),
-                    reverse=True,
+            pre_job_clusters_tmp = []
+            for cluster_group in pre_job_clusters:
+                pre_job_clusters_tmp.append(
+                    sorted(
+                        cluster_group,
+                        key=lambda cluster: (
+                            job.evaluate("Rank", my=job, target=next(iter(cluster))),
+                            random.random(),
+                        ),
+                        reverse=True,
+                    )
                 )
-                for cluster_group in pre_job_clusters
-            )
+
+            pre_job_clusters = pre_job_clusters_tmp
 
         for cluster_group in pre_job_clusters:
             # TODO: if we have POST_JOB_RANK, collect *all* matches of a group
-            # random.shuffle(cluster_group)  # shuffle cluster to remove bias towards cpus
             for cluster in cluster_group:
                 for drone in cluster:
                     if drone["Requirements"] == Undefined() or drone.evaluate(
@@ -629,8 +641,6 @@ class CondorClassadJobScheduler(JobScheduler):
         pre_job_drones = self._drones.copy()
         matches: List[Tuple[int, WrappedClassAd[Job], WrappedClassAd[Drone]]] = []
         for queue_index, candidate_job in enumerate(self.job_queue):
-            # if not candidate_job._wrapped.requested_inputfiles:
-            #     continue
             try:
                 pre_job_drones.lookup(candidate_job._wrapped)
                 matched_drone = self._match_job(
