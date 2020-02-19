@@ -48,15 +48,16 @@ storage_import_mapper = {
 }
 
 
-def create_pool_in_simulator(simulator, pool_input, pool_reader, pool_type, connection,
-                             controller=None):
+def create_pool_in_simulator(
+    simulator, pool_input, pool_reader, pool_type, connection, controller=None
+):
     for pool in pool_reader(
-            iterable=pool_input,
-            pool_type=pool_type,
-            make_drone=partial(Drone, simulator.job_scheduler),
-            connection=connection,
+        iterable=pool_input,
+        pool_type=pool_type,
+        make_drone=partial(Drone, simulator.job_scheduler),
+        connection=connection,
     ):
-        self.pools.append(pool)
+        simulator.pools.append(pool)
         if controller:
             simulator.controllers.append(controller(target=pool, rate=1))
 
@@ -124,7 +125,7 @@ def ini_and_run(
     for pool_file in pool_files:
         with open(pool_file, "r") as pool_file:
             pool_file_type = "htcondor"
-            if "dummycluster" in pool_file:
+            if "dummycluster" in pool_file.name:
                 # Attention: dummy_pool_connection is currently not part of
                 # monitoring as it is not known within the simulator itself
                 # TODO: do you need this in monitoring?
@@ -133,7 +134,7 @@ def ini_and_run(
                     pool_input=pool_file,
                     pool_reader=pool_import_mapper[pool_file_type],
                     pool_type=StaticPool,
-                    connection=dummy_pool_connection
+                    connection=dummy_pool_connection,
                 )
             else:
                 create_pool_in_simulator(
@@ -141,8 +142,9 @@ def ini_and_run(
                     pool_input=pool_file,
                     pool_reader=pool_import_mapper[pool_file_type],
                     pool_type=StaticPool,
-                    connection=simulator.connection
+                    connection=simulator.connection,
                 )
+
     simulator.enable_monitoring()
 
     # run simulation
@@ -150,7 +152,9 @@ def ini_and_run(
 
 
 # job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal.json"
-job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal_only_cpu.json"
+job_file = "/home/tabea/work/testdata/modified/job_list_minimal_only_cpu.json"
+# job_file = "/home/tabea/work/testdata/modified/single_job.json"
+# job_file = "/home/tabea/work/testdata/modified/week_25_1.0_0.0_16_input.json"
 # job_file = "/home/tabea/work/testdata/fullsim/test_12h_jobinput.json"
 # job_file = "/home/tabea/work/testdata/fullsim/resampled_reduced_025week_16_jobinput" \
 #            ".json"
@@ -171,20 +175,29 @@ pool_files = [
     "/home/tabea/work/testdata/fullsim/sg_machines_shared_cache.csv",
     "/home/tabea/work/testdata/fullsim/dummycluster.csv",
 ]
+# pool_files = ["/home/tabea/work/testdata/hitratebased/minimal_pool.csv"]
 storage_file = "/home/tabea/work/testdata/fullsim/sg_caches_shared.csv"
 storage_type = "filehitrate"
 ini_and_run(
     job_file=job_file,
+    remote_throughput=0.75,
+    calculation_efficiency=0.99,
     pool_files=pool_files,
     storage_file=storage_file,
     storage_type=storage_type,
     log_file="test_new_scheduler.log",
     log_telegraf=True,
-    pre_job_rank="10000000 * my.Rank + 1000000 - 100000 * my.cpus - my.memory",
+    # pre_job_rank="10000000 * my.Rank + 1000000 - 100000 * my.cpus - my.memory",
+    pre_job_rank="0",
     machine_ads="""
     requirements = target.requestcpus <= my.cpus
-    rank = 1 / my.cache_average_throughput
+    rank = 0
     """.strip(),
+    job_ads="""
+    Requirements = my.requestcpus <= target.cpus && my.requestmemory <= target.memory
+    Rank = 0 """,
 )
 
+# * (target.cache_demand > 0.1) * target.cache_demand *
+#     target.cache_throughput
 # rank = my.pipe_utilization + my.average_throughput
