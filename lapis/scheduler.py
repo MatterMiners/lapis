@@ -350,10 +350,10 @@ class RankedClusters(Generic[DJ]):
     def __init__(self, quantization: Dict[str, HTCInt], ranking: Expression):
         raise NotImplementedError
 
-    @abstractmethod
-    def copy(self: RC[DJ]) -> RC[DJ]:
-        """Copy the entire ranked auto clusters"""
-        raise NotImplementedError
+    # @abstractmethod
+    # def copy(self: RC[DJ]) -> RC[DJ]:
+    #     """Copy the entire ranked auto clusters"""
+    #     raise NotImplementedError
 
     @abstractmethod
     def add(self, item: WrappedClassAd[DJ]) -> None:
@@ -381,6 +381,11 @@ class RankedClusters(Generic[DJ]):
     @abstractmethod
     def cluster_groups(self) -> Iterator[List[Set[WrappedClassAd[Drone]]]]:
         """Group autoclusters by PreJobRank"""
+        raise NotImplementedError
+
+    @abstractmethod
+    def lookup(self, job: Job) -> None:
+        """Update information about cached data for every drone"""
         raise NotImplementedError
 
 
@@ -418,11 +423,6 @@ class RankedAutoClusters(RankedClusters[DJ]):
         if not cluster:
             del self._clusters[item_key]
 
-    def lookup(self, job: Job):
-        for ranked_key, drones in self._clusters.items():
-            for drone in drones:
-                drone._wrapped.look_up_cached_data(job)
-
     def _clustering_key(self, item: WrappedClassAd[DJ]):
         # TODO: assert that order is consistent
         quantization = self._quantization
@@ -452,6 +452,11 @@ class RankedAutoClusters(RankedClusters[DJ]):
             group.append(drones)
         if group:
             yield group
+
+    def lookup(self, job: Job):
+        for ranked_key, drones in self._clusters.items():
+            for drone in drones:
+                drone._wrapped.look_up_cached_data(job)
 
 
 class RankedNonClusters(RankedClusters[DJ]):
@@ -504,6 +509,11 @@ class RankedNonClusters(RankedClusters[DJ]):
     def cluster_groups(self) -> Iterator[List[Set[WrappedClassAd[Drone]]]]:
         for ranked_key, drones in self._clusters.items():
             yield [{item} for item in drones]
+
+    def lookup(self, job: Job):
+        for ranked_key, drones in self._clusters.items():
+            for drone in drones:
+                drone._wrapped.look_up_cached_data(job)
 
 
 class CondorClassadJobScheduler(JobScheduler):
