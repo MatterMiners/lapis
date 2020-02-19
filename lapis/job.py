@@ -122,7 +122,11 @@ class Job(object):
         # )
         result = self.walltime
         try:
-            if not self.requested_inputfiles:
+            if (
+                not self.requested_inputfiles
+                or self.drone.connection.remote_connection.connection.throughput
+                == float("Inf")
+            ):
                 raise KeyError
             result = (
                 self.used_resources["cores"] / self.calculation_efficiency
