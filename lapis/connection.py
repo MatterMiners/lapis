@@ -39,20 +39,9 @@ class Connection(object):
 
     async def run_pipemonitoring(self):
         async def report_load_to_monitoring(pipe: MonitoredPipe):
-            async for throughput in pipe.load():
-                print(
-                    time.now,
-                    "registered change, sending to monitoring",
-                    time.now,
-                    pipe,
-                    pipe._subscriptions,
-                    pipe._throughput_scale,
-                )
-                print(throughput)
-                await sampling_required.put(throughput)
-                # print(
-                #     f"{time.now:6.0f}: {throughput} \t [{throughput / pipe.throughput * 100:03.0f}%]"
-                # )
+            async for information in pipe.load():
+                # print(information)
+                await sampling_required.put(information)
 
         async with Scope() as scope:
             scope.do(report_load_to_monitoring(self.remote_connection.connection))

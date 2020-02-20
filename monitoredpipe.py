@@ -54,7 +54,6 @@ class MonitoredPipe(Pipe):
         super()._throttle_subscribers()
         data = self._sample_state()
         for buffer in self._monitor_buffers.values():
-            print(buffer)
             buffer.append(data)
 
     def _sample_state(self):
