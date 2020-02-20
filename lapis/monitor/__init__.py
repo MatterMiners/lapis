@@ -5,6 +5,7 @@ from typing import Callable
 
 from cobald.monitor.format_json import JsonFormatter
 from usim import time, Queue
+from usim._core.loop import __LOOP_STATE__
 
 
 SIMULATION_START = None
@@ -26,7 +27,8 @@ class SimulationTimeFilter(logging.Filter):
     """
 
     def filter(self, record) -> bool:
-        record.created = time.now
+        # record.created = time.now
+        record.created = time.now + (1e-9 * __LOOP_STATE__.LOOP.turn)
         return True
 
 

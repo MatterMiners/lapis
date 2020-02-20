@@ -37,10 +37,10 @@ drone_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1e-9
     ),
 }
 
@@ -72,9 +72,9 @@ pool_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1e-9
     ),
 }

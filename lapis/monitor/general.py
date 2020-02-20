@@ -61,11 +61,11 @@ resource_statistics.logging_formatter = {
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "resource_type", "pool_configuration", "pool_type", "pool"},
-        resolution=1,
+        resolution=1e-9,
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "resource_type", "pool_configuration", "pool_type", "pool"},
-        resolution=1,
+        resolution=1e-9,
     ),
 }
 
@@ -88,10 +88,10 @@ user_demand.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis"}, resolution=1
+        tags={"tardis"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis"}, resolution=1
+        tags={"tardis"}, resolution=1e-9
     ),
 }
 
@@ -128,10 +128,10 @@ job_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1
+        tags={"tardis", "pool_configuration", "pool_type", "pool"}, resolution=1e-9
     ),
 }
 
@@ -207,11 +207,11 @@ job_events.logging_formatter = {
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "pool_configuration", "pool_type", "pool", "job", "cached"},
-        resolution=1,
+        resolution=1e-9,
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "pool_configuration", "pool_type", "pool", "job", "cached"},
-        resolution=1,
+        resolution=1e-9,
     ),
 }
 
@@ -233,11 +233,11 @@ pool_status.logging_formatter = {
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "parent_pool", "pool_configuration", "pool_type", "pool"},
-        resolution=1,
+        resolution=1e-9,
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
         tags={"tardis", "parent_pool", "pool_configuration", "pool_type", "pool"},
-        resolution=1,
+        resolution=1e-9,
     ),
 }
 
@@ -257,10 +257,10 @@ configuration_information.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "resource_type"}, resolution=1
+        tags={"tardis", "pool_configuration", "resource_type"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "resource_type"}, resolution=1
+        tags={"tardis", "pool_configuration", "resource_type"}, resolution=1e-9
     ),
 }
 
@@ -293,9 +293,9 @@ drone_statistics_caching.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_type", "pool"}, resolution=1
+        tags={"tardis", "pool_type", "pool"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_type", "pool"}, resolution=1
+        tags={"tardis", "pool_type", "pool"}, resolution=1e-9
     ),
 }

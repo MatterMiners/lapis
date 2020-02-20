@@ -139,10 +139,10 @@ pipe_status.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pipe"}, resolution=1
+        tags={"tardis", "pipe"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pipe"}, resolution=1
+        tags={"tardis", "pipe"}, resolution=1e-9
     ),
 }
 
@@ -153,8 +153,12 @@ def pipe_data_volume(pipe: MonitoredPipe):
     :param pipe:
     :return:
     """
-    results = [{"pipe": repr(pipe), "current_total": pipe.transferred_data}]
-    print(results)
+    results = [
+        {
+            "pipe": repr(pipe),
+            "current_total": pipe.transferred_data / 1000.0 / 1000.0 / 1000.0,
+        }
+    ]
     return results
 
 
@@ -164,9 +168,9 @@ pipe_data_volume.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pipe"}, resolution=1
+        tags={"tardis", "pipe"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pipe"}, resolution=1
+        tags={"tardis", "pipe"}, resolution=1e-9
     ),
 }
