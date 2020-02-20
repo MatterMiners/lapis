@@ -1,36 +1,70 @@
-from usim import Pipe, instant
+from typing import NamedTuple, Optional, Deque, Any, Dict, AsyncIterable
+
+from usim import Pipe, instant, time
+from collections import deque
 from usim._primitives.notification import Notification
-from typing import Optional
+
+
+class MonitoredPipeInfo(NamedTuple):
+    requested_throughput: float
+    available_throughput: float
+    pipename: Optional[str]
+    throughputscale: float
+    no_subscriptions: int
 
 
 class MonitoredPipe(Pipe):
     def __init__(self, throughput: float):
         super().__init__(throughput)
         self._monitor = Notification()
+        self._monitor_buffers: Dict[Any, Deque[MonitoredPipeInfo]] = {}
         self.storage = None
         self.transferred_data = 0
 
-    async def load(self):
+    async def load(self) -> AsyncIterable[MonitoredPipeInfo]:
         """
         Monitor any changes of the throughput load of the pipe
         .. code:: python3
             async def report_load(pipe: MonitoredPipe):
-                async for throughput in pipe.load():
-                    print(f'{time.now:6.0f}: {throughput} \t [{throughput / pipe.throughput * 100:03.0f}%]')
-        .. note::
-            Currently only works for loads exceeding 100%.
+                async for event in pipe.load():
+                    print(
+                        f'{time.now:6.0f}:'
+                        f'{event.requested_throughput} \t'
+                        f'[{event.requested_throughput / event.available_throughput * 100:03.0f}%]'
+                    )
         """
         await instant
-        yield sum(self._subscriptions.values())
-        while True:
-            await self._monitor
-            print(time.now, "woke up:", time.now, self, self._subscriptions)
-            yield sum(self._subscriptions.values())
+        yield self._sample_state()
+        sentinel = object()
+        self._monitor_buffers[
+            sentinel
+        ] = buffer = deque()  # type: Deque[MonitoredPipeInfo]
+        try:
+            while True:
+                while buffer:
+                    yield buffer.popleft()
+                await self._monitor
+        finally:
+            del self._monitor_buffers[sentinel]
 
     def _throttle_subscribers(self):
         print(time.now, "awakening monitors, throttling subscribers")
+
         self._monitor.__awake_all__()
         super()._throttle_subscribers()
+        data = self._sample_state()
+        for buffer in self._monitor_buffers.values():
+            print(buffer)
+            buffer.append(data)
+
+    def _sample_state(self):
+        return MonitoredPipeInfo(
+            sum(self._subscriptions.values()),
+            self.throughput,
+            repr(self),
+            self._throughput_scale,
+            len(self._subscriptions),
+        )
 
     async def transfer(self, total: float, throughput: Optional[float] = None) -> None:
         await super().transfer(total, throughput)
@@ -41,12 +75,14 @@ class MonitoredPipe(Pipe):
 
 
 if __name__ == "__main__":
-    from usim import time, run, Scope
+    from usim import run, Scope
 
     async def report_load(pipe: MonitoredPipe):
-        async for throughput in pipe.load():
+        async for event in pipe.load():
             print(
-                f"{time.now:6.0f}: {throughput} \t [{throughput / pipe.throughput * 100:03.0f}%]"
+                f"{time.now:6.0f}:"
+                f"{event.requested_throughput} \t"
+                f"[{event.requested_throughput / event.available_throughput * 100:03.0f}%]"
             )
 
     async def perform_load(pipe: MonitoredPipe, delay, amount):
