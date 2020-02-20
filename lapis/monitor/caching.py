@@ -5,8 +5,16 @@ from typing import NamedTuple, Optional
 from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
 
-from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler
+from lapis.monitor import (
+    LoggingSocketHandler,
+    LoggingUDPSocketHandler,
+    SIMULATION_START,
+)
 from lapis.storageelement import StorageElement
+from monitoredpipe import MonitoredPipe
+
+import time as pytime
+from usim import time
 
 
 class MonitoredPipeInfo(NamedTuple):
@@ -21,6 +29,36 @@ class HitrateInfo(NamedTuple):
     hitrate: float
     volume: float
     provides_file: int
+
+
+class SimulationInfo(NamedTuple):
+    input: list
+    identifier: str
+
+
+def simulation_id(simulationinfo) -> list:
+    results = [
+        {
+            "input": str(simulationinfo.input),
+            "id": simulationinfo.identifier,
+            "time": pytime.ctime(SIMULATION_START),
+        }
+    ]
+    return results
+
+
+simulation_id.name = "simulation_id"
+simulation_id.whitelist = (SimulationInfo,)
+simulation_id.logging_formatter = {
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    # logging.StreamHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: LineProtocolFormatter(
+        tags={"tardis"}, resolution=1
+    ),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis"}, resolution=1
+    ),
+}
 
 
 def hitrate_evaluation(hitrateinfo: HitrateInfo) -> list:
@@ -97,6 +135,7 @@ def pipe_status(pipeinfo: MonitoredPipeInfo) -> list:
             "no_subscribers": pipeinfo.no_subscriptions,
         }
     ]
+    print(time.now, "monitoring:", results)
     return results
 
 
@@ -114,56 +153,26 @@ pipe_status.logging_formatter = {
 }
 
 
-# def storage_connection(storage: StorageElement) -> list:
-#     """
-#     Log information about the storages connection
-#     :param storage:
-#     :return:
-#     """
-#     results = [
-#         {
-#             "storage": repr(storage),
-#             "throughput": storage.connection.throughput,
-#             "requested_throughput": sum(storage.connection._subscriptions.values()),
-#             "throughput_scale": storage.connection._throughput_scale,
-#         }
-#     ]
-#     return results
-#
-#
-# storage_connection.name = "storage_connection"
-# storage_connection.whitelist = (StorageElement,)
-# storage_connection.logging_formatter = {
-#     LoggingSocketHandler.__name__: JsonFormatter(),
-#     logging.StreamHandler.__name__: JsonFormatter(),
-#     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-#         tags={"tardis", "storage"}, resolution=1
-#     ),
-# }
-#
-#
-# def remote_connection(remote: Pipe) -> list:
-#     """
-#     Log information about the remote connection
-#     :param remote:
-#     :return:
-#     """
-#     results = [
-#         {
-#             "throughput": remote.throughput,
-#             "requested_throughput": sum(remote._subscriptions.values()),
-#             "throughput_scale": remote._throughput_scale,
-#         }
-#     ]
-#     return results
-#
-#
-# remote_connection.name = "remote_connection"
-# remote_connection.whitelist = (Pipe,)
-# remote_connection.logging_formatter = {
-#     LoggingSocketHandler.__name__: JsonFormatter(),
-#     logging.StreamHandler.__name__: JsonFormatter(),
-#     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-#         tags={"tardis"}, resolution=1
-#     ),
-# }
+def pipe_data_volume(pipe: MonitoredPipe):
+    """
+    Total amount of data transferred by the pipe up to this point
+    :param pipe:
+    :return:
+    """
+    results = [{"pipe": repr(pipe), "current_total": pipe.transferred_data}]
+    print(results)
+    return results
+
+
+pipe_data_volume.name = "pipe_data_volume"
+pipe_data_volume.whitelist = (MonitoredPipe,)
+pipe_data_volume.logging_formatter = {
+    LoggingSocketHandler.__name__: JsonFormatter(),
+    # logging.StreamHandler.__name__: JsonFormatter(),
+    logging.StreamHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "pipe"}, resolution=1
+    ),
+    LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
+        tags={"tardis", "pipe"}, resolution=1
+    ),
+}

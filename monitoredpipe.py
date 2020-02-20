@@ -1,5 +1,6 @@
 from usim import Pipe, instant
 from usim._primitives.notification import Notification
+from typing import Optional
 
 
 class MonitoredPipe(Pipe):
@@ -7,6 +8,7 @@ class MonitoredPipe(Pipe):
         super().__init__(throughput)
         self._monitor = Notification()
         self.storage = None
+        self.transferred_data = 0
 
     async def load(self):
         """
@@ -19,15 +21,20 @@ class MonitoredPipe(Pipe):
             Currently only works for loads exceeding 100%.
         """
         await instant
-
         yield sum(self._subscriptions.values())
         while True:
             await self._monitor
+            print(time.now, "woke up:", time.now, self, self._subscriptions)
             yield sum(self._subscriptions.values())
 
     def _throttle_subscribers(self):
+        print(time.now, "awakening monitors, throttling subscribers")
         self._monitor.__awake_all__()
         super()._throttle_subscribers()
+
+    async def transfer(self, total: float, throughput: Optional[float] = None) -> None:
+        await super().transfer(total, throughput)
+        self.transferred_data += total
 
     def __repr__(self):
         return "<%s: %s>" % (self.__class__.__name__, self.storage or id(self))

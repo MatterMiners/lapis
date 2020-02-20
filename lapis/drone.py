@@ -50,7 +50,7 @@ class Drone(interfaces.Pool):
         self._job_queue = Queue()
 
         # caching-related
-        self.jobs_using_caching = 0
+        self.jobs_with_cached_data = 0
         self.cached_data = 0
 
     @property
@@ -142,6 +142,8 @@ class Drone(interfaces.Pool):
 
             job_execution = scope.do(job.run(self))
             self.jobs += 1
+            if job._cached_data:
+                self.jobs_with_cached_data += 1
             try:
                 async with self.resources.claim(**job.resources):
                     await sampling_required.put(self)
@@ -171,6 +173,8 @@ class Drone(interfaces.Pool):
                 await instant
                 job_execution.cancel()
             self.jobs -= 1
+            if job._cached_data:
+                self.jobs_with_cached_data -= 1
             await self.scheduler.job_finished(job)
             self._utilisation = self._allocation = None
             self.scheduler.update_drone(self)

@@ -12,7 +12,13 @@ import lapis.monitor as monitor
 from lapis.drone import Drone
 from lapis.job import job_to_queue_scheduler
 from lapis.connection import Connection
-from lapis.monitor.caching import storage_status, pipe_status, hitrate_evaluation
+from lapis.monitor.caching import (
+    storage_status,
+    pipe_status,
+    hitrate_evaluation,
+    simulation_id,
+    pipe_data_volume,
+)
 from lapis.monitor.general import (
     user_demand,
     job_statistics,
@@ -54,6 +60,8 @@ class Simulator(object):
         self.monitoring.register_statistic(pipe_status)
         self.monitoring.register_statistic(drone_statistics_caching)
         self.monitoring.register_statistic(hitrate_evaluation)
+        self.monitoring.register_statistic(simulation_id)
+        self.monitoring.register_statistic(pipe_data_volume)
 
     def create_job_generator(self, job_input, job_reader):
         self._job_generators.append((job_input, job_reader))
@@ -89,6 +97,7 @@ class Simulator(object):
 
     def run(self, until=None):
         monitor.SIMULATION_START = pytime.time()
+
         print(f"[lapis-{monitor.SIMULATION_START}] running until {until}")
         run(self._simulate(until))
 

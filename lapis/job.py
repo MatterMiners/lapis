@@ -26,9 +26,14 @@ class Job(object):
         "_success",
         "calculation_efficiency",
         "__weakref__",
-        "_coordinated",
-        "_used_cache",
+        "_read_from_cache",
+        "_cached_data",
         "_total_input_data",
+        "_original_walltime",
+        "_calculation_time",
+        "_transfer_time",
+        "failed_matches",
+        "cputime",
     )
 
     def __init__(
@@ -79,14 +84,19 @@ class Job(object):
         # caching-related
         self.requested_inputfiles = resources.pop("inputfiles", None)
         self.used_inputfiles = used_resources.pop("inputfiles", None)
-        self._coordinated = 0
-        self._used_cache = 0
+        self._read_from_cache = 0
+        self._cached_data = 0
+        self._original_walltime = self.walltime
+        self._calculation_time = 0
+        self._transfer_time = 0
+        self.cputime = self.used_resources["cores"] * self.walltime
         try:
             self._total_input_data = sum(
                 [fileinfo["usedsize"] for fileinfo in self.used_inputfiles.values()]
             )
         except AttributeError:
             self._total_input_data = 0
+        self.failed_matches = 0
 
     @property
     def name(self) -> str:
@@ -131,6 +141,8 @@ class Job(object):
             result = (
                 self.used_resources["cores"] / self.calculation_efficiency
             ) * self.walltime
+            self._calculation_time = result
+
         except (KeyError, TypeError):
             pass
         # start = time.now
@@ -138,13 +150,11 @@ class Job(object):
         # print(f"finished calculation at {time.now - start}")
 
     async def _transfer_inputfiles(self):
+        start = time.now
         try:
-            # start = time.now
             # print(f"TRANSFERING INPUTFILES: Job {self} @ {start}")
             await self.drone.connection.transfer_files(
-                drone=self.drone,
-                requested_files=self.used_inputfiles,
-                job_repr=repr(self),
+                drone=self.drone, requested_files=self.used_inputfiles, job_repr=self
             )
             # print(
             #     f"streamed inputfiles {self.used_inputfiles.keys()} for job {self} "
@@ -152,6 +162,7 @@ class Job(object):
             # )
         except AttributeError:
             pass
+        self._transfer_time = time.now - start
 
     async def run(self, drone: "Drone"):
         assert drone, "Jobs cannot run without a drone being assigned"

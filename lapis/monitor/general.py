@@ -77,6 +77,7 @@ def user_demand(job_queue: JobQueue) -> List[Dict]:
     :param scheduler: the scheduler
     :return: list of records for logging
     """
+    # print("user_demand", job_queue)
     result = [{"value": len(job_queue)}]
     return result
 
@@ -161,6 +162,7 @@ def job_events(job: Job) -> List[Dict]:
         "pool_type": "drone",
         "pool": repr(job.drone),
         "job": repr(job),
+        "cached": str(job._cached_data),
     }
     if job.successful is None:
         result["queue_time"] = job.queue_date
@@ -168,7 +170,15 @@ def job_events(job: Job) -> List[Dict]:
         result["starting"] = 1
     elif job.successful:
         result["wall_time"] = job.walltime
+        result["original_walltime"] = job._original_walltime
+        result["calculation_time"] = job._calculation_time
+        result["transfer_time"] = job._transfer_time
         result["success"] = 1
+        result["diff"] = job.walltime - job._original_walltime
+        result["efficiency"] = job.cputime * 1.0 / job.walltime
+        result["data_througput"] = (
+            job._total_input_data / 1000.0 / 1000.0 / 1000.0 / job.walltime
+        )
     else:
         result["success"] = 0
         error_logged = False
@@ -196,10 +206,12 @@ job_events.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool", "job"}, resolution=1
+        tags={"tardis", "pool_configuration", "pool_type", "pool", "job", "cached"},
+        resolution=1,
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "pool_configuration", "pool_type", "pool", "job"}, resolution=1
+        tags={"tardis", "pool_configuration", "pool_type", "pool", "job", "cached"},
+        resolution=1,
     ),
 }
 
@@ -269,6 +281,7 @@ def drone_statistics_caching(drone: Drone) -> List[Dict]:
             "pool": repr(drone),
             "claimed_slots": full_resources["cores"] - resources["cores"],
             "free_slots": resources["cores"],
+            "slots_with_caching": drone.jobs_with_cached_data,
         }
     ]
     return results

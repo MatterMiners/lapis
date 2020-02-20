@@ -18,6 +18,8 @@ from lapis.monitor import sampling_required
 
 from numpy import mean
 
+from usim import time
+
 
 class JobQueue(list):
     pass
@@ -66,6 +68,8 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
                 return (1 / 1024 / 1024) * access_wrapped("memory", requested=True)
             elif "requestdisk" in item:
                 return (1 / 1024) * access_wrapped("disk", requested=True)
+            elif "requestwalltime" in item:
+                return self._wrapped.requested_walltime
             elif "cpus" in item:
                 try:
                     return self._temp["cores"]
@@ -80,12 +84,12 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
                 try:
                     return (1 / 1024) * self._temp["disk"]
                 except KeyError:
+
                     return (1 / 1024) * access_wrapped("disk", requested=False)
             elif "cache_demand" in item:
                 caches = self._wrapped.connection.storages.get(
                     self._wrapped.sitename, None
                 )
-
                 try:
                     # print(mean(
                     #     [cache.connection._throughput_scale for cache in caches]
@@ -118,6 +122,12 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
             elif "cached_data" in item:
                 # print(self._wrapped, self._wrapped.cached_data / 1000. / 1000. / 1000.)
                 return self._wrapped.cached_data / 1000.0 / 1000.0 / 1000.0
+
+            elif "data_volume" in item:
+                return self._wrapped._total_input_data
+
+            elif "current_waiting_time" in item:
+                return time.now - self._wrapped.queue_date
 
         return super(WrappedClassAd, self).__getitem__(item)
 
@@ -633,6 +643,7 @@ class CondorClassadJobScheduler(JobScheduler):
                         "Requirements", my=drone, target=job
                     ):
                         return drone
+        job._wrapped.failed_matches += 1
         raise NoMatch()
 
     async def _schedule_jobs(self):
@@ -659,6 +670,13 @@ class CondorClassadJobScheduler(JobScheduler):
                         - value
                     )
                 pre_job_drones.update(matched_drone)
+                if (
+                    candidate_job._wrapped._total_input_data
+                    and matched_drone._wrapped.cached_data
+                ):
+                    candidate_job._wrapped._cached_data = (
+                        matched_drone._wrapped.cached_data
+                    )
         if not matches:
             return
         # TODO: optimize for few matches, many matches, all matches

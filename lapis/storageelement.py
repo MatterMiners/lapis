@@ -2,6 +2,7 @@ from typing import Optional
 
 from usim import time, Resources, Scope
 from monitoredpipe import MonitoredPipe
+from lapis.monitor import sampling_required
 
 from lapis.files import StoredFile, RequestedFile, RequestedFile_HitrateBased
 from lapis.interfaces._storage import Storage, LookUpInformation
@@ -28,6 +29,7 @@ class RemoteStorage(Storage):
 
     async def transfer(self, file: RequestedFile, **kwargs):
         await self.connection.transfer(total=file.filesize)
+        await sampling_required.put(self.connection)
 
     async def add(self, file: StoredFile, **kwargs):
         raise NotImplementedError
@@ -291,8 +293,11 @@ class FileBasedHitrateStorage(StorageElement):
         # )
         if file.cachehitrate:
             await self.connection.transfer(total=file.filesize)
+            await sampling_required.put(self.connection)
         else:
-            await self.remote_storage.connection.transfer(total=file.filesize)
+            print("wants to read from remote")
+            print("file is not cached but cache is file source, this should not occur")
+            raise ValueError
 
     def find(self, requested_file: RequestedFile_HitrateBased, job_repr=None):
         # return LookUpInformation(requested_file.filesize, self)

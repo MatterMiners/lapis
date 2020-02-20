@@ -40,6 +40,14 @@ class Connection(object):
     async def run_pipemonitoring(self):
         async def report_load_to_monitoring(pipe: MonitoredPipe):
             async for throughput in pipe.load():
+                print(
+                    time.now,
+                    "registered change, sending to monitoring",
+                    time.now,
+                    pipe,
+                    pipe._subscriptions,
+                    pipe._throughput_scale,
+                )
                 await sampling_required.put(
                     MonitoredPipeInfo(
                         throughput,
@@ -149,7 +157,7 @@ class Connection(object):
         #     )
         # )
 
-    async def transfer_files(self, drone, requested_files: dict, job_repr=None):
+    async def transfer_files(self, drone, requested_files: dict, job_repr):
         """
         Converts dict information about requested files to RequestedFile object and
         sequentially streams all files
@@ -170,9 +178,7 @@ class Connection(object):
                         for file in requested_files.values()
                     ]
                 ) / sum([file["usedsize"] for file in requested_files.values()])
-                # print(drone, requested_files, random_inputfile_information, hitrate)
                 provides_file = int(random.random() < hitrate)
-                # print(drone, provides_file)
                 await sampling_required.put(
                     HitrateInfo(
                         hitrate,
@@ -183,11 +189,8 @@ class Connection(object):
                 # input()
             except ZeroDivisionError:
                 provides_file = 0
-            # print(
-            #     "{} on {} hitrate {} => {}".format(
-            #         requested_files, drone.sitename, hitrate, provides_file
-            #     )
-            # )
+
+        job_repr._read_from_cache = provides_file
 
         for inputfilename, inputfilespecs in requested_files.items():
             if "hitrates" in inputfilespecs.keys():
