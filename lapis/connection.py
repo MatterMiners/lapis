@@ -18,9 +18,14 @@ from lapis.monitor.caching import MonitoredPipeInfo, HitrateInfo
 
 class Connection(object):
 
-    __slots__ = ("storages", "remote_connection", "caching_algorithm")
+    __slots__ = (
+        "storages",
+        "remote_connection",
+        "caching_algorithm",
+        "_filebased_caching",
+    )
 
-    def __init__(self, throughput=1000 * 1000 * 1000):
+    def __init__(self, throughput=1000 * 1000 * 1000, filebased_caching=True):
         self.storages = dict()
         self.remote_connection = RemoteStorage(MonitoredPipe(throughput=throughput))
         self.caching_algorithm = CacheAlgorithm(
@@ -30,6 +35,7 @@ class Connection(object):
                 file, storage
             ),
         )
+        self._filebased_caching = filebased_caching
 
     async def run_pipemonitoring(self):
         async def report_load_to_monitoring(pipe: MonitoredPipe):
@@ -114,27 +120,27 @@ class Connection(object):
         used_connection = await self._determine_inputfile_source(
             requested_file, dronesite, job_repr
         )
-        # await sampling_required.put(used_connection)
-        if used_connection == self.remote_connection and self.storages.get(
-            dronesite, None
-        ):
-            try:
-                potential_cache = random.choice(self.storages[dronesite])
-                cache_file, files_for_deletion = self.caching_algorithm.consider(
-                    file=requested_file, storage=potential_cache
-                )
-                if cache_file:
-                    for file in files_for_deletion:
-                        await potential_cache.remove(file, job_repr)
-                    await potential_cache.add(requested_file, job_repr)
-                else:
-                    print(
-                        f"APPLY CACHING DECISION: Job {job_repr}, "
-                        f"File {requested_file.filename}: File wasnt "
-                        f"cached @ {time.now}"
+        if self._filebased_caching:
+            if used_connection == self.remote_connection and self.storages.get(
+                dronesite, None
+            ):
+                try:
+                    potential_cache = random.choice(self.storages[dronesite])
+                    cache_file, files_for_deletion = self.caching_algorithm.consider(
+                        file=requested_file, storage=potential_cache
                     )
-            except KeyError:
-                pass
+                    if cache_file:
+                        for file in files_for_deletion:
+                            await potential_cache.remove(file, job_repr)
+                        await potential_cache.add(requested_file, job_repr)
+                    else:
+                        print(
+                            f"APPLY CACHING DECISION: Job {job_repr}, "
+                            f"File {requested_file.filename}: File wasnt "
+                            f"cached @ {time.now}"
+                        )
+                except KeyError:
+                    pass
         # print(f"now transfering {requested_file.filesize} from {used_connection}")
         await used_connection.transfer(requested_file, job_repr=job_repr)
         # print(
