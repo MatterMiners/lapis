@@ -1,6 +1,6 @@
 import logging
 
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 
 from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
@@ -11,18 +11,10 @@ from lapis.monitor import (
     SIMULATION_START,
 )
 from lapis.storageelement import StorageElement
-from monitoredpipe import MonitoredPipe
+from monitoredpipe import MonitoredPipe, MonitoredPipeInfo
 
 import time as pytime
 from usim import time
-
-
-class MonitoredPipeInfo(NamedTuple):
-    requested_throughput: float
-    available_throughput: float
-    pipename: Optional[str]
-    throughputscale: float
-    no_subscriptions: int
 
 
 class HitrateInfo(NamedTuple):
@@ -123,6 +115,8 @@ def pipe_status(pipeinfo: MonitoredPipeInfo) -> list:
     #     :param storage:
     #     :return:
     #     """
+    # print(pipeinfo)
+    # print(pipeinfo.requested_throughput)
     results = [
         {
             "pipe": repr(pipeinfo.pipename),

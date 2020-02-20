@@ -13,7 +13,7 @@ from lapis.cachealgorithm import (
 from lapis.storageelement import StorageElement, RemoteStorage
 from lapis.files import RequestedFile, RequestedFile_HitrateBased
 from lapis.monitor import sampling_required
-from lapis.monitor.caching import MonitoredPipeInfo, HitrateInfo
+from lapis.monitor.caching import HitrateInfo
 
 
 class Connection(object):
@@ -48,15 +48,8 @@ class Connection(object):
                     pipe._subscriptions,
                     pipe._throughput_scale,
                 )
-                await sampling_required.put(
-                    MonitoredPipeInfo(
-                        throughput,
-                        pipe.throughput,
-                        repr(pipe),
-                        pipe._throughput_scale,
-                        len(pipe._subscriptions),
-                    )
-                )
+                print(throughput)
+                await sampling_required.put(throughput)
                 # print(
                 #     f"{time.now:6.0f}: {throughput} \t [{throughput / pipe.throughput * 100:03.0f}%]"
                 # )
