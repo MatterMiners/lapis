@@ -8,6 +8,7 @@ from cobald.monitor.format_line import LineProtocolFormatter
 from lapis.connection import Connection
 from lapis.drone import Drone
 from lapis.job_io.htcondor import htcondor_job_reader
+
 from lapis.pool import StaticPool
 from lapis.pool_io.htcondor import htcondor_pool_reader
 from lapis.job_io.swf import swf_job_reader
@@ -76,6 +77,7 @@ def ini_and_run(
     pre_job_rank=pre_job_rank_defaults,
     machine_ads=machine_ad_defaults,
     job_ads=job_ad_defaults,
+    additional_identifier=None,
 ):
     # ini logging to file
     monitoring_logger = logging.getLogger()
@@ -107,8 +109,8 @@ def ini_and_run(
 
     print(
         "scheduler configuration: \n "
-        "\tpre job rank: {} \n"
-        "\tmachine classad: {}\n"
+        "\tpre job rank: {} \n\n"
+        "\tmachine classad:\n \t{}\n\n"
         "\tjob classad: {}".format(pre_job_rank, machine_ads, job_ads)
     )
 
@@ -119,8 +121,11 @@ def ini_and_run(
         job_ad=job_ads,
     )
 
-    simulator.create_connection_module(remote_throughput * 1000 * 1000 * 1000)
+    simulator.connection = Connection(
+        remote_throughput * 1000 * 1000 * 1000, filebased_caching=False
+    )
     dummy_pool_connection = Connection(float("Inf"))
+    print("dummy:", dummy_pool_connection.remote_connection.connection)
     with open(storage_file, "r") as storage_file:
         simulator.create_storage(
             storage_input=storage_file,
@@ -162,6 +167,7 @@ if __name__ == "__main__":
 
     # job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal.json"
     job_file = "/home/tabea/work/testdata/modified/job_list_minimal_only_cpu.json"
+    # job_file = "/home/tabea/work/testdata/modified/job_list_minimal_only_caching.json"
     # job_file = "/home/tabea/work/testdata/modified/single_job.json"
     # job_file = "/home/tabea/work/testdata/modified/week_25_1.0_0.0_16_input.json"
     # job_file = "/home/tabea/work/testdata/fullsim/test_12h_jobinput.json"
@@ -184,13 +190,16 @@ if __name__ == "__main__":
         "/home/tabea/work/testdata/fullsim/sg_machines_shared_cache.csv",
         "/home/tabea/work/testdata/fullsim/dummycluster.csv",
     ]
-    # pool_files = ["/home/tabea/work/testdata/hitratebased/minimal_pool.csv"]
-    storage_file = "/home/tabea/work/testdata/fullsim/sg_caches_shared.csv"
+    # pool_files = ["/home/tabea/work/testdata/fullsim/minimal_pool.csv"]
+    # pool_files = ["/home/tabea/work/testdata/fullsim/dummycluster.csv"]
+    # pool_files = ["/home/tabea/work/testdata/fullsim/sg_machines_shared_cache.csv"]
+    # storage_file = "/home/tabea/work/testdata/fullsim/sg_caches_shared.csv"
+    storage_file = "/home/tabea/work/testdata/fullsim/minimal_cache.csv"
     storage_type = "filehitrate"
     ini_and_run(
         job_file=job_file,
         remote_throughput=0.75,
-        calculation_efficiency=0.99,
+        calculation_efficiency=0.9,
         pool_files=pool_files,
         storage_file=storage_file,
         storage_type=storage_type,
@@ -204,9 +213,7 @@ if __name__ == "__main__":
         """.strip(),
         job_ads="""
         Requirements = my.requestcpus <= target.cpus && my.requestmemory <= target.memory
-        Rank = 0 """,
+        Rank = 0""",
     )
 
-    # * (target.cache_demand > 0.1) * target.cache_demand *
-    #     target.cache_throughput
-    # rank = my.pipe_utilization + my.average_throughput
+    # target.cached_data * (target.cache_demand > 0.1)
