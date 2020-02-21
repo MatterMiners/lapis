@@ -28,6 +28,7 @@ from lapis.monitor.general import (
     job_events,
     drone_statistics_caching,
 )
+from lapis.monitor.duplicates import user_demand_tmp, drone_statistics_caching_tmp
 from lapis.monitor.cobald import drone_statistics, pool_statistics
 from lapis.pool import Pool
 
@@ -62,6 +63,8 @@ class Simulator(object):
         self.monitoring.register_statistic(hitrate_evaluation)
         self.monitoring.register_statistic(simulation_id)
         self.monitoring.register_statistic(pipe_data_volume)
+        self.monitoring.register_statistic(user_demand_tmp)
+        self.monitoring.register_statistic(drone_statistics_caching_tmp)
 
     def create_job_generator(self, job_input, job_reader):
         self._job_generators.append((job_input, job_reader))

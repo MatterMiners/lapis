@@ -15,6 +15,7 @@ from usim import Scope, interval, Resources
 from lapis.drone import Drone
 from lapis.job import Job
 from lapis.monitor import sampling_required
+from lapis.monitor.duplicates import UserDemand
 
 from numpy import mean
 
@@ -50,7 +51,6 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
     def __init__(self, classad: ClassAd, wrapped: DJ):
         super(WrappedClassAd, self).__init__()
         self._wrapped = wrapped
-        print(classad, type(classad), repr(classad))
         self._data = classad._data
         self._temp = {}
 
@@ -63,34 +63,50 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
             return self._wrapped.used_resources[name]
 
         if "target" not in item:
-            if "requestcpus" in item:
+            if "requestcpus" == item:
                 return access_wrapped("cores", requested=True)
-            elif "requestmemory" in item:
+            elif "requestmemory" == item:
                 return (1 / 1024 / 1024) * access_wrapped("memory", requested=True)
-            elif "requestdisk" in item:
+            elif "requestdisk" == item:
                 return (1 / 1024) * access_wrapped("disk", requested=True)
-            elif "requestwalltime" in item:
+            elif "requestwalltime" == item:
                 return self._wrapped.requested_walltime
-            elif "cpus" in item:
+            elif "cpus" == item:
                 try:
                     return self._temp["cores"]
                 except KeyError:
                     return access_wrapped("cores", requested=False)
-            elif "memory" in item:
+            elif "memory" == item:
                 try:
                     return (1 / 1000 / 1000) * self._temp["memory"]
                 except KeyError:
                     return (1 / 1000 / 1000) * access_wrapped("memory", requested=False)
-            elif "disk" in item:
+            elif "disk" == item:
                 try:
                     return (1 / 1024) * self._temp["disk"]
                 except KeyError:
 
                     return (1 / 1024) * access_wrapped("disk", requested=False)
-            elif "cache_demand" in item:
+            elif "cache_demand" == item:
                 caches = self._wrapped.connection.storages.get(
                     self._wrapped.sitename, None
                 )
+                # print(caches)
+                try:
+                    # print(mean(
+                    #     [1. / cache.connection._throughput_scale for cache in caches]
+                    # ))
+                    return mean(
+                        [1.0 / cache.connection._throughput_scale for cache in caches]
+                    )
+                except TypeError:
+                    return 0
+
+            elif "cache_scale" == item:
+                caches = self._wrapped.connection.storages.get(
+                    self._wrapped.sitename, None
+                )
+                # print(caches)
                 try:
                     # print(mean(
                     #     [cache.connection._throughput_scale for cache in caches]
@@ -100,7 +116,8 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
                     )
                 except TypeError:
                     return 0
-            elif "cache_throughput_per_core" in item:
+
+            elif "cache_throughput_per_core" == item:
                 caches = self._wrapped.connection.storages.get(
                     self._wrapped.sitename, None
                 )
@@ -110,25 +127,34 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
                     #     [cache.connection.throughput / 1000. / 1000. / 1000. for cache
                     #      in
                     #      caches]
-                    # ) / float(access_wrapped("cores")))
+                    # ) / float(self._wrapped.pool_resources["cores"]))
                     return sum(
                         [
                             cache.connection.throughput / 1000.0 / 1000.0 / 1000.0
                             for cache in caches
                         ]
-                    ) / float(access_wrapped("cores"))
+                    ) / float(self._wrapped.pool_resources["cores"])
                 except TypeError:
                     return 0
 
-            elif "cached_data" in item:
+            elif "cached_data" == item:
                 # print(self._wrapped, self._wrapped.cached_data / 1000. / 1000. / 1000.)
                 return self._wrapped.cached_data / 1000.0 / 1000.0 / 1000.0
 
-            elif "data_volume" in item:
-                return self._wrapped._total_input_data
+            elif "data_volume" == item:
+                return self._wrapped._total_input_data / 1000.0 / 1000.0 / 1000.0
 
-            elif "current_waiting_time" in item:
+            elif "current_waiting_time" == item:
                 return time.now - self._wrapped.queue_date
+
+            elif "failed_matches" == item:
+                # print("evaluated", self._wrapped, self._wrapped.failed_matches)
+                return self._wrapped.failed_matches
+
+            elif "jobs_with_cached_data" == item:
+                # print(self._wrapped)
+                # print(self._wrapped.jobs_with_cached_data)
+                return self._wrapped.jobs_with_cached_data
 
         return super(WrappedClassAd, self).__getitem__(item)
 
@@ -270,6 +296,7 @@ class CondorJobScheduler(JobScheduler):
                         await best_match.schedule_job(job)
                         self.job_queue.remove(job)
                         await sampling_required.put(self.job_queue)
+                        await sampling_required.put(UserDemand(len(self.job_queue)))
                         self.unregister_drone(best_match)
                         left_resources = best_match.theoretical_available_resources
                         left_resources = {
@@ -291,6 +318,7 @@ class CondorJobScheduler(JobScheduler):
             await self._processing.increase(jobs=1)
             # TODO: logging happens with each job
             await sampling_required.put(self.job_queue)
+            await sampling_required.put(UserDemand(len(self.job_queue)))
         self._collecting = False
 
     async def job_finished(self, job):
@@ -518,6 +546,7 @@ class RankedNonClusters(RankedClusters[DJ]):
         return iter(self._clusters.items())
 
     def cluster_groups(self) -> Iterator[List[Set[WrappedClassAd[Drone]]]]:
+        # print(self._clusters.items())
         for ranked_key, drones in self._clusters.items():
             yield [{item} for item in drones]
 
@@ -610,12 +639,21 @@ class CondorClassadJobScheduler(JobScheduler):
     def _match_job(
         job: ClassAd, pre_job_clusters: Iterator[List[Set[WrappedClassAd[Drone]]]]
     ):
+        def debug_evaluate(expr, my, target=None):
+            if type(expr) is str:
+                expr = my[expr]
+            result = expr.evaluate(my=my, target=target)
+            # print(f'>>> {expr}, {my}, {target}\n... {result}')
+            return result
+
         if job["Requirements"] != Undefined():
             pre_job_clusters_tmp = []
             for cluster_group in pre_job_clusters:
                 cluster_group_tmp = []
                 for cluster in cluster_group:
-                    if job.evaluate("Requirements", my=job, target=next(iter(cluster))):
+                    if debug_evaluate(
+                        "Requirements", my=job, target=next(iter(cluster))
+                    ):
                         cluster_group_tmp.append(cluster)
                 pre_job_clusters_tmp.append(cluster_group_tmp)
             pre_job_clusters = pre_job_clusters_tmp
@@ -627,13 +665,12 @@ class CondorClassadJobScheduler(JobScheduler):
                     sorted(
                         cluster_group,
                         key=lambda cluster: (
-                            job.evaluate("Rank", my=job, target=next(iter(cluster))),
+                            debug_evaluate("Rank", my=job, target=next(iter(cluster))),
                             random.random(),
                         ),
                         reverse=True,
                     )
                 )
-
             pre_job_clusters = pre_job_clusters_tmp
 
         for cluster_group in pre_job_clusters:
@@ -644,7 +681,7 @@ class CondorClassadJobScheduler(JobScheduler):
                         "Requirements", my=drone, target=job
                     ):
                         return drone
-        job._wrapped.failed_matches += 1
+
         raise NoMatch()
 
     async def _schedule_jobs(self):
@@ -654,11 +691,14 @@ class CondorClassadJobScheduler(JobScheduler):
         matches: List[Tuple[int, WrappedClassAd[Job], WrappedClassAd[Drone]]] = []
         for queue_index, candidate_job in enumerate(self.job_queue):
             try:
+                # print(time.now, candidate_job._wrapped,
+                #       candidate_job._wrapped.requested_inputfiles)
                 pre_job_drones.lookup(candidate_job._wrapped)
                 matched_drone = self._match_job(
                     candidate_job, pre_job_drones.cluster_groups()
                 )
             except NoMatch:
+                candidate_job._wrapped.failed_matches += 1
                 continue
             else:
                 matches.append((queue_index, candidate_job, matched_drone))
@@ -689,6 +729,7 @@ class CondorClassadJobScheduler(JobScheduler):
         await sampling_required.put(self)
         # NOTE: Is this correct? Triggers once instead of for each job
         await sampling_required.put(self.job_queue)
+        await sampling_required.put(UserDemand(len(self.job_queue)))
 
     async def _execute_job(self, job: WrappedClassAd, drone: WrappedClassAd):
         wrapped_job = job._wrapped
@@ -704,6 +745,7 @@ class CondorClassadJobScheduler(JobScheduler):
             # TODO: logging happens with each job
             # TODO: job queue to the outside now contains wrapped classads...
             await sampling_required.put(self.job_queue)
+            await sampling_required.put(UserDemand(len(self.job_queue)))
         self._collecting = False
 
     async def job_finished(self, job):

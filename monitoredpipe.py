@@ -48,7 +48,7 @@ class MonitoredPipe(Pipe):
             del self._monitor_buffers[sentinel]
 
     def _throttle_subscribers(self):
-        print(time.now, "awakening monitors, throttling subscribers")
+        # print(time.now, "awakening monitors, throttling subscribers")
 
         self._monitor.__awake_all__()
         super()._throttle_subscribers()
