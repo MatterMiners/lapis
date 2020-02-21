@@ -50,6 +50,7 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
     def __init__(self, classad: ClassAd, wrapped: DJ):
         super(WrappedClassAd, self).__init__()
         self._wrapped = wrapped
+        print(classad, type(classad), repr(classad))
         self._data = classad._data
         self._temp = {}
 
