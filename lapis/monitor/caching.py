@@ -129,7 +129,6 @@ def pipe_status(pipeinfo: MonitoredPipeInfo) -> list:
             "no_subscribers": pipeinfo.no_subscriptions,
         }
     ]
-    print(time.now, "monitoring:", results)
     return results
 
 
