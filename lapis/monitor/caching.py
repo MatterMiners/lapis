@@ -45,10 +45,10 @@ simulation_id.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis"}, resolution=1
+        tags={"tardis"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis"}, resolution=1
+        tags={"tardis"}, resolution=1e-9
     ),
 }
 
@@ -70,10 +70,10 @@ hitrate_evaluation.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis"}, resolution=1
+        tags={"tardis"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis"}, resolution=1
+        tags={"tardis"}, resolution=1e-9
     ),
 }
 
@@ -101,10 +101,10 @@ storage_status.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     # logging.StreamHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "storage"}, resolution=1
+        tags={"tardis", "storage"}, resolution=1e-9
     ),
     LoggingUDPSocketHandler.__name__: LineProtocolFormatter(
-        tags={"tardis", "storage"}, resolution=1
+        tags={"tardis", "storage"}, resolution=1e-9
     ),
 }
 

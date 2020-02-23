@@ -176,6 +176,7 @@ def job_events(job: Job) -> List[Dict]:
         result["success"] = 1
         result["diff"] = job.walltime - job._original_walltime
         result["efficiency"] = job.cputime * 1.0 / job.walltime
+        result["read_from_cache"] = job._read_from_cache
         result["data_througput"] = (
             job._total_input_data / 1000.0 / 1000.0 / 1000.0 / job.walltime
         )
