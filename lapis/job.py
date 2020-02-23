@@ -179,11 +179,11 @@ class Job(object):
                 scope.do(self._transfer_inputfiles())
                 scope.do(self._calculate())
         except CancelTask:
-            self.drone = None
+            # self.drone = None
             self._success = False
             # TODO: in_queue_until is still set
         except BaseException:
-            self.drone = None
+            # self.drone = None
             self._success = False
             # TODO: in_queue_until is still set
             raise
@@ -191,7 +191,7 @@ class Job(object):
             # old_walltime = self.walltime
             self.walltime = time.now - start
             # print(f"monitored walltime of {old_walltime} changed to {self.walltime}")
-            self.drone = None
+            # self.drone = None
             self._success = True
             await sampling_required.put(self)
 
