@@ -152,7 +152,9 @@ class Connection(object):
 
         # decision if a jobs inputfiles are cached based on hitrate
         random_inputfile_information = next(iter(requested_files.values()))
+        # print(time.now, job_repr, requested_files, drone.sitename)
         if "hitrates" in random_inputfile_information.keys():
+            # print(job_repr, "contains hitrates")
             try:
                 hitrate = sum(
                     [
@@ -161,18 +163,22 @@ class Connection(object):
                     ]
                 ) / sum([file["usedsize"] for file in requested_files.values()])
                 provides_file = int(random.random() < hitrate)
-                await sampling_required.put(
-                    HitrateInfo(
-                        hitrate,
-                        sum([file["usedsize"] for file in requested_files.values()]),
-                        provides_file,
-                    )
-                )
+                # print(job_repr, hitrate, provides_file)
+
                 # input()
             except ZeroDivisionError:
+                hitrate = 0
                 provides_file = 0
 
+        await sampling_required.put(
+            HitrateInfo(
+                hitrate,
+                sum([file["usedsize"] for file in requested_files.values()]),
+                provides_file,
+            )
+        )
         job_repr._read_from_cache = provides_file
+        # print(job_repr, job_repr._read_from_cache)
 
         for inputfilename, inputfilespecs in requested_files.items():
             if "hitrates" in inputfilespecs.keys():
