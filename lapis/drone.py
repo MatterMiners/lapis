@@ -15,6 +15,7 @@ class Drone(interfaces.Pool):
         pool_resources: dict,
         scheduling_duration: float,
         ignore_resources: list = None,
+        empty: callable = lambda drone: False,
     ):
         """
         :param scheduler:
@@ -41,6 +42,10 @@ class Drone(interfaces.Pool):
         self._allocation = None
         self._utilisation = None
         self._job_queue = Queue()
+        self._empty = empty
+
+    def empty(self):
+        return self._empty(self)
 
     @property
     def theoretical_available_resources(self):
