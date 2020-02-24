@@ -300,7 +300,7 @@ class RankedClusterKey(NamedTuple):
     key: Tuple[float, ...]
 
 
-RC = TypeVar('RC', bound='RankedClusters')
+RC = TypeVar("RC", bound="RankedClusters")
 
 
 class RankedClusters(Generic[DJ]):
@@ -311,7 +311,7 @@ class RankedClusters(Generic[DJ]):
         raise NotImplementedError
 
     @abstractmethod
-    def copy(self: RC[DJ]) -> RC[DJ]:
+    def copy(self: "RankedAutoClusters[DJ]") -> "RankedAutoClusters[DJ]":
         """Copy the entire ranked auto clusters"""
         raise NotImplementedError
 
@@ -548,9 +548,10 @@ class CondorClassadJobScheduler(JobScheduler):
             pre_job_clusters = (
                 sorted(
                     cluster_group,
-                    key=lambda cluster: (job.evaluate(
-                        "Rank", my=job, target=next(iter(cluster))
-                    ), random.random()),
+                    key=lambda cluster: (
+                        job.evaluate("Rank", my=job, target=next(iter(cluster))),
+                        random.random(),
+                    ),
                     reverse=True,
                 )
                 for cluster_group in pre_job_clusters
