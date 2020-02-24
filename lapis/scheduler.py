@@ -311,6 +311,11 @@ class RankedClusters(Generic[DJ]):
         raise NotImplementedError
 
     @abstractmethod
+    def empty(self) -> bool:
+        """"Whether there are no resources available"""
+        raise NotImplementedError
+
+    @abstractmethod
     def copy(self: "RankedAutoClusters[DJ]") -> "RankedAutoClusters[DJ]":
         """Copy the entire ranked auto clusters"""
         raise NotImplementedError
@@ -352,6 +357,12 @@ class RankedAutoClusters(RankedClusters[DJ]):
         self._ranking = ranking
         self._clusters: Dict[RankedClusterKey, Set[WrappedClassAd[DJ]]] = SortedDict()
         self._inverse: Dict[WrappedClassAd[DJ], RankedClusterKey] = {}
+
+    def empty(self) -> bool:
+        for drones in self._clusters.values():
+            if not next(iter(drones))._wrapped.empty():
+                return False
+        return True
 
     def copy(self) -> "RankedAutoClusters[DJ]":
         clone = type(self)(quantization=self._quantization, ranking=self._ranking)
@@ -419,6 +430,12 @@ class RankedNonClusters(RankedClusters[DJ]):
         self._ranking = ranking
         self._clusters: Dict[float, Set[WrappedClassAd[DJ]]] = SortedDict()
         self._inverse: Dict[WrappedClassAd[DJ], float] = {}
+
+    def empty(self) -> bool:
+        for drones in self._clusters.values():
+            if not next(iter(drones))._wrapped.empty():
+                return False
+        return True
 
     def copy(self) -> "RankedNonClusters[DJ]":
         clone = type(self)(quantization=self._quantization, ranking=self._ranking)
@@ -571,6 +588,8 @@ class CondorClassadJobScheduler(JobScheduler):
     async def _schedule_jobs(self):
         # Pre Job Rank is the same for all jobs
         # Use a copy to allow temporary "remainder after match" estimates
+        if self._drones.empty():
+            return
         pre_job_drones = self._drones.copy()
         matches: List[Tuple[int, WrappedClassAd[Job], WrappedClassAd[Drone]]] = []
         for queue_index, candidate_job in enumerate(self.job_queue):
