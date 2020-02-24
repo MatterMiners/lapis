@@ -548,8 +548,8 @@ class RankedNonClusters(RankedClusters[DJ]):
         return iter(self._clusters.items())
 
     def cluster_groups(self) -> Iterator[List[Set[WrappedClassAd[Drone]]]]:
-        # print(self._clusters.items())
-        for ranked_key, drones in self._clusters.items():
+
+        for _ranked_key, drones in self._clusters.items():
             yield [{item} for item in drones]
 
     def lookup(self, job: Job):
