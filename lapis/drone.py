@@ -21,7 +21,10 @@ class Drone(interfaces.Pool):
         ignore_resources: list = None,
         sitename: str = None,
         connection: Connection = None,
-        empty: callable = lambda drone: drone.available_resources.get("cores", 1) < 1,
+        empty: callable = lambda drone: drone.theoretical_available_resources.get(
+            "cores", 1
+        )
+        < 1,
     ):
         """
         :param scheduler:

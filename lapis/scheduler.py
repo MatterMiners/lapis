@@ -522,8 +522,9 @@ class RankedNonClusters(RankedClusters[DJ]):
 
     def empty(self) -> bool:
         for drones in self._clusters.values():
-            if not next(iter(drones))._wrapped.empty():
-                return False
+            for drone in drones:
+                if not drone._wrapped.empty():
+                    return False
         return True
 
     def copy(self) -> "RankedNonClusters[DJ]":
