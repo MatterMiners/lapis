@@ -21,6 +21,7 @@ class Drone(interfaces.Pool):
         ignore_resources: list = None,
         sitename: str = None,
         connection: Connection = None,
+        empty: callable = lambda drone: False,
     ):
         """
         :param scheduler:
@@ -50,6 +51,10 @@ class Drone(interfaces.Pool):
         self._allocation = None
         self._utilisation = None
         self._job_queue = Queue()
+        self._empty = empty
+
+    def empty(self):
+        return self._empty(self)
 
         # caching-related
         self.jobs_with_cached_data = 0

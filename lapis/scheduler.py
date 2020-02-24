@@ -483,6 +483,8 @@ class RankedAutoClusters(RankedClusters[DJ]):
         group = []
         current_rank = None
         for ranked_key, drones in self._clusters.items():
+            if next(iter(drones))._wrapped.empty():
+                continue
             if ranked_key.rank != current_rank:
                 current_rank = ranked_key.rank
                 if group:
