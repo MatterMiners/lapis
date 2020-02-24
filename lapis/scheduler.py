@@ -389,10 +389,10 @@ class RankedClusters(Generic[DJ]):
     def __init__(self, quantization: Dict[str, HTCInt], ranking: Expression):
         raise NotImplementedError
 
-    # @abstractmethod
-    # def copy(self: RC[DJ]) -> RC[DJ]:
-    #     """Copy the entire ranked auto clusters"""
-    #     raise NotImplementedError
+    @abstractmethod
+    def copy(self: "RankedAutoClusters[DJ]") -> "RankedAutoClusters[DJ]":
+        """Copy the entire ranked auto clusters"""
+        raise NotImplementedError
 
     @abstractmethod
     def add(self, item: WrappedClassAd[DJ]) -> None:
