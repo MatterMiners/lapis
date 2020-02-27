@@ -54,6 +54,12 @@ class WrappedClassAd(ClassAd, Generic[DJ]):
         self._data = classad._data
         self._temp = {}
 
+    def empty(self):
+        try:
+            return self._temp["cores"] < 1
+        except KeyError:
+            return self._wrapped.theoretical_available_resources["cores"] < 1
+
     def __getitem__(self, item):
         def access_wrapped(name, requested=True):
             if isinstance(self._wrapped, Drone):
@@ -444,7 +450,7 @@ class RankedAutoClusters(RankedClusters[DJ]):
 
     def empty(self) -> bool:
         for drones in self._clusters.values():
-            if not next(iter(drones))._wrapped.empty():
+            if not next(iter(drones)).empty():
                 return False
         return True
 
@@ -494,7 +500,7 @@ class RankedAutoClusters(RankedClusters[DJ]):
         group = []
         current_rank = None
         for ranked_key, drones in self._clusters.items():
-            if next(iter(drones))._wrapped.empty():
+            if next(iter(drones)).empty():
                 continue
             if ranked_key.rank != current_rank:
                 current_rank = ranked_key.rank
@@ -523,7 +529,7 @@ class RankedNonClusters(RankedClusters[DJ]):
     def empty(self) -> bool:
         for drones in self._clusters.values():
             for drone in drones:
-                if not drone._wrapped.empty():
+                if not drone.empty():
                     return False
         return True
 
@@ -740,6 +746,8 @@ class CondorClassadJobScheduler(JobScheduler):
                     candidate_job._wrapped._cached_data = (
                         matched_drone._wrapped.cached_data
                     )
+                if pre_job_drones.empty():
+                    break
         if not matches:
             return
         # TODO: optimize for few matches, many matches, all matches
