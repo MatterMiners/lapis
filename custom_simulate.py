@@ -165,36 +165,11 @@ def ini_and_run(
 
 if __name__ == "__main__":
 
-    # job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal.json"
-    job_file = "/home/tabea/work/testdata/modified/job_list_minimal_only_cpu.json"
-    # job_file = "/home/tabea/work/testdata/modified/job_list_minimal_only_caching.json"
-    # job_file = "/home/tabea/work/testdata/modified/single_job.json"
-    # job_file = "/home/tabea/work/testdata/modified/week_25_1.0_0.0_16_input.json"
-    # job_file = "/home/tabea/work/testdata/fullsim/test_12h_jobinput.json"
-    # job_file = "/home/tabea/work/testdata/fullsim/resampled_reduced_025week_16_jobinput" \
-    #            ".json"
-    # pool_files = ["/home/tabea/work/testdata/hitratebased/sg_machines.csv",
-    #              "/home/tabea/work/testdata/hitratebased/dummycluster.csv"]
-    # storage_file = "/home/tabea/work/testdata/hitratebased/sg_caches.csv"
-    # storage_type = "filehitrate"
-    #
-    # ini_and_run(job_file=job_file, pool_files=pool_files, storage_file=storage_file,
-    #             storage_type=storage_type, log_file="minimal_hitratebased_test.log",
-    #             log_telegraf=True)
+    job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal_only_cpu.json"
 
-    # job_file = "/home/tabea/work/testdata/hitratebased/testjobs.json"
-    # job_file = "/home/tabea/work/testdata/hitratebased/week.json"
-    # job_file = "/home/tabea/work/testdata/hitratebased/day_jobinput.json"
-    # job_file = "/home/tabea/work/testdata/hitratebased/week_1_sample_time_jobinput.json"
-    pool_files = [
-        "/home/tabea/work/testdata/fullsim/sg_machines_shared_cache.csv",
-        "/home/tabea/work/testdata/fullsim/dummycluster.csv",
-    ]
-    # pool_files = ["/home/tabea/work/testdata/fullsim/minimal_pool.csv"]
-    # pool_files = ["/home/tabea/work/testdata/fullsim/dummycluster.csv"]
-    # pool_files = ["/home/tabea/work/testdata/fullsim/sg_machines_shared_cache.csv"]
-    # storage_file = "/home/tabea/work/testdata/fullsim/sg_caches_shared.csv"
-    storage_file = "/home/tabea/work/testdata/fullsim/minimal_cache.csv"
+    pool_files = ["/home/tabea/work/testdata/fullsim/minimal_pool.csv"]
+
+    storage_file = "/home/tabea/work/testdata/fullsim/sg_caches_shared.csv"
     storage_type = "filehitrate"
     ini_and_run(
         job_file=job_file,
@@ -205,6 +180,7 @@ if __name__ == "__main__":
         storage_type=storage_type,
         log_file="test_new_scheduler.log",
         log_telegraf=True,
+        seed=1234,
         # pre_job_rank="10000000 * my.Rank + 1000000 - 100000 * my.cpus - my.memory",
         pre_job_rank="0",
         machine_ads="""
@@ -212,8 +188,35 @@ if __name__ == "__main__":
         rank = 0
         """.strip(),
         job_ads="""
-        Requirements = my.requestcpus <= target.cpus && my.requestmemory <= target.memory
-        Rank = 0""",
+        Requirements = my.requestcpus <= target.cpus && my.requestmemory <= target.memory Rank = target.cached_data """,
     )
 
-    # target.cached_data * (target.cache_demand > 0.1)
+
+# job_file = "/home/tabea/work/testdata/hitratebased/job_list_minimal.json"
+
+# job_file = "/home/tabea/work/testdata/modified/job_list_minimal_only_caching.json"
+# job_file = "/home/tabea/work/testdata/modified/single_job.json"
+# job_file = "/home/tabea/work/testdata/modified/week_25_1.0_0.0_16_input.json"
+# job_file = "/home/tabea/work/testdata/fullsim/test_12h_jobinput.json"
+# job_file = "/home/tabea/work/testdata/fullsim/resampled_reduced_025week_16_jobinput" \
+#            ".json"
+# pool_files = ["/home/tabea/work/testdata/hitratebased/sg_machines.csv",
+#              "/home/tabea/work/testdata/hitratebased/dummycluster.csv"]
+# storage_file = "/home/tabea/work/testdata/hitratebased/sg_caches.csv"
+# storage_type = "filehitrate"
+#
+# ini_and_run(job_file=job_file, pool_files=pool_files, storage_file=storage_file,
+#             storage_type=storage_type, log_file="minimal_hitratebased_test.log",
+#             log_telegraf=True)
+
+# job_file = "/home/tabea/work/testdata/hitratebased/testjobs.json"
+# job_file = "/home/tabea/work/testdata/hitratebased/week.json"
+# job_file = "/home/tabea/work/testdata/hitratebased/day_jobinput.json"
+# job_file = "/home/tabea/work/testdata/hitratebased/week_1_sample_time_jobinput.json"
+# pool_files = [
+#     "/home/tabea/work/testdata/modified/sg_machines_shared_cache.csv",
+#     "/home/tabea/work/testdata/modified/dummycluster_888cores_split.csv",
+# ]
+# pool_files = ["/home/tabea/work/testdata/fullsim/dummycluster.csv"]
+# pool_files = ["/home/tabea/work/testdata/fullsim/sg_machines_shared_cache.csv"]
+# storage_file = "/home/tabea/work/testdata/fullsim/minimal_cache.csv"
