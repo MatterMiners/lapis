@@ -180,6 +180,8 @@ def job_events(job: Job) -> List[Dict]:
         result["data_througput"] = (
             job._total_input_data / 1000.0 / 1000.0 / 1000.0 / job.walltime
         )
+        result["cache_probability"] = job.cache_probability
+        result["expectation_cached_data"] = job.expectation_cached_data
     else:
         result["success"] = 0
         error_logged = False

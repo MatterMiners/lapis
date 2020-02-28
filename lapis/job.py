@@ -34,6 +34,8 @@ class Job(object):
         "_transfer_time",
         "failed_matches",
         "cputime",
+        "cache_probability",
+        "expectation_cached_data",
     )
 
     def __init__(
@@ -96,6 +98,24 @@ class Job(object):
             )
         except AttributeError:
             self._total_input_data = 0
+        if self._total_input_data:
+            self.expectation_cached_data = sum(
+                [
+                    file["usedsize"] * sum(file["hitrates"].values())
+                    for file in self.used_inputfiles.values()
+                ]
+            )
+        else:
+            self.expectation_cached_data = 0
+        if self._total_input_data:
+            self.cache_probability = sum(
+                [
+                    file["usedsize"] * sum(file["hitrates"].values())
+                    for file in self.used_inputfiles.values()
+                ]
+            ) / sum([file["usedsize"] for file in self.used_inputfiles.values()])
+        else:
+            self.cache_probability = 0
         self.failed_matches = 0
 
     @property
@@ -179,12 +199,15 @@ class Job(object):
                 scope.do(self._transfer_inputfiles())
                 scope.do(self._calculate())
         except CancelTask:
+            print("CancelTask")
             # self.drone = None
             self._success = False
+            # await sampling_required.put(self)
             # TODO: in_queue_until is still set
         except BaseException:
             # self.drone = None
             self._success = False
+            await sampling_required.put(self)
             # TODO: in_queue_until is still set
             raise
         else:
