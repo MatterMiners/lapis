@@ -5,4 +5,5 @@ description: |
   of that job was not properly set as the job was not yet in running state.
   This is fixed now by additionally waiting for an `instant`.
 pull requests:
-  - 80
+- 80
+version: 0.4.0

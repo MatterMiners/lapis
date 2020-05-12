@@ -5,4 +5,5 @@ description: |
   could be removed during scheduling. Now scheduling is performed on a copy
   of the job queue.
 pull requests:
-  - 79
+- 79
+version: 0.4.0

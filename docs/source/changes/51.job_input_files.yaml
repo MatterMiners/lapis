@@ -4,4 +4,5 @@ description: |
   In preparation for enabling caching and its effects within the simulation the
   support of input files for jobs has been added.
 pull requests:
-  - 51
+- 51
+version: 0.4.0

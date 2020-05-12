@@ -1,6 +1,7 @@
 category: added
-summary: "Changelog"
+summary: Changelog
 description: |
   The documentation now includes a changelog up to the current version.
 pull requests:
-  - 74
+- 74
+version: 0.4.0

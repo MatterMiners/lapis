@@ -8,4 +8,5 @@ description: |
   now takes care to properly start the job so that it runs independently now in
   the scope of the drone.
 pull requests:
-  - 63
+- 63
+version: 0.4.0
