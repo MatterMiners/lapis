@@ -1,3 +1,5 @@
+from functools import partial
+
 import click
 import logging.handlers
 
@@ -9,6 +11,8 @@ from lapis.job_io.htcondor import htcondor_job_reader
 from lapis.pool import StaticPool, Pool
 from lapis.pool_io.htcondor import htcondor_pool_reader
 from lapis.job_io.swf import swf_job_reader
+from lapis.storageelement import StorageElement, HitrateStorage
+from lapis.storage_io.storage import storage_reader
 
 from lapis.scheduler import CondorJobScheduler
 from lapis.simulator import Simulator
@@ -25,6 +29,8 @@ job_import_mapper = {"htcondor": htcondor_job_reader, "swf": swf_job_reader}
 
 pool_import_mapper = {"htcondor": htcondor_pool_reader}
 
+storage_import_mapper = {"standard": storage_reader}
+
 
 @click.group()
 @click.option("--seed", type=int, default=1234)
@@ -32,11 +38,13 @@ pool_import_mapper = {"htcondor": htcondor_pool_reader}
 @click.option("--log-tcp", "log_tcp", is_flag=True)
 @click.option("--log-file", "log_file", type=click.File("w"))
 @click.option("--log-telegraf", "log_telegraf", is_flag=True)
+@click.option("--calculation-efficiency", type=float)
 @click.pass_context
-def cli(ctx, seed, until, log_tcp, log_file, log_telegraf):
+def cli(ctx, seed, until, log_tcp, log_file, log_telegraf, calculation_efficiency):
     ctx.ensure_object(dict)
     ctx.obj["seed"] = seed
     ctx.obj["until"] = until
+    ctx.obj["calculation_efficiency"] = calculation_efficiency
     monitoring_logger = logging.getLogger()
     monitoring_logger.setLevel(logging.DEBUG)
     time_filter = SimulationTimeFilter()
@@ -71,15 +79,43 @@ def cli(ctx, seed, until, log_tcp, log_file, log_telegraf):
     type=(click.File("r"), click.Choice(list(pool_import_mapper.keys()))),
     multiple=True,
 )
+@click.option(
+    "--storage-files",
+    "storage_files",
+    type=(
+        click.File("r"),
+        click.File("r"),
+        click.Choice(list(storage_import_mapper.keys())),
+    ),
+    default=(None, None, None),
+)
+@click.option("--remote-throughput", "remote_throughput", type=float, default=10)
+@click.option("--cache-hitrate", "cache_hitrate", type=float, default=None)
 @click.pass_context
-def static(ctx, job_file, pool_file):
+def static(ctx, job_file, pool_file, storage_files, remote_throughput, cache_hitrate):
     click.echo("starting static environment")
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
     simulator.create_job_generator(
-        job_input=file, job_reader=job_import_mapper[file_type]
+        job_input=file,
+        job_reader=partial(
+            job_import_mapper[file_type],
+            calculation_efficiency=ctx.obj["calculation_efficiency"],
+        ),
     )
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
+
+    if all(storage_files):
+        simulator.create_connection_module(remote_throughput * 1024 * 1024 * 1024)
+        storage_file, storage_content_file, storage_type = storage_files
+        simulator.create_storage(
+            storage_input=storage_file,
+            storage_content_input=storage_content_file,
+            storage_reader=storage_import_mapper[storage_type],
+            storage_type=partial(HitrateStorage, cache_hitrate)
+            if cache_hitrate is not None
+            else StorageElement,
+        )
     for current_pool in pool_file:
         pool_file, pool_file_type = current_pool
         simulator.create_pools(
@@ -87,6 +123,7 @@ def static(ctx, job_file, pool_file):
             pool_reader=pool_import_mapper[pool_file_type],
             pool_type=StaticPool,
         )
+    simulator.enable_monitoring()
     simulator.run(until=ctx.obj["until"])
 
 
@@ -108,7 +145,11 @@ def dynamic(ctx, job_file, pool_file):
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
     simulator.create_job_generator(
-        job_input=file, job_reader=job_import_mapper[file_type]
+        job_input=file,
+        job_reader=partial(
+            job_import_mapper[file_type],
+            calculation_efficiency=ctx.obj["calculation_efficiency"],
+        ),
     )
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     for current_pool in pool_file:
@@ -119,6 +160,7 @@ def dynamic(ctx, job_file, pool_file):
             pool_type=Pool,
             controller=SimulatedLinearController,
         )
+    simulator.enable_monitoring()
     simulator.run(until=ctx.obj["until"])
 
 
@@ -146,7 +188,11 @@ def hybrid(ctx, job_file, static_pool_file, dynamic_pool_file):
     simulator = Simulator(seed=ctx.obj["seed"])
     file, file_type = job_file
     simulator.create_job_generator(
-        job_input=file, job_reader=job_import_mapper[file_type]
+        job_input=file,
+        job_reader=partial(
+            job_import_mapper[file_type],
+            calculation_efficiency=ctx.obj["calculation_efficiency"],
+        ),
     )
     simulator.create_scheduler(scheduler_type=CondorJobScheduler)
     for current_pool in static_pool_file:
@@ -164,6 +210,7 @@ def hybrid(ctx, job_file, static_pool_file, dynamic_pool_file):
             pool_type=Pool,
             controller=SimulatedLinearController,
         )
+    simulator.enable_monitoring()
     simulator.run(until=ctx.obj["until"])
 
 

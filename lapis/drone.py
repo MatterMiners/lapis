@@ -1,7 +1,9 @@
 from cobald import interfaces
+from typing import Optional
 from usim import time, Scope, instant, Capacities, ResourcesUnavailable, Queue
 
 from lapis.job import Job
+from lapis.connection import Connection
 
 
 class ResourcesExceeded(Exception):
@@ -12,9 +14,11 @@ class Drone(interfaces.Pool):
     def __init__(
         self,
         scheduler,
-        pool_resources: dict,
-        scheduling_duration: float,
+        pool_resources: Optional[dict] = None,
+        scheduling_duration: Optional[float] = None,
         ignore_resources: list = None,
+        sitename: str = None,
+        connection: Connection = None,
     ):
         """
         :param scheduler:
@@ -23,6 +27,8 @@ class Drone(interfaces.Pool):
         """
         super(Drone, self).__init__()
         self.scheduler = scheduler
+        self.connection = connection
+        self.sitename = sitename
         self.pool_resources = pool_resources
         self.resources = Capacities(**pool_resources)
         # shadowing requested resources to determine jobs to be killed
@@ -145,6 +151,11 @@ class Drone(interfaces.Pool):
                                 pass
                     self.scheduler.update_drone(self)
                     await job_execution.done
+                    print(
+                        "finished job {} on drone {} @ {}".format(
+                            repr(job), repr(self), time.now
+                        )
+                    )
             except ResourcesUnavailable:
                 await instant
                 job_execution.cancel()

@@ -1,5 +1,5 @@
 from typing import Dict
-from usim import Scope, interval, Resources
+from usim import Scope, interval, Resources, time
 
 from lapis.drone import Drone
 from lapis.monitor import sampling_required
@@ -88,9 +88,17 @@ class CondorJobScheduler(object):
         async with Scope() as scope:
             scope.do(self._collect_jobs())
             async for _ in interval(self.interval):
+                print("NEW SCHEDULING INTERVAL @ {}".format(time.now))
+                print(self.job_queue)
                 for job in self.job_queue.copy():
+                    print("SCHEDULING {}".format(repr(job)))
                     best_match = self._schedule_job(job)
                     if best_match:
+                        print(
+                            "start job {} on drone {} @ {}".format(
+                                repr(job), repr(best_match), time.now
+                            )
+                        )
                         await best_match.schedule_job(job)
                         self.job_queue.remove(job)
                         await sampling_required.put(self.job_queue)
@@ -129,6 +137,11 @@ class CondorJobScheduler(object):
             drone = cluster[0]
             cost = 0
             resources = drone.theoretical_available_resources
+            # print(
+            #     "trying to match Job {} to {}, resources {}".format(
+            #         repr(job), repr(drone), resources
+            #     )
+            # )
             for resource_type in job.resources:
                 if resources.get(resource_type, 0) < job.resources[resource_type]:
                     # Inf for all job resources that a drone does not support

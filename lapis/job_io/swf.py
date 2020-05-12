@@ -4,12 +4,14 @@ Current implementation is based on version 2.2 of the
 [Standard Workload Format](http://www.cs.huji.ac.il/labs/parallel/workload/swf.html).
 """
 import csv
+from typing import Optional
 
 from lapis.job import Job
 
 
 def swf_job_reader(
     iterable,
+    calculation_efficiency: Optional[float] = None,
     resource_name_mapping={  # noqa: B006
         "cores": "Requested Number of Processors",
         "walltime": "Requested Time",  # s
@@ -90,4 +92,5 @@ def swf_job_reader(
             used_resources=used_resources,
             queue_date=float(row[header[used_resource_name_mapping["queuetime"]]]),
             name=row[header["Job Number"]],
+            calculation_efficiency=calculation_efficiency,
         )

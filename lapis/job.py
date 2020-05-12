@@ -1,7 +1,7 @@
 import logging
 from typing import Optional, TYPE_CHECKING
 
-from usim import time
+from usim import time, Scope, instant
 from usim import CancelTask
 
 from lapis.monitor import sampling_required
@@ -24,6 +24,7 @@ class Job(object):
         "_name",
         "drone",
         "_success",
+        "calculation_efficiency",
     )
 
     def __init__(
@@ -32,8 +33,9 @@ class Job(object):
         used_resources: dict,
         in_queue_since: float = 0,
         queue_date: float = 0,
-        name: str = None,
-        drone: "Drone" = None,
+        name: Optional[str] = None,
+        drone: "Optional[Drone]" = None,
+        calculation_efficiency: Optional[float] = None,
     ):
         """
         Definition of a job that uses a specified amount of resources `used_resources`
@@ -59,17 +61,20 @@ class Job(object):
                     self.used_resources[key],
                 )
                 self.resources[key] = self.used_resources[key]
-        self.walltime = used_resources.pop("walltime")
-        self.requested_walltime = resources.pop("walltime", None)
-        self.requested_inputfiles = resources.pop("inputfiles", None)
-        self.used_inputfiles = used_resources.pop("inputfiles", None)
+        self.walltime: int = used_resources.pop("walltime")
+        self.requested_walltime: Optional[int] = resources.pop("walltime", None)
         self.queue_date = queue_date
         assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since
-        self.in_queue_until = None
+        self.in_queue_until: Optional[float] = None
         self.drone = drone
         self._name = name
         self._success: Optional[bool] = None
+        self.calculation_efficiency = calculation_efficiency
+
+        # caching-related
+        self.requested_inputfiles = resources.pop("inputfiles", None)
+        self.used_inputfiles = used_resources.pop("inputfiles", None)
 
     @property
     def name(self) -> str:
@@ -91,22 +96,71 @@ class Job(object):
             return self.in_queue_until - self.in_queue_since
         return float("Inf")
 
+    async def _calculate(self):
+        """
+        Determines a jobs calculation time based on the jobs CPU time and a
+        calculation efficiency representing inefficient programming.
+        :param calculation_efficiency:
+        :return:
+        """
+        print(
+            f"WALLTIME: Job {self} @ {time.now}, "
+            f"{self.used_resources.get('cores', None)}, "
+            f"{self.calculation_efficiency}"
+        )
+        result = self.walltime
+        try:
+            result = (
+                self.used_resources["cores"] / self.calculation_efficiency
+            ) * self.walltime
+        except (KeyError, TypeError):
+            pass
+        start = time.now
+        await (time + result)
+        print(f"finished calculation at {time.now - start}")
+
+    async def _transfer_inputfiles(self):
+        try:
+            start = time.now
+            print(f"TRANSFERING INPUTFILES: Job {self} @ {start}")
+            await self.drone.connection.transfer_files(
+                drone=self.drone,
+                requested_files=self.used_inputfiles,
+                job_repr=repr(self),
+            )
+            print(
+                f"streamed inputfiles {self.used_inputfiles.keys()} for job {self} "
+                f"in {time.now - start} timeunits, finished @ {time.now}"
+            )
+        except AttributeError:
+            pass
+
     async def run(self, drone: "Drone"):
         assert drone, "Jobs cannot run without a drone being assigned"
         self.drone = drone
         self.in_queue_until = time.now
         self._success = None
         await sampling_required.put(self)
+        print("running job {}  in drone {}".format(repr(self), repr(self.drone)))
         try:
-            await (time + self.walltime)
+            start = time.now
+            async with Scope() as scope:
+                await instant
+                scope.do(self._transfer_inputfiles())
+                scope.do(self._calculate())
         except CancelTask:
             self.drone = None
             self._success = False
+            # TODO: in_queue_until is still set
         except BaseException:
             self.drone = None
             self._success = False
+            # TODO: in_queue_until is still set
             raise
         else:
+            old_walltime = self.walltime
+            self.walltime = time.now - start
+            print(f"monitored walltime of {old_walltime} changed to {self.walltime}")
             self.drone = None
             self._success = True
         await sampling_required.put(self)

@@ -1,7 +1,9 @@
+from functools import partial
 from typing import Generator, Callable
 from cobald import interfaces
 from usim import eternity, Scope, interval
 
+from lapis.connection import Connection
 from .drone import Drone
 
 
@@ -24,15 +26,20 @@ class Pool(interfaces.Pool):
         capacity: int = float("inf"),
         init: int = 0,
         name: str = None,
+        connection: Connection = None,
     ):
         super(Pool, self).__init__()
         assert init <= capacity
-        self.make_drone = make_drone
         self._drones = []
         self._demand = 1
         self._level = init
         self._capacity = capacity
         self._name = name
+        # TODO: Should drones have access to the pool or the connection directly?
+        if connection is not None:
+            self.make_drone = partial(make_drone, connection=connection)
+        else:
+            self.make_drone = make_drone
 
     async def init_pool(self, scope: Scope, init: int = 0):
         """
@@ -136,10 +143,15 @@ class StaticPool(Pool):
                       instantiated within the pool
     """
 
-    def __init__(self, make_drone: Callable, capacity: int = 0):
+    def __init__(
+        self, make_drone: Callable, capacity: int = 0, connection: Connection = None
+    ):
         assert capacity > 0, "Static pool was initialised without any resources..."
         super(StaticPool, self).__init__(
-            capacity=capacity, init=capacity, make_drone=make_drone
+            capacity=capacity,
+            init=capacity,
+            make_drone=make_drone,
+            connection=connection,
         )
         self._demand = capacity
 

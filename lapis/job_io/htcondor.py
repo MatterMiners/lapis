@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+from typing import Optional
 
 from lapis.job import Job
 from copy import deepcopy
@@ -8,6 +9,7 @@ from copy import deepcopy
 
 def htcondor_job_reader(
     iterable,
+    calculation_efficiency: Optional[float] = None,
     resource_name_mapping={  # noqa: B006
         "cores": "RequestCpus",
         "walltime": "RequestWalltime",  # s
@@ -29,6 +31,8 @@ def htcondor_job_reader(
         "RemoteWallClockTime": 1,
         "MemoryUsage": 1000 * 1000,
         "DiskUsage_RAW": 1024,
+        "filesize": 1024 * 1024 * 1024,
+        "usedsize": 1024 * 1024 * 1024,
     },
 ):
     input_file_type = iterable.name.split(".")[-1].lower()
@@ -70,17 +74,34 @@ def htcondor_job_reader(
                 * unit_conversion_mapping.get(original_key, 1)
             )
 
+        calculation_efficiency = entry.get(
+            "calculation_efficiency", calculation_efficiency
+        )
+
         try:
+            if not entry["Inputfiles"]:
+                del entry["Inputfiles"]
             resources["inputfiles"] = deepcopy(entry["Inputfiles"])
             used_resources["inputfiles"] = deepcopy(entry["Inputfiles"])
             for filename, filespecs in entry["Inputfiles"].items():
+                for key in filespecs.keys():
+                    if key == "hitrates":
+                        continue
+                    resources["inputfiles"][filename][key] = filespecs[
+                        key
+                    ] * unit_conversion_mapping.get(key, 1)
+                    used_resources["inputfiles"][filename][key] = filespecs[
+                        key
+                    ] * unit_conversion_mapping.get(key, 1)
+
                 if "usedsize" in filespecs:
                     del resources["inputfiles"][filename]["usedsize"]
+
                 if "filesize" in filespecs:
                     if "usedsize" not in filespecs:
-                        used_resources["inputfiles"][filename]["usedsize"] = filespecs[
-                            "filesize"
-                        ]
+                        used_resources["inputfiles"][filename]["usedsize"] = resources[
+                            "inputfiles"
+                        ][filename]["filesize"]
                     del used_resources["inputfiles"][filename]["filesize"]
 
         except KeyError:
@@ -89,4 +110,6 @@ def htcondor_job_reader(
             resources=resources,
             used_resources=used_resources,
             queue_date=float(entry[used_resource_name_mapping["queuetime"]]),
+            calculation_efficiency=calculation_efficiency,
+            name=entry.get("name", None),
         )
