@@ -4,4 +4,5 @@ description: |
   The usage of units was not standardised so far. We now introduced to solely work
   with Bytes and use ``int`` for representation throughout the simulation.
 pull requests:
-  - 59
+- 59
+version: 0.4.0

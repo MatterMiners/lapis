@@ -6,4 +6,5 @@ description: |
   now has a new property to store the number of running jobs. So the termination
   of the scheduler is now additionally bound to this counter getting ``0``.
 pull requests:
-  - 66
+- 66
+version: 0.4.0

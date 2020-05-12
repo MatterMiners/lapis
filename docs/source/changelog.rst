@@ -1,15 +1,15 @@
-.. Created by log.py at 2019-12-12, command
+.. Created by log.py at 2020-05-12, command
    '/Users/eileenwork/development/work/lapis/venv/lib/python3.7/site-packages/change/__main__.py log docs/source/changes compile --output docs/source/changelog.rst'
    based on the format of 'https://keepachangelog.com/'
 #########
 ChangeLog
 #########
 
-Upcoming
-========
+0.4 Series
+==========
 
-Version [Unreleased] - 2019-12-12
-+++++++++++++++++++++++++++++++++
+Version [0.4.0] - 2020-05-12
+++++++++++++++++++++++++++++
 
 * **[Added]** Basic documentation
 * **[Added]** Changelog
@@ -65,4 +65,3 @@ Version [0.1.1] - 2019-10-24
 * **[Fixed]** Calculation of used and requested resource ratio
 * **[Fixed]** StopIteration handling by Job Generator
 * **[Fixed]** Importing of SWF files
-
