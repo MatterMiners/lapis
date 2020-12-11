@@ -17,8 +17,6 @@ class Job(object):
         "walltime",
         "requested_walltime",
         "queue_date",
-        "requested_inputfiles",
-        "used_inputfiles",
         "in_queue_since",
         "in_queue_until",
         "_name",
@@ -33,7 +31,6 @@ class Job(object):
         in_queue_since: float = 0,
         queue_date: float = 0,
         name: str = None,
-        drone: "Drone" = None,
     ):
         """
         Definition of a job that uses a specified amount of resources `used_resources`
@@ -47,7 +44,6 @@ class Job(object):
                                simulation scheduler
         :param queue_date: Time when job was inserted into queue in real life
         :param name: Name of the job
-        :param drone: Drone where the job is running on
         """
         self.resources = resources
         self.used_resources = used_resources
@@ -61,13 +57,11 @@ class Job(object):
                 self.resources[key] = self.used_resources[key]
         self.walltime = used_resources.pop("walltime")
         self.requested_walltime = resources.pop("walltime", None)
-        self.requested_inputfiles = resources.pop("inputfiles", None)
-        self.used_inputfiles = used_resources.pop("inputfiles", None)
         self.queue_date = queue_date
         assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since
         self.in_queue_until = None
-        self.drone = drone
+        self.drone = None
         self._name = name
         self._success: Optional[bool] = None
 
@@ -83,7 +77,7 @@ class Job(object):
     def waiting_time(self) -> float:
         """
         The time the job spent in the simulators scheduling queue. `Inf` when
-        the job is still waitiing.
+        the job is still waiting.
 
         :return: Time in queue
         """
