@@ -4,10 +4,10 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "lapis-sim"
-version = "0.4.1"
+version = "0.4.2"
 description = "Lapis is an adaptable, performant, and interactive scheduling (Lapis) simulator"
 license = "MIT"
-authors = ["Eileen Kuehn <eileen.kuehn@kit.edu>", "Max Fischer <max.fischer@kit.edu>"]
+authors = ["Eileen Kuehn, Max Fischer <mainekuehn@gmail.com>"]
 maintainers = ["MatterMiners <matterminers@lists.kit.edu>"]
 readme = "README.rst"
 homepage = "https://matterminers.github.io"
