@@ -1,15 +1,19 @@
 [build-system]
-requires = ["flit"]
-build-backend = "flit.buildapi"
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
-[tool.flit.metadata]
-module = "lapis"
-dist-name = "lapis-sim"
-author = "Eileen Kuehn, Max Fischer"
-author-email = "mainekuehn@gmail.com"
-home-page = "https://github.com/MatterMiners/lapis"
-description-file = "README.rst"
-keywords = "htcondor simulation python cobald tardis opportunistic scheduling scheduler"
+[tool.poetry]
+name = "lapis-sim"
+version = "0.4.1"
+description = "Lapis is an adaptable, performant, and interactive scheduling (Lapis) simulator"
+license = "MIT"
+authors = ["Eileen Kuehn <eileen.kuehn@kit.edu>", "Max Fischer <max.fischer@kit.edu>"]
+maintainers = ["MatterMiners <matterminers@lists.kit.edu>"]
+readme = "README.rst"
+homepage = "https://matterminers.github.io"
+repository = "https://github.com/MatterMiners/lapis"
+documentation = "https://lapis-sim.readthedocs.io/en/latest/"
+keywords = ["htcondor", "simulation", "tardis", "opportunistic", "scheduling"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Development Status :: 2 - Pre-Alpha",
@@ -21,18 +25,32 @@ classifiers = [
     "Topic :: Office/Business :: Scheduling",
     "Topic :: System :: Distributed Computing",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
 ]
-requires = ["cobald", "usim == 0.4", "click"]
+packages = [
+    { include = "lapis" }
+]
 
-[tool.flit.metadata.requires-extra]
-test = [
-    "pytest >=4.3.0",
-    "flake8",
-    "flake8-bugbear",
-    "black; implementation_name=='cpython'",
-]
+[tool.poetry.dev-dependencies]
+pre-commit = "^2.9.3"
+
+[tool.poetry.dependencies]
+python = "^3.6.1"
+cobald = "^0.12"
+usim = "^0.4"
+click = "^7.1"
+
+Sphinx = { version = "^3.3.1", optional = true }
+sphinx-rtd-theme = { version = "^0.5.0", optional = true }
+sphinxcontrib-contentui = { version = "^0.2.5", optional = true }
+sphinx-click = { version = "^2.5.0", optional = true }
+change-log = { version = "^0.2.0", optional = true }
+
+pytest = ">= 4.3.0"
+flake8 = "^3.8.4"
+flake8-bugbear = "^20.11.1"
+black = { version = "^20.8b1", markers = "implementation_name=='cpython'" }
+
+[tool.poetry.extras]
 doc = [
     "sphinx",
     "sphinx_rtd_theme",
@@ -40,7 +58,9 @@ doc = [
     "sphinx-click",
     "change-log",
 ]
-dev = ["pre-commit"]
-
-[tool.flit.metadata.urls]
-Documentation = "https://lapis-sim.readthedocs.io/en/latest/"
+test = [
+    "pytest",
+    "flake8",
+    "flake8-bugbear",
+    "black"
+]
