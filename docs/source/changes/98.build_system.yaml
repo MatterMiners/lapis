@@ -1,0 +1,8 @@
+category: changed
+summary: "Changed build system from flit to poetry"
+description: |
+  As LAPIS now supports plugins and therefore needs to provide a proper namespace
+  we introduce poetry as build and package management system.
+pull requests:
+- 98
+version: 0.4.1

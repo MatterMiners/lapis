@@ -1,5 +1,5 @@
-.. Created by log.py at 2020-05-12, command
-   '/Users/eileenwork/development/work/lapis/venv/lib/python3.7/site-packages/change/__main__.py log docs/source/changes compile --output docs/source/changelog.rst'
+.. Created by log.py at 2020-12-11, command
+   '/Users/eileenwork/development/work/lapis/venv/lib/python3.9/site-packages/change/__main__.py log docs/source/changes compile --output docs/source/changelog.rst'
    based on the format of 'https://keepachangelog.com/'
 #########
 ChangeLog
@@ -7,6 +7,11 @@ ChangeLog
 
 0.4 Series
 ==========
+
+Version [0.4.1] - 2020-12-11
+++++++++++++++++++++++++++++
+
+* **[Changed]** Changed build system from flit to poetry
 
 Version [0.4.0] - 2020-05-12
 ++++++++++++++++++++++++++++
