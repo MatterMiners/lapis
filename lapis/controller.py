@@ -6,7 +6,12 @@ from usim import time
 
 class SimulatedLinearController(LinearController):
     def __init__(
-        self, target: Pool, low_utilisation=0.5, high_allocation=0.5, rate=1, interval=1
+        self,
+        target: Pool,
+        low_utilisation: float = 0.5,
+        high_allocation: float = 0.5,
+        rate: float = 1,
+        interval: float = 1,
     ):
         super(SimulatedLinearController, self).__init__(
             target, low_utilisation, high_allocation, rate, interval
@@ -22,11 +27,11 @@ class SimulatedRelativeSupplyController(RelativeSupplyController):
     def __init__(
         self,
         target: Pool,
-        low_utilisation=0.5,
-        high_allocation=0.5,
-        low_scale=0.9,
-        high_scale=1.1,
-        interval=1,
+        low_utilisation: float = 0.5,
+        high_allocation: float = 0.5,
+        low_scale: float = 0.9,
+        high_scale: float = 1.1,
+        interval: float = 1,
     ):
         super(SimulatedRelativeSupplyController, self).__init__(
             target=target,
@@ -45,14 +50,19 @@ class SimulatedRelativeSupplyController(RelativeSupplyController):
 
 class SimulatedCostController(SimulatedLinearController):
     def __init__(
-        self, target: Pool, low_utilisation=0.5, high_allocation=0.5, rate=1, interval=1
+        self,
+        target: Pool,
+        low_utilisation: float = 0.5,
+        high_allocation: float = 0.5,
+        rate: float = 1,
+        interval: float = 1,
     ):
         self.current_cost = 1
         super(SimulatedCostController, self).__init__(
             target, low_utilisation, high_allocation, rate, interval
         )
 
-    def regulate(self, interval):
+    def regulate(self, interval: float):
         allocation = 0
         for drone in self.target.drones:
             allocation += drone.allocation
@@ -64,8 +74,3 @@ class SimulatedCostController(SimulatedLinearController):
                 self.target.demand = allocation
                 if self.current_cost > 1:
                     self.current_cost -= 1
-                # self.target.demand = allocation + self.current_cost
-        # else:
-        #     if self.current_cost > 1:
-        #         self.current_cost -= 1
-        #     self.target.demand = allocation + self.current_cost
