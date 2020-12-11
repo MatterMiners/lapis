@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 from cobald import interfaces
 from usim import time, Scope, instant, Capacities, ResourcesUnavailable, Queue
 
@@ -12,9 +14,9 @@ class Drone(interfaces.Pool):
     def __init__(
         self,
         scheduler,
-        pool_resources: dict,
+        pool_resources: Dict[str, float],
         scheduling_duration: float,
-        ignore_resources: list = None,
+        ignore_resources: List[str] = None,
     ):
         """
         :param scheduler:
@@ -43,11 +45,11 @@ class Drone(interfaces.Pool):
         self._job_queue = Queue()
 
     @property
-    def theoretical_available_resources(self):
+    def theoretical_available_resources(self) -> Dict[str, float]:
         return dict(self.resources.levels)
 
     @property
-    def available_resources(self):
+    def available_resources(self) -> Dict[str, float]:
         return dict(self.used_resources.levels)
 
     async def run(self):
