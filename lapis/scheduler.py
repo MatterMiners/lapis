@@ -1,7 +1,8 @@
-from typing import Dict
-from usim import Scope, interval, Resources
+from typing import Dict, Iterator, Optional
+from usim import Scope, interval, Resources, Queue
 
 from lapis.drone import Drone
+from lapis.job import Job
 from lapis.monitor import sampling_required
 
 
@@ -26,7 +27,7 @@ class CondorJobScheduler(object):
     :return:
     """
 
-    def __init__(self, job_queue):
+    def __init__(self, job_queue: Queue):
         self._stream_queue = job_queue
         self.drone_cluster = []
         self.interval = 60
@@ -35,7 +36,7 @@ class CondorJobScheduler(object):
         self._processing = Resources(jobs=0)
 
     @property
-    def drone_list(self):
+    def drones(self) -> Iterator[Drone]:
         for cluster in self.drone_cluster:
             for drone in cluster:
                 yield drone
@@ -117,13 +118,13 @@ class CondorJobScheduler(object):
             await sampling_required.put(self.job_queue)
         self._collecting = False
 
-    async def job_finished(self, job):
+    async def job_finished(self, job: Job):
         if job.successful:
             await self._processing.decrease(jobs=1)
         else:
             await self._stream_queue.put(job)
 
-    def _schedule_job(self, job) -> Drone:
+    def _schedule_job(self, job: Job) -> Optional[Drone]:
         priorities = {}
         for cluster in self.drone_cluster:
             drone = cluster[0]
