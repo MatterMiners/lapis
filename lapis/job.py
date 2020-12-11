@@ -1,7 +1,7 @@
 import logging
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Dict
 
-from usim import time
+from usim import time, Queue
 from usim import CancelTask
 
 from lapis.monitor import sampling_required
@@ -26,8 +26,8 @@ class Job(object):
 
     def __init__(
         self,
-        resources: dict,
-        used_resources: dict,
+        resources: Dict[str, float],
+        used_resources: Dict[str, float],
         in_queue_since: float = 0,
         queue_date: float = 0,
         name: str = None,
@@ -109,7 +109,7 @@ class Job(object):
         return "<%s: %s>" % (self.__class__.__name__, self._name or id(self))
 
 
-async def job_to_queue_scheduler(job_generator, job_queue):
+async def job_to_queue_scheduler(job_generator, job_queue: Queue):
     base_date = None
     for job in job_generator:
         if base_date is None:
