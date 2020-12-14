@@ -10,7 +10,7 @@ from lapis_tests import via_usim
 from . import make_test_logger
 
 from lapis.monitor.general import resource_statistics
-from lapis.monitor import SimulationTimeFilter, Monitoring
+from lapis.monitor.core import SimulationTimeFilter, Monitoring
 
 
 def parse_line_protocol(literal: str):

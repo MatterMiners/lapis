@@ -14,7 +14,7 @@ from lapis.monitor.general import (
     configuration_information,
     job_events,
 )
-from lapis.monitor import Monitoring
+from lapis.monitor.core import Monitoring
 from lapis.monitor.cobald import drone_statistics, pool_statistics
 
 

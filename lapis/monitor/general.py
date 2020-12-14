@@ -7,7 +7,7 @@ from cobald.monitor.format_line import LineProtocolFormatter
 
 from lapis.drone import Drone
 from lapis.job import Job
-from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler
+from lapis.monitor.core import LoggingSocketHandler, LoggingUDPSocketHandler
 from lapis.pool import Pool
 from lapis.scheduler import CondorJobScheduler, JobQueue
 

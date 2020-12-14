@@ -3,7 +3,7 @@ from usim import Scope, interval, Resources, Queue
 
 from lapis.drone import Drone
 from lapis.job import Job
-from lapis.monitor import sampling_required
+from lapis.monitor.core import sampling_required
 
 
 class JobQueue(list):

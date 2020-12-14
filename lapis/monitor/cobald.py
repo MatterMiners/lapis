@@ -5,7 +5,7 @@ from cobald.monitor.format_line import LineProtocolFormatter
 from typing import List, Dict
 
 from lapis.drone import Drone
-from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler
+from lapis.monitor.core import LoggingSocketHandler, LoggingUDPSocketHandler
 from lapis.pool import Pool
 
 

@@ -53,7 +53,7 @@ class Drone(interfaces.Pool):
         return dict(self.used_resources.levels)
 
     async def run(self):
-        from lapis.monitor import sampling_required
+        from lapis.monitor.core import sampling_required
 
         await (time + self.scheduling_duration)
         self._supply = 1
@@ -98,7 +98,7 @@ class Drone(interfaces.Pool):
         self._utilisation = min(resources)
 
     async def shutdown(self):
-        from lapis.monitor import sampling_required
+        from lapis.monitor.core import sampling_required
 
         self._supply = 0
         self.scheduler.unregister_drone(self)
@@ -121,7 +121,7 @@ class Drone(interfaces.Pool):
         """
         job.drone = self
         async with Scope() as scope:
-            from lapis.monitor import sampling_required
+            from lapis.monitor.core import sampling_required
 
             self._utilisation = self._allocation = None
 

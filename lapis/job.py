@@ -4,7 +4,7 @@ from typing import Optional, TYPE_CHECKING, Dict
 from usim import time, Queue
 from usim import CancelTask
 
-from lapis.monitor import sampling_required
+from lapis.monitor.core import sampling_required
 
 if TYPE_CHECKING:
     from lapis.drone import Drone
