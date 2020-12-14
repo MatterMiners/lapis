@@ -90,7 +90,7 @@ class Drone(interfaces.Pool):
         resources = []
         for resource_key in self._valid_resource_keys:
             resources.append(
-                getattr(levels, resource_key) / self.pool_resources[resource_key]
+                1 - getattr(levels, resource_key) / self.pool_resources[resource_key]
             )
         self._allocation = max(resources)
         self._utilisation = min(resources)
