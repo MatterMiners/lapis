@@ -1,0 +1,8 @@
+category: fixed
+summary: "Reference to version in documentation"
+description: |
+  The documentation used an old reference to the current LAPIS version. This is
+  fixed now.
+pull requests:
+- 99
+version: 0.4.2

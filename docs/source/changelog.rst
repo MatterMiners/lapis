@@ -8,6 +8,11 @@ ChangeLog
 0.4 Series
 ==========
 
+Version [0.4.2] - 2020-12-11
+++++++++++++++++++++++++++++
+
+* **[Fixed]** Reference to version in documentation
+
 Version [0.4.1] - 2020-12-11
 ++++++++++++++++++++++++++++
 
