@@ -6,7 +6,7 @@ from functools import partial
 from usim import run, time, until, Scope, Queue
 
 import lapis.monitor as monitor
-from lapis.drone import Drone
+from lapis.workernode import WorkerNode
 from lapis.job import job_to_queue_scheduler
 from lapis.monitor.general import (
     user_demand,
@@ -56,7 +56,7 @@ class Simulator(object):
         for pool in pool_reader(
             iterable=pool_input,
             pool_type=pool_type,
-            make_drone=partial(Drone, self.job_scheduler),
+            make_drone=partial(WorkerNode, self.job_scheduler),
         ):
             self.pools.append(pool)
             if controller:

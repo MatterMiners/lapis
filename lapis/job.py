@@ -7,7 +7,7 @@ from usim import CancelTask
 from lapis.monitor.core import sampling_required
 
 if TYPE_CHECKING:
-    from lapis.drone import Drone
+    from lapis.workernode import WorkerNode
 
 
 class Job(object):
@@ -85,7 +85,7 @@ class Job(object):
             return self.in_queue_until - self.in_queue_since
         return float("Inf")
 
-    async def run(self, drone: "Drone"):
+    async def run(self, drone: "WorkerNode"):
         assert drone, "Jobs cannot run without a drone being assigned"
         self.drone = drone
         self.in_queue_until = time.now

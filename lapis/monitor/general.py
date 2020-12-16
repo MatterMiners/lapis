@@ -5,7 +5,7 @@ import logging.handlers
 from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
 
-from lapis.drone import Drone
+from lapis.workernode import WorkerNode
 from lapis.job import Job
 from lapis.monitor.core import LoggingSocketHandler, LoggingUDPSocketHandler
 from lapis.pool import Pool
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from lapis.simulator import Simulator
 
 
-def resource_statistics(drone: Drone) -> List[Dict]:
+def resource_statistics(drone: WorkerNode) -> List[Dict]:
     """
     Log ratio of used and requested resources for drones.
 
@@ -42,7 +42,7 @@ def resource_statistics(drone: Drone) -> List[Dict]:
 
 
 resource_statistics.name = "resource_status"
-resource_statistics.whitelist = (Drone,)
+resource_statistics.whitelist = (WorkerNode,)
 resource_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),

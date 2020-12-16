@@ -10,7 +10,7 @@ class ResourcesExceeded(Exception):
     ...
 
 
-class Drone(interfaces.Pool):
+class WorkerNode(interfaces.Pool):
     def __init__(
         self,
         scheduler,
@@ -23,7 +23,7 @@ class Drone(interfaces.Pool):
         :param pool_resources:
         :param scheduling_duration:
         """
-        super(Drone, self).__init__()
+        super(WorkerNode, self).__init__()
         self.scheduler = scheduler
         self.pool_resources = pool_resources
         self.resources = Capacities(**pool_resources)

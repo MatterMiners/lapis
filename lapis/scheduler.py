@@ -1,7 +1,7 @@
 from typing import Dict, Iterator, Optional
 from usim import Scope, interval, Resources, Queue
 
-from lapis.drone import Drone
+from lapis.workernode import WorkerNode
 from lapis.job import Job
 from lapis.monitor.core import sampling_required
 
@@ -36,15 +36,15 @@ class CondorJobScheduler(object):
         self._processing = Resources(jobs=0)
 
     @property
-    def drones(self) -> Iterator[Drone]:
+    def drones(self) -> Iterator[WorkerNode]:
         for cluster in self.drone_cluster:
             for drone in cluster:
                 yield drone
 
-    def register_drone(self, drone: Drone):
+    def register_drone(self, drone: WorkerNode):
         self._add_drone(drone)
 
-    def unregister_drone(self, drone: Drone):
+    def unregister_drone(self, drone: WorkerNode):
         for cluster in self.drone_cluster:
             try:
                 cluster.remove(drone)
@@ -54,7 +54,7 @@ class CondorJobScheduler(object):
                 if len(cluster) == 0:
                     self.drone_cluster.remove(cluster)
 
-    def _add_drone(self, drone: Drone, drone_resources: Dict = None):
+    def _add_drone(self, drone: WorkerNode, drone_resources: Dict = None):
         minimum_distance_cluster = None
         distance = float("Inf")
         if len(self.drone_cluster) > 0:
@@ -81,7 +81,7 @@ class CondorJobScheduler(object):
         else:
             self.drone_cluster.append([drone])
 
-    def update_drone(self, drone: Drone):
+    def update_drone(self, drone: WorkerNode):
         self.unregister_drone(drone)
         self._add_drone(drone)
 
@@ -124,7 +124,7 @@ class CondorJobScheduler(object):
         else:
             await self._stream_queue.put(job)
 
-    def _schedule_job(self, job: Job) -> Optional[Drone]:
+    def _schedule_job(self, job: Job) -> Optional[WorkerNode]:
         priorities = {}
         for cluster in self.drone_cluster:
             drone = cluster[0]

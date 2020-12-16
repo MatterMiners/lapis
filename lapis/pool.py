@@ -2,7 +2,7 @@ from typing import Generator, Callable
 from cobald import interfaces
 from usim import eternity, Scope, interval
 
-from .drone import Drone
+from .workernode import WorkerNode
 
 
 class Pool(interfaces.Pool):
@@ -75,7 +75,7 @@ class Pool(interfaces.Pool):
                                 break
 
     @property
-    def drones(self) -> Generator[Drone, None, None]:
+    def drones(self) -> Generator[WorkerNode, None, None]:
         for drone in self._drones:
             if drone.supply > 0:
                 yield drone
