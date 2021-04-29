@@ -55,15 +55,22 @@ class Job(object):
                     self.used_resources[key],
                 )
                 self.resources[key] = self.used_resources[key]
-        self.walltime = used_resources.pop("walltime")
-        self.requested_walltime = resources.pop("walltime", None)
+        self.walltime: int = used_resources.pop("walltime")
+        """the job's runtime, in reality as well as in the simulation"""
+        self.requested_walltime: Optional[int] = resources.pop("walltime", None)
+        """estimate of the job's walltime"""
         self.queue_date = queue_date
+        """ point in time when the job was submitted to the simulated job queue"""
         assert in_queue_since >= 0, "Queue time cannot be negative"
         self.in_queue_since = in_queue_since
-        self.in_queue_until = None
+        """Time when job was inserted into the queue of the simulation scheduler"""
+        self.in_queue_until: Optional[float] = None
+        """point in time when the job left the job queue"""
         self.drone = None
         self._name = name
+        """identifier of the job"""
         self._success: Optional[bool] = None
+        """flag indicating whether the job was completed successfully"""
 
     @property
     def name(self) -> str:
@@ -110,6 +117,12 @@ class Job(object):
 
 
 async def job_to_queue_scheduler(job_generator, job_queue: Queue):
+    """
+    Handles reading the simulation's job input and puts the job's into the job queue
+
+    :param job_generator: reader object that yields jobs from input
+    :param job_queue: queue the jobs are added to
+    """
     base_date = None
     for job in job_generator:
         if base_date is None:

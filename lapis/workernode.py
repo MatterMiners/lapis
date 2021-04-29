@@ -25,10 +25,16 @@ class WorkerNode(interfaces.Pool):
         """
         super(WorkerNode, self).__init__()
         self.scheduler = scheduler
+        """scheduler that assigns jobs to the workernode"""
         self.pool_resources = pool_resources
+        """dict stating the workernode's resources"""
         self.resources = Capacities(**pool_resources)
+        """available resources, based on the amount of resources requested by
+                jobs running on the workernode """
         # shadowing requested resources to determine jobs to be killed
         self.used_resources = Capacities(**pool_resources)
+        """available resources, based on the amount of resources actually used by
+                jobs running on the workernode"""
         if ignore_resources:
             self._valid_resource_keys = [
                 resource
@@ -38,21 +44,42 @@ class WorkerNode(interfaces.Pool):
         else:
             self._valid_resource_keys = self.pool_resources.keys()
         self.scheduling_duration = scheduling_duration
+        """amount of time that passes between the drone's
+                start up and it's registration at the scheduler"""
         self._supply = 0
         self.jobs = 0
+        """number of jobs running on the drone"""
         self._allocation = None
         self._utilisation = None
         self._job_queue = Queue()
 
     @property
     def theoretical_available_resources(self) -> Dict[str, float]:
+        """
+        Returns the amount of resources of the drone that were available if all jobs
+        used exactly the amount of resources they requested
+
+        :return: dictionary of theoretically available resources
+        """
         return dict(self.resources.levels)
 
     @property
     def available_resources(self) -> Dict[str, float]:
+        """
+        Returns the amount of resources of the drone that are available based on the
+        amount of resources the running jobs actually use.
+
+        :return: dictionary of available resources
+        """
         return dict(self.used_resources.levels)
 
     async def run(self):
+        """
+        Handles the drone's activity during simulation. Upon execution the drone
+        registers itself at the scheduler and once jobs are scheduled to the drone's
+        job queue, these jobs are executed. Starting jobs via a job queue was
+        introduced to avoid errors in resource allocation and monitoring.
+        """
         from lapis.monitor.core import sampling_required
 
         await (time + self.scheduling_duration)
@@ -98,6 +125,7 @@ class WorkerNode(interfaces.Pool):
         self._utilisation = min(resources)
 
     async def shutdown(self):
+        """Upon shutdown, the drone unregisters from the scheduler."""
         from lapis.monitor.core import sampling_required
 
         self._supply = 0
@@ -106,6 +134,13 @@ class WorkerNode(interfaces.Pool):
         await (time + 1)
 
     async def schedule_job(self, job: Job, kill: bool = False):
+        """
+        A job is scheduled to a drone by putting it in the drone's job queue.
+
+        :param job: job that was matched to the drone
+        :param kill: flag, if true jobs can be killed if they use more resources
+            than they requested
+        """
         await self._job_queue.put((job, kill))
 
     async def _run_job(self, job: Job, kill: bool):
