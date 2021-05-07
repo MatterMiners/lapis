@@ -55,9 +55,9 @@ class Job(object):
                     self.used_resources[key],
                 )
                 self.resources[key] = self.used_resources[key]
-        self.walltime: int = used_resources.pop("walltime")
+        self.walltime: float = used_resources.pop("walltime")
         """the job's runtime, in reality as well as in the simulation"""
-        self.requested_walltime: Optional[int] = resources.pop("walltime", None)
+        self.requested_walltime: Optional[float] = resources.pop("walltime", None)
         """estimate of the job's walltime"""
         self.queue_date = queue_date
         """ point in time when the job was submitted to the simulated job queue"""
