@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from cobald import interfaces
 from usim import time, Scope, instant, Capacities, ResourcesUnavailable, Queue
@@ -49,8 +49,8 @@ class WorkerNode(interfaces.Pool):
         self._supply = 0
         self.jobs = 0
         """number of jobs running on the drone"""
-        self._allocation = None
-        self._utilisation = None
+        self._allocation: Optional[float] = None
+        self._utilisation: Optional[float] = None
         self._job_queue = Queue()
 
     @property

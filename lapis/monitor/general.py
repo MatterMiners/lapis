@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, List, Dict
 
+import logging
 import logging.handlers
 
 from cobald.monitor.format_json import JsonFormatter
