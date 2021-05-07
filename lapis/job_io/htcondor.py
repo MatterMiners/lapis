@@ -4,7 +4,6 @@ import logging
 from typing import Dict, Iterable
 
 from lapis.job import Job
-from copy import deepcopy
 
 
 default_resource_name_mapping: Dict[str, str] = {
@@ -83,22 +82,6 @@ def htcondor_job_reader(
                 float(entry[original_key])
                 * unit_conversion_mapping.get(original_key, 1)
             )
-
-        try:
-            resources["inputfiles"] = deepcopy(entry["Inputfiles"])
-            used_resources["inputfiles"] = deepcopy(entry["Inputfiles"])
-            for filename, filespecs in entry["Inputfiles"].items():
-                if "usedsize" in filespecs:
-                    del resources["inputfiles"][filename]["usedsize"]
-                if "filesize" in filespecs:
-                    if "usedsize" not in filespecs:
-                        used_resources["inputfiles"][filename]["usedsize"] = filespecs[
-                            "filesize"
-                        ]
-                    del used_resources["inputfiles"][filename]["filesize"]
-
-        except KeyError:
-            pass
         yield Job(
             resources=resources,
             used_resources=used_resources,
