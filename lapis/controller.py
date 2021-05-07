@@ -1,6 +1,6 @@
+from lapis.pool import Pool
 from cobald.controller.linear import LinearController
 from cobald.controller.relative_supply import RelativeSupplyController
-from cobald.interfaces import Pool
 from usim import time
 
 
