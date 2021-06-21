@@ -57,7 +57,7 @@ class Monitoring(object):
                         record["tardis"] = "lapis-%s" % SIMULATION_START
                         logging.getLogger(statistic.name).info(statistic.name, record)
         except GeneratorExit:
-            await log_iter.aclose()
+            pass
 
     def register_statistic(self, statistic: Callable) -> None:
         """
