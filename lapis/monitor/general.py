@@ -10,7 +10,7 @@ from lapis.workernode import WorkerNode
 from lapis.job import Job
 from lapis.monitor.core import LoggingSocketHandler, LoggingUDPSocketHandler
 from lapis.pool import Pool
-from lapis.scheduler import CondorJobScheduler, JobQueue
+from lapis.scheduler.base import CondorJobScheduler, JobQueue
 
 if TYPE_CHECKING:
     from lapis.simulator import Simulator

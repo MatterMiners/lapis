@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Dict, Iterator, Optional
 from usim import Scope, interval, Resources, Queue
 
@@ -10,7 +11,40 @@ class JobQueue(list):
     pass
 
 
-class CondorJobScheduler(object):
+class JobScheduler(ABC):
+    __slots__ = ()
+
+    @property
+    def drone_list(self) -> Iterator[WorkerNode]:
+        """Yields the registered drones"""
+        raise NotImplementedError
+
+    def register_drone(self, drone: WorkerNode):
+        """Register a drone at the scheduler"""
+        raise NotImplementedError
+
+    def unregister_drone(self, drone: WorkerNode):
+        """Unregister a drone at the scheduler"""
+        raise NotImplementedError
+
+    def update_drone(self, drone: WorkerNode):
+        """Update parameters of a drone"""
+        raise NotImplementedError
+
+    async def run(self):
+        """Run method of the scheduler"""
+        raise NotImplementedError
+
+    async def job_finished(self, job):
+        """
+        Declare a job as finished by a drone. This might even mean, that the job
+        has failed and that the scheduler needs to requeue the job for further
+        processing.
+        """
+        raise NotImplementedError
+
+
+class CondorJobScheduler(JobScheduler):
     """
     Goal of the htcondor job scheduler is to have a scheduler that somehow
     mimics how htcondor does schedule jobs.
@@ -63,12 +97,12 @@ class CondorJobScheduler(object):
                 for key in {*cluster[0].pool_resources, *drone.pool_resources}:
                     if drone_resources:
                         current_distance += abs(
-                            cluster[0].theoretical_available_resources.get(key, 0)
+                            cluster[0].unallocated_resources.get(key, 0)
                             - drone_resources.get(key, 0)
                         )
                     else:
                         current_distance += abs(
-                            cluster[0].theoretical_available_resources.get(key, 0)
+                            cluster[0].unallocated_resources.get(key, 0)
                             - drone.unallocated_resources.get(key, 0)
                         )
                 if current_distance < distance:
@@ -129,7 +163,7 @@ class CondorJobScheduler(object):
         for cluster in self.drone_cluster:
             drone = cluster[0]
             cost = 0
-            resources = drone.theoretical_available_resources
+            resources = drone.unallocated_resources
             for resource_type in job.resources:
                 if resources.get(resource_type, 0) < job.resources[resource_type]:
                     # Inf for all job resources that a drone does not support
