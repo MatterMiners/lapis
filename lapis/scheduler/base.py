@@ -1,15 +1,50 @@
-from typing import Dict
-from usim import Scope, interval, Resources
+from abc import ABC
+from typing import Dict, Iterator, Optional
+from usim import Scope, interval, Resources, Queue
 
-from lapis.drone import Drone
-from lapis.monitor import sampling_required
+from lapis.workernode import WorkerNode
+from lapis.job import Job
+from lapis.monitor.core import sampling_required
 
 
 class JobQueue(list):
     pass
 
 
-class CondorJobScheduler(object):
+class JobScheduler(ABC):
+    __slots__ = ()
+
+    @property
+    def drone_list(self) -> Iterator[WorkerNode]:
+        """Yields the registered drones"""
+        raise NotImplementedError
+
+    def register_drone(self, drone: WorkerNode):
+        """Register a drone at the scheduler"""
+        raise NotImplementedError
+
+    def unregister_drone(self, drone: WorkerNode):
+        """Unregister a drone at the scheduler"""
+        raise NotImplementedError
+
+    def update_drone(self, drone: WorkerNode):
+        """Update parameters of a drone"""
+        raise NotImplementedError
+
+    async def run(self):
+        """Run method of the scheduler"""
+        raise NotImplementedError
+
+    async def job_finished(self, job):
+        """
+        Declare a job as finished by a drone. This might even mean, that the job
+        has failed and that the scheduler needs to requeue the job for further
+        processing.
+        """
+        raise NotImplementedError
+
+
+class CondorJobScheduler(JobScheduler):
     """
     Goal of the htcondor job scheduler is to have a scheduler that somehow
     mimics how htcondor does schedule jobs.
@@ -26,7 +61,7 @@ class CondorJobScheduler(object):
     :return:
     """
 
-    def __init__(self, job_queue):
+    def __init__(self, job_queue: Queue):
         self._stream_queue = job_queue
         self.drone_cluster = []
         self.interval = 60
@@ -35,15 +70,15 @@ class CondorJobScheduler(object):
         self._processing = Resources(jobs=0)
 
     @property
-    def drone_list(self):
+    def drones(self) -> Iterator[WorkerNode]:
         for cluster in self.drone_cluster:
             for drone in cluster:
                 yield drone
 
-    def register_drone(self, drone: Drone):
+    def register_drone(self, drone: WorkerNode):
         self._add_drone(drone)
 
-    def unregister_drone(self, drone: Drone):
+    def unregister_drone(self, drone: WorkerNode):
         for cluster in self.drone_cluster:
             try:
                 cluster.remove(drone)
@@ -53,7 +88,7 @@ class CondorJobScheduler(object):
                 if len(cluster) == 0:
                     self.drone_cluster.remove(cluster)
 
-    def _add_drone(self, drone: Drone, drone_resources: Dict = None):
+    def _add_drone(self, drone: WorkerNode, drone_resources: Dict = None):
         minimum_distance_cluster = None
         distance = float("Inf")
         if len(self.drone_cluster) > 0:
@@ -62,13 +97,13 @@ class CondorJobScheduler(object):
                 for key in {*cluster[0].pool_resources, *drone.pool_resources}:
                     if drone_resources:
                         current_distance += abs(
-                            cluster[0].theoretical_available_resources.get(key, 0)
+                            cluster[0].unallocated_resources.get(key, 0)
                             - drone_resources.get(key, 0)
                         )
                     else:
                         current_distance += abs(
-                            cluster[0].theoretical_available_resources.get(key, 0)
-                            - drone.theoretical_available_resources.get(key, 0)
+                            cluster[0].unallocated_resources.get(key, 0)
+                            - drone.unallocated_resources.get(key, 0)
                         )
                 if current_distance < distance:
                     minimum_distance_cluster = cluster
@@ -80,7 +115,7 @@ class CondorJobScheduler(object):
         else:
             self.drone_cluster.append([drone])
 
-    def update_drone(self, drone: Drone):
+    def update_drone(self, drone: WorkerNode):
         self.unregister_drone(drone)
         self._add_drone(drone)
 
@@ -95,7 +130,7 @@ class CondorJobScheduler(object):
                         self.job_queue.remove(job)
                         await sampling_required.put(self.job_queue)
                         self.unregister_drone(best_match)
-                        left_resources = best_match.theoretical_available_resources
+                        left_resources = best_match.unallocated_resources
                         left_resources = {
                             key: value - job.resources.get(key, 0)
                             for key, value in left_resources.items()
@@ -117,18 +152,18 @@ class CondorJobScheduler(object):
             await sampling_required.put(self.job_queue)
         self._collecting = False
 
-    async def job_finished(self, job):
+    async def job_finished(self, job: Job):
         if job.successful:
             await self._processing.decrease(jobs=1)
         else:
             await self._stream_queue.put(job)
 
-    def _schedule_job(self, job) -> Drone:
+    def _schedule_job(self, job: Job) -> Optional[WorkerNode]:
         priorities = {}
         for cluster in self.drone_cluster:
             drone = cluster[0]
             cost = 0
-            resources = drone.theoretical_available_resources
+            resources = drone.unallocated_resources
             for resource_type in job.resources:
                 if resources.get(resource_type, 0) < job.resources[resource_type]:
                     # Inf for all job resources that a drone does not support

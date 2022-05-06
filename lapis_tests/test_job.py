@@ -1,7 +1,7 @@
 import pytest
 from usim import Scope, time
 
-from lapis.drone import Drone
+from lapis.workernode import WorkerNode
 from lapis.job import Job
 from lapis_tests import via_usim, DummyScheduler, DummyDrone
 
@@ -43,7 +43,7 @@ class TestJob(object):
             resources={"walltime": 50, "cores": 1, "memory": 1},
             used_resources={"walltime": 10, "cores": 1, "memory": 1},
         )
-        drone = Drone(
+        drone = WorkerNode(
             scheduler=scheduler,
             pool_resources={"cores": 1, "memory": 1},
             scheduling_duration=0,
@@ -62,7 +62,7 @@ class TestJob(object):
             resources={"walltime": 50, "cores": 2, "memory": 1},
             used_resources={"walltime": 10, "cores": 1, "memory": 1},
         )
-        drone = Drone(
+        drone = WorkerNode(
             scheduler=scheduler,
             pool_resources={"cores": 1, "memory": 1},
             scheduling_duration=0,
@@ -85,7 +85,7 @@ class TestJob(object):
             resources={"walltime": 50, "cores": 1, "memory": 1},
             used_resources={"walltime": 10, "cores": 1, "memory": 1},
         )
-        drone = Drone(
+        drone = WorkerNode(
             scheduler=scheduler,
             pool_resources={"cores": 1, "memory": 1},
             scheduling_duration=0,
@@ -111,7 +111,7 @@ class TestJob(object):
             resources={"walltime": 50, "cores": 1, "memory": 1},
             used_resources={"walltime": 10, "cores": 1, "memory": 1},
         )
-        drone = Drone(
+        drone = WorkerNode(
             scheduler=scheduler,
             pool_resources={"cores": 2, "memory": 2},
             scheduling_duration=0,

@@ -2,7 +2,7 @@ from typing import Generator, Callable
 from cobald import interfaces
 from usim import eternity, Scope, interval
 
-from .drone import Drone
+from .workernode import WorkerNode
 
 
 class Pool(interfaces.Pool):
@@ -34,10 +34,11 @@ class Pool(interfaces.Pool):
         self._capacity = capacity
         self._name = name
 
-    async def init_pool(self, scope: Scope, init: int = 0):
+    def _init_pool(self, scope: Scope, init: int = 0):
         """
         Initialisation of existing drones at creation time of pool.
 
+        :param scope:
         :param init: Number of drones to create.
         """
         for _ in range(init):
@@ -53,7 +54,7 @@ class Pool(interfaces.Pool):
         initialising new drones. Otherwise drones get removed.
         """
         async with Scope() as scope:
-            await self.init_pool(scope=scope, init=self._level)
+            self._init_pool(scope=scope, init=self._level)
             async for _ in interval(1):
                 drones_required = min(self._demand, self._capacity) - self._level
                 while drones_required > 0:
@@ -74,7 +75,7 @@ class Pool(interfaces.Pool):
                                 break
 
     @property
-    def drones(self) -> Generator[Drone, None, None]:
+    def drones(self) -> Generator[WorkerNode, None, None]:
         for drone in self._drones:
             if drone.supply > 0:
                 yield drone
@@ -148,5 +149,5 @@ class StaticPool(Pool):
         Pool runs forever and does not check if number of drones needs to be adapted.
         """
         async with Scope() as scope:
-            await self.init_pool(scope=scope, init=self._level)
+            self._init_pool(scope=scope, init=self._level)
             await eternity

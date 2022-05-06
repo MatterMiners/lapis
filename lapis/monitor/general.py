@@ -1,21 +1,22 @@
 from typing import TYPE_CHECKING, List, Dict
 
+import logging
 import logging.handlers
 
 from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
 
-from lapis.drone import Drone
+from lapis.workernode import WorkerNode
 from lapis.job import Job
-from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler
+from lapis.monitor.core import LoggingSocketHandler, LoggingUDPSocketHandler
 from lapis.pool import Pool
-from lapis.scheduler import CondorJobScheduler, JobQueue
+from lapis.scheduler.base import CondorJobScheduler, JobQueue
 
 if TYPE_CHECKING:
     from lapis.simulator import Simulator
 
 
-def resource_statistics(drone: Drone) -> List[Dict]:
+def resource_statistics(drone: WorkerNode) -> List[Dict]:
     """
     Log ratio of used and requested resources for drones.
 
@@ -23,7 +24,7 @@ def resource_statistics(drone: Drone) -> List[Dict]:
     :return: list of records for logging
     """
     results = []
-    resources = drone.theoretical_available_resources
+    resources = drone.unallocated_resources
     used_resources = drone.available_resources
     for resource_type in resources:
         results.append(
@@ -42,7 +43,7 @@ def resource_statistics(drone: Drone) -> List[Dict]:
 
 
 resource_statistics.name = "resource_status"
-resource_statistics.whitelist = (Drone,)
+resource_statistics.whitelist = (WorkerNode,)
 resource_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),

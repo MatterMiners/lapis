@@ -3,7 +3,7 @@ from functools import wraps
 
 from usim import run
 
-from lapis.drone import Drone
+from lapis.workernode import WorkerNode
 
 
 def via_usim(test_case: Callable[..., Coroutine]):
@@ -33,15 +33,15 @@ def via_usim(test_case: Callable[..., Coroutine]):
 
 class DummyScheduler:
     @staticmethod
-    def register_drone(drone: Drone):
+    def register_drone(drone: WorkerNode):
         pass
 
     @staticmethod
-    def unregister_drone(drone: Drone):
+    def unregister_drone(drone: WorkerNode):
         pass
 
     @staticmethod
-    def update_drone(drone: Drone):
+    def update_drone(drone: WorkerNode):
         pass
 
 

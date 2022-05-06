@@ -4,12 +4,12 @@ from cobald.monitor.format_json import JsonFormatter
 from cobald.monitor.format_line import LineProtocolFormatter
 from typing import List, Dict
 
-from lapis.drone import Drone
-from lapis.monitor import LoggingSocketHandler, LoggingUDPSocketHandler
+from lapis.workernode import WorkerNode
+from lapis.monitor.core import LoggingSocketHandler, LoggingUDPSocketHandler
 from lapis.pool import Pool
 
 
-def drone_statistics(drone: Drone) -> List[Dict]:
+def drone_statistics(drone: WorkerNode) -> List[Dict]:
     """
     Collect allocation, utilisation, demand and supply of drones.
 
@@ -32,7 +32,7 @@ def drone_statistics(drone: Drone) -> List[Dict]:
 
 
 drone_statistics.name = "cobald_status"
-drone_statistics.whitelist = (Drone,)
+drone_statistics.whitelist = (WorkerNode,)
 drone_statistics.logging_formatter = {
     LoggingSocketHandler.__name__: JsonFormatter(),
     logging.StreamHandler.__name__: JsonFormatter(),

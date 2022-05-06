@@ -4,28 +4,40 @@ Current implementation is based on version 2.2 of the
 [Standard Workload Format](http://www.cs.huji.ac.il/labs/parallel/workload/swf.html).
 """
 import csv
+from typing import Dict, Iterable
 
 from lapis.job import Job
 
 
+default_resource_name_mapping: Dict[str, str] = {
+    "cores": "Requested Number of Processors",
+    "walltime": "Requested Time",  # s
+    "memory": "Requested Memory",  # KiB
+}
+default_used_resource_name_mapping: Dict[str, str] = {
+    "walltime": "Run Time",  # s
+    "cores": "Number of Allocated Processors",
+    "memory": "Used Memory",  # KiB
+    "queuetime": "Submit Time",
+}
+default_unit_conversion_mapping: Dict[str, float] = {
+    "Used Memory": 1024,
+    "Requested Memory": 1024,
+}
+
+
 def swf_job_reader(
     iterable,
-    resource_name_mapping={  # noqa: B006
-        "cores": "Requested Number of Processors",
-        "walltime": "Requested Time",  # s
-        "memory": "Requested Memory",  # KiB
-    },
-    used_resource_name_mapping={  # noqa: B006
-        "walltime": "Run Time",  # s
-        "cores": "Number of Allocated Processors",
-        "memory": "Used Memory",  # KiB
-        "queuetime": "Submit Time",
-    },
-    unit_conversion_mapping={  # noqa: B006
-        "Used Memory": 1024,
-        "Requested Memory": 1024,
-    },
-):
+    resource_name_mapping: Dict[str, str] = None,
+    used_resource_name_mapping: Dict[str, str] = None,
+    unit_conversion_mapping: Dict[str, float] = None,
+) -> Iterable[Job]:
+    if resource_name_mapping is None:
+        resource_name_mapping = default_resource_name_mapping
+    if used_resource_name_mapping is None:
+        used_resource_name_mapping = default_used_resource_name_mapping
+    if unit_conversion_mapping is None:
+        unit_conversion_mapping = default_unit_conversion_mapping
     header = {
         "Job Number": 0,
         "Submit Time": 1,
