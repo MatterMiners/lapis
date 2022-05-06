@@ -24,7 +24,7 @@ def resource_statistics(drone: WorkerNode) -> List[Dict]:
     :return: list of records for logging
     """
     results = []
-    resources = drone.theoretical_available_resources
+    resources = drone.unallocated_resources
     used_resources = drone.available_resources
     for resource_type in resources:
         results.append(

@@ -69,7 +69,7 @@ class CondorJobScheduler(object):
                     else:
                         current_distance += abs(
                             cluster[0].theoretical_available_resources.get(key, 0)
-                            - drone.theoretical_available_resources.get(key, 0)
+                            - drone.unallocated_resources.get(key, 0)
                         )
                 if current_distance < distance:
                     minimum_distance_cluster = cluster
@@ -96,7 +96,7 @@ class CondorJobScheduler(object):
                         self.job_queue.remove(job)
                         await sampling_required.put(self.job_queue)
                         self.unregister_drone(best_match)
-                        left_resources = best_match.theoretical_available_resources
+                        left_resources = best_match.unallocated_resources
                         left_resources = {
                             key: value - job.resources.get(key, 0)
                             for key, value in left_resources.items()

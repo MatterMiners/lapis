@@ -54,7 +54,7 @@ class WorkerNode(interfaces.Pool):
         self._job_queue = Queue()
 
     @property
-    def theoretical_available_resources(self) -> Dict[str, float]:
+    def unallocated_resources(self) -> Dict[str, float]:
         """
         Returns the amount of resources of the drone that were available if all jobs
         used exactly the amount of resources they requested
